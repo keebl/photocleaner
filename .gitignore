@@ -12,3 +12,6 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 .build/
+
+# Simulator-screenshots (demo-artefacten)
+shots/
