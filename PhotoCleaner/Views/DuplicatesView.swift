@@ -133,8 +133,8 @@ struct DuplicatesView: View {
 
     private func thumb(_ asset: PhotoAsset, isKeeper: Bool) -> some View {
         PhotoThumbnail(asset: asset, source: source)
-            .frame(width: 100, height: 100)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .frame(width: 132, height: 132)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(alignment: .topLeading) {
                 if isKeeper {
                     Text("Behouden")

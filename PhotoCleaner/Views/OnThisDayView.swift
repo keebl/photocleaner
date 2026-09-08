@@ -158,7 +158,13 @@ struct OnThisDayView: View {
                                 .font(.title3).bold()
                                 .padding(.horizontal)
                             ForEach(group.assets) { asset in
-                                photoCard(asset)
+                                OnThisDayCard(
+                                    asset: asset,
+                                    source: source,
+                                    onKeep: { withAnimation { _ = kept.insert(asset.id) } },
+                                    onDiscard: { withAnimation { trash.mark(asset, reason: "Op deze dag") } }
+                                )
+                                .padding(.horizontal)
                             }
                         }
                     }
@@ -166,39 +172,6 @@ struct OnThisDayView: View {
                 .padding(.vertical)
             }
         }
-    }
-
-    private func photoCard(_ asset: PhotoAsset) -> some View {
-        VStack(spacing: 0) {
-            PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 1000, height: 1000))
-                .aspectRatio(4.0 / 3.0, contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .background(.quaternary)
-
-            HStack(spacing: 10) {
-                Button {
-                    withAnimation { _ = kept.insert(asset.id) }
-                } label: {
-                    Label("Behouden", systemImage: "checkmark")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button(role: .destructive) {
-                    withAnimation { trash.mark(asset, reason: "Op deze dag") }
-                } label: {
-                    Label("Weggooien", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding(12)
-        }
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.separator.opacity(0.5)))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
-        .padding(.horizontal)
     }
 
     // MARK: - Datumlogica
@@ -236,5 +209,100 @@ struct OnThisDayView: View {
         case 1:     return "1 jaar geleden · \(year)"
         default:    return "\(ago) jaar geleden · \(year)"
         }
+    }
+}
+
+/// Eén foto-kaart met knoppen én swipe-gebaren: sleep naar rechts om te behouden,
+/// naar links om weg te gooien.
+private struct OnThisDayCard: View {
+    let asset: PhotoAsset
+    let source: PhotoSource
+    var onKeep: () -> Void
+    var onDiscard: () -> Void
+
+    @State private var offset: CGFloat = 0
+
+    private let threshold: CGFloat = 110
+
+    private var keepProgress: Double { Double(min(max(offset / threshold, 0), 1)) }
+    private var discardProgress: Double { Double(min(max(-offset / threshold, 0), 1)) }
+
+    var body: some View {
+        ZStack {
+            swipeBackground
+            card
+                .offset(x: offset)
+                .gesture(dragGesture)
+        }
+    }
+
+    private var card: some View {
+        VStack(spacing: 0) {
+            PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 1000, height: 1000))
+                .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                .frame(maxWidth: .infinity)
+                .background(.quaternary)
+                .overlay {
+                    // Kleur-hint tijdens het slepen
+                    if offset > 0 {
+                        Color.green.opacity(keepProgress * 0.35)
+                    } else if offset < 0 {
+                        Color.red.opacity(discardProgress * 0.35)
+                    }
+                }
+
+            HStack(spacing: 10) {
+                Button { onKeep() } label: {
+                    Label("Behouden", systemImage: "checkmark").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                Button(role: .destructive) { onDiscard() } label: {
+                    Label("Weggooien", systemImage: "trash").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(12)
+        }
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.separator.opacity(0.5)))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+    }
+
+    /// Achtergrond-indicatoren die zichtbaar worden tijdens het slepen.
+    private var swipeBackground: some View {
+        HStack {
+            Label("Behouden", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .opacity(keepProgress)
+            Spacer()
+            Label("Weggooien", systemImage: "trash.circle.fill")
+                .foregroundStyle(.red)
+                .opacity(discardProgress)
+        }
+        .font(.headline)
+        .padding(.horizontal, 24)
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                // Alleen horizontaal reageren.
+                if abs(value.translation.width) > abs(value.translation.height) {
+                    offset = value.translation.width
+                }
+            }
+            .onEnded { value in
+                if value.translation.width > threshold {
+                    withAnimation(.spring) { offset = 600 }
+                    onKeep()
+                } else if value.translation.width < -threshold {
+                    withAnimation(.spring) { offset = -600 }
+                    onDiscard()
+                } else {
+                    withAnimation(.spring) { offset = 0 }
+                }
+            }
     }
 }
