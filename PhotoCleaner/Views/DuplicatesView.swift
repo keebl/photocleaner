@@ -2,7 +2,15 @@ import SwiftUI
 
 @MainActor
 final class DuplicatesViewModel: ObservableObject {
-    @Published private(set) var groups: [DuplicateGroup] = []
+    enum Mode: String, CaseIterable, Identifiable {
+        case exact = "Exact"
+        case similar = "Lijkend"
+        var id: String { rawValue }
+    }
+
+    @Published var mode: Mode = ProcessInfo.processInfo.environment["START_DUP_MODE"] == "similar" ? .similar : .exact
+    @Published private(set) var exactGroups: [DuplicateGroup] = []
+    @Published private(set) var similarGroups: [DuplicateGroup] = []
     @Published private(set) var isLoading = false
 
     private let source: PhotoSource
@@ -11,16 +19,32 @@ final class DuplicatesViewModel: ObservableObject {
         self.source = source
     }
 
+    var groups: [DuplicateGroup] {
+        mode == .exact ? exactGroups : similarGroups
+    }
+
     func scan(excluding hidden: Set<String>) async {
         isLoading = true
+        defer { isLoading = false }
+
         let all = await source.fetchAllPhotos()
         let visible = all.filter { !hidden.contains($0.id) }
-        groups = DuplicateDetector.findDuplicates(in: visible)
-        isLoading = false
+
+        // Exacte dubbelen op metadata.
+        exactGroups = DuplicateDetector.findDuplicates(in: visible)
+
+        // Lijkende foto's op perceptual hash.
+        var hashed: [(asset: PhotoAsset, hash: UInt64)] = []
+        for asset in visible {
+            if let hash = await source.perceptualHash(for: asset) {
+                hashed.append((asset, hash))
+            }
+        }
+        similarGroups = PerceptualDetector.group(hashed, maxDistance: 8)
     }
 }
 
-/// "Dubbelen": groepen van foto's die volgens de metadata gelijk zijn. Per groep
+/// "Dubbelen": exacte (metadata) én lijkende (perceptual) duplicaten. Per groep
 /// stellen we voor de beste te behouden en de rest weg te gooien.
 struct DuplicatesView: View {
     let source: PhotoSource
@@ -35,17 +59,24 @@ struct DuplicatesView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if vm.isLoading {
-                    ProgressView("Bibliotheek scannen…")
-                } else if vm.groups.isEmpty {
-                    ContentUnavailableView(
-                        "Geen dubbelen gevonden",
-                        systemImage: "checkmark.seal",
-                        description: Text("Er zijn geen foto's met dezelfde metadata gevonden.")
-                    )
-                } else {
-                    list
+            VStack(spacing: 0) {
+                Picker("Soort", selection: $vm.mode) {
+                    ForEach(DuplicatesViewModel.Mode.allCases) { mode in
+                        Text(mode == .exact ? "Exacte dubbelen" : "Lijkende foto's").tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding()
+
+                Group {
+                    if vm.isLoading {
+                        ProgressView("Bibliotheek scannen…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if vm.groups.isEmpty {
+                        emptyState
+                    } else {
+                        list
+                    }
                 }
             }
             .navigationTitle("Dubbelen")
@@ -58,6 +89,17 @@ struct DuplicatesView: View {
             }
         }
         .task { await vm.scan(excluding: trash.trashedIDs) }
+    }
+
+    private var emptyState: some View {
+        ContentUnavailableView(
+            vm.mode == .exact ? "Geen dubbelen gevonden" : "Geen lijkende foto's",
+            systemImage: "checkmark.seal",
+            description: Text(vm.mode == .exact
+                ? "Er zijn geen foto's met dezelfde metadata gevonden."
+                : "Er zijn geen op elkaar lijkende foto's gevonden.")
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var list: some View {
@@ -76,11 +118,11 @@ struct DuplicatesView: View {
                     Button(role: .destructive) {
                         withAnimation {
                             for dup in group.duplicates {
-                                trash.mark(dup, reason: "Dubbel")
+                                trash.mark(dup, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
                             }
                         }
                     } label: {
-                        Label("Behoud beste, gooi \(group.duplicates.count) dubbele weg", systemImage: "trash")
+                        Label("Behoud beste, gooi \(group.duplicates.count) weg", systemImage: "trash")
                     }
                 } header: {
                     Text("\(group.count) exemplaren · \(ByteFormatter.string(group.reclaimableBytes)) te winnen")

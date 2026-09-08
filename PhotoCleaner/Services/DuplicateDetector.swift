@@ -13,6 +13,16 @@ struct DuplicateGroup: Identifiable {
 
     /// Ruimte die je terugwint als je de duplicaten weggooit.
     var reclaimableBytes: Int64 { duplicates.reduce(0) { $0 + $1.byteSize } }
+
+    /// Maakt een groep uit losse foto's: behoud de foto met de meeste pixels
+    /// (bij gelijkspel het grootste bestand), de rest zijn duplicaten.
+    static func make(from assets: [PhotoAsset]) -> DuplicateGroup {
+        let sorted = assets.sorted { a, b in
+            if a.pixelCount != b.pixelCount { return a.pixelCount > b.pixelCount }
+            return a.byteSize > b.byteSize
+        }
+        return DuplicateGroup(keep: sorted[0], duplicates: Array(sorted.dropFirst()))
+    }
 }
 
 /// Vindt duplicaten op basis van métadata (geen pixelvergelijking).
@@ -31,7 +41,7 @@ enum DuplicateDetector {
 
         return buckets.values
             .filter { $0.count > 1 }
-            .map { makeGroup(from: $0) }
+            .map { DuplicateGroup.make(from: $0) }
             .sorted { $0.reclaimableBytes > $1.reclaimableBytes }
     }
 
@@ -41,14 +51,5 @@ enum DuplicateDetector {
         guard let date = asset.creationDate else { return nil }
         let second = Int(date.timeIntervalSince1970)
         return "\(second)|\(asset.pixelWidth)x\(asset.pixelHeight)"
-    }
-
-    private static func makeGroup(from assets: [PhotoAsset]) -> DuplicateGroup {
-        // Behoud de foto met de meeste pixels; bij gelijkspel het grootste bestand.
-        let sorted = assets.sorted { a, b in
-            if a.pixelCount != b.pixelCount { return a.pixelCount > b.pixelCount }
-            return a.byteSize > b.byteSize
-        }
-        return DuplicateGroup(keep: sorted[0], duplicates: Array(sorted.dropFirst()))
     }
 }

@@ -43,6 +43,10 @@ private struct MainTabs: View {
             TrashView(source: source)
                 .tabItem { Label("Prullenbak", systemImage: "trash") }
                 .tag(2)
+
+            SettingsView()
+                .tabItem { Label("Instellingen", systemImage: "gearshape") }
+                .tag(3)
         }
     }
 }

@@ -58,6 +58,63 @@ final class PhotoKitSource: PhotoSource {
         }
     }
 
+    // MARK: - Perceptual hash (lijkende foto's)
+
+    func perceptualHash(for asset: PhotoAsset) async -> UInt64? {
+        guard let phAsset = assetIndex[asset.id] else { return nil }
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+        options.isNetworkAccessAllowed = true
+
+        let image: UIImage? = await withCheckedContinuation { continuation in
+            var didResume = false
+            imageManager.requestImage(
+                for: phAsset,
+                targetSize: CGSize(width: 32, height: 32),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                guard !didResume else { return }
+                didResume = true
+                continuation.resume(returning: image)
+            }
+        }
+        return Self.dHash(image)
+    }
+
+    /// dHash: teken op 9×8 grijswaarden en vergelijk elke pixel met z'n
+    /// rechterbuur → 64 bits.
+    private static func dHash(_ image: UIImage?) -> UInt64? {
+        guard let cgImage = image?.cgImage else { return nil }
+        let width = 9, height = 8
+        var pixels = [UInt8](repeating: 0, count: width * height)
+        let colorSpace = CGColorSpaceCreateDeviceGray()
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.none.rawValue
+        ) else { return nil }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        var hash: UInt64 = 0
+        var bit: UInt64 = 0
+        for row in 0..<height {
+            for col in 0..<(width - 1) {
+                let left = pixels[row * width + col]
+                let right = pixels[row * width + col + 1]
+                if left > right { hash |= (1 << bit) }
+                bit += 1
+            }
+        }
+        return hash
+    }
+
     // MARK: - Verwijderen
 
     func delete(_ assets: [PhotoAsset]) async throws {

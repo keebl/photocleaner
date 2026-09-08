@@ -58,11 +58,22 @@ PhotoCleaner/
 └─ Views/        Op deze dag, Dubbelen, Prullenbak, thumbnails
 ```
 
+## Functies (v1)
+
+- **Op deze dag** — dagelijkse lokale notificatie in te schakelen bij Instellingen.
+- **Dubbelen** — twee modi: *Exacte dubbelen* (metadata) en *Lijkende foto's*
+  (perceptual hash / dHash) voor bewerkte of gecomprimeerde kopieën.
+- **Prullenbak** — 30 dagen retentie.
+- **Fotobron** — iPhone-bibliotheek actief; Google Foto's en NAS voorbereid via
+  de `PhotoSource`-abstractie (zie `Sources/RemoteSources.swift`).
+
 ## Bekende beperkingen / volgende stappen
 
-- Dubbelen worden nu op metadata gevonden. Voor "lijkt op elkaar"-duplicaten
-  (bewerkt/gecomprimeerd) is een perceptual hash de logische volgende stap.
 - Bestandsgrootte wordt nu voor elke foto tijdens de scan bepaald; bij zeer
-  grote bibliotheken loont het dit lui te doen.
-- Dagelijkse melding voor "Op deze dag" (lokale notificatie) staat op de rol.
-- Bronnen Google Foto's / NAS: implementeren als extra `PhotoSource`.
+  grote bibliotheken loont het dit lui te doen (alleen voor kandidaten).
+- De perceptual scan laadt per foto een kleine thumbnail; voor duizenden foto's
+  is caching van de hashes een logische optimalisatie.
+- Google Foto's / NAS: architectuur staat klaar; de echte koppeling vereist
+  externe stappen (Google-OAuth, netwerkconfig) — zie de doc-comments in
+  `Sources/RemoteSources.swift`.
+- Naar de App Store: zie [docs/APPSTORE.md](docs/APPSTORE.md).
