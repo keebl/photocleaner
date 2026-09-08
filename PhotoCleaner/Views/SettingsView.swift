@@ -4,10 +4,20 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var notifications: NotificationManager
     @EnvironmentObject private var trash: TrashStore
+    @EnvironmentObject private var theme: ThemeManager
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Weergave") {
+                    Picker("Thema", selection: $theme.theme) {
+                        ForEach(AppTheme.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Section {
                     Toggle("Dagelijkse herinnering", isOn: Binding(
                         get: { notifications.isEnabled },
