@@ -3,7 +3,7 @@ import UIKit
 import CoreImage
 
 /// `PhotoSource`-implementatie bovenop Apple's PhotoKit (de iPhone-bibliotheek).
-final class PhotoKitSource: PhotoSource {
+final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver {
     let displayName = "iPhone-bibliotheek"
 
     private let imageManager = PHImageManager.default()
@@ -13,8 +13,22 @@ final class PhotoKitSource: PhotoSource {
     /// Cache van de volledige lijst, zodat tab-wissels en datumnavigatie niet
     /// telkens de hele bibliotheek opnieuw enumereren.
     private var cachedAll: [PhotoAsset]?
-    /// Cache van berekende perceptual hashes (per foto-id).
-    private var hashCache: [String: UInt64] = [:]
+    /// Persistente cache van berekende perceptual hashes (per foto-id).
+    private let hashCache = HashCache()
+
+    override init() {
+        super.init()
+        PHPhotoLibrary.shared().register(self)
+    }
+
+    /// Automatisch verversen wanneer de bibliotheek wijzigt (foto toegevoegd,
+    /// verwijderd of bewerkt, ook buiten de app om).
+    func photoLibraryDidChange(_ changeInstance: PHChange) {
+        invalidateCache()
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .photoLibraryDidChange, object: nil)
+        }
+    }
 
     // MARK: - Ophalen
 
@@ -51,6 +65,10 @@ final class PhotoKitSource: PhotoSource {
         cachedAll = nil
     }
 
+    func flushCaches() {
+        hashCache.flush()
+    }
+
     // MARK: - Thumbnails (annuleerbaar)
 
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
@@ -82,7 +100,9 @@ final class PhotoKitSource: PhotoSource {
     // MARK: - Perceptual hash (lijkende foto's)
 
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? {
-        if let cached = hashCache[asset.id] { return cached }
+        if let cached = hashCache.hash(for: asset.id, modifiedAt: asset.modificationDate) {
+            return cached
+        }
         guard let phAsset = assetIndex[asset.id] else { return nil }
 
         let options = PHImageRequestOptions()
@@ -111,7 +131,7 @@ final class PhotoKitSource: PhotoSource {
         }
 
         guard let hash = Self.dHash(image) else { return nil }
-        hashCache[asset.id] = hash
+        hashCache.set(hash, for: asset.id, modifiedAt: asset.modificationDate)
         return hash
     }
 
@@ -204,6 +224,7 @@ final class PhotoKitSource: PhotoSource {
         PhotoAsset(
             id: phAsset.localIdentifier,
             creationDate: phAsset.creationDate,
+            modificationDate: phAsset.modificationDate,
             pixelWidth: phAsset.pixelWidth,
             pixelHeight: phAsset.pixelHeight,
             byteSize: 0,

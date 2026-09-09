@@ -40,6 +40,8 @@ struct TrashView: View {
     @EnvironmentObject private var trash: TrashStore
     @StateObject private var vm: TrashViewModel
 
+    @State private var confirmDeleteAll = false
+
     init(source: PhotoSource) {
         self.source = source
         _vm = StateObject(wrappedValue: TrashViewModel(source: source))
@@ -62,6 +64,22 @@ struct TrashView: View {
             .toolbar { toolbar }
             .task(id: trash.items.map(\.id).joined()) {
                 await vm.load(ids: trash.items.map(\.id))
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
+                Task { await vm.load(ids: trash.items.map(\.id)) }
+            }
+            .confirmationDialog(
+                "Alle \(trash.items.count) foto's definitief verwijderen?",
+                isPresented: $confirmDeleteAll,
+                titleVisibility: .visible
+            ) {
+                Button("Definitief verwijderen", role: .destructive) {
+                    Haptics.warning()
+                    Task { await vm.permanentlyDelete(trash.items, from: trash) }
+                }
+                Button("Annuleren", role: .cancel) {}
+            } message: {
+                Text("Dit kan niet ongedaan worden gemaakt. De foto's gaan nog wel naar Apple's ‘Recent verwijderd’.")
             }
             .alert("Er ging iets mis", isPresented: Binding(
                 get: { vm.errorMessage != nil },
@@ -103,9 +121,12 @@ struct TrashView: View {
 
             Spacer()
 
-            Button("Terugzetten") { trash.restore(item.id) }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+            Button("Terugzetten") {
+                Haptics.tap()
+                trash.restore(item.id)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
     }
 
@@ -114,6 +135,7 @@ struct TrashView: View {
         ToolbarItem(placement: .primaryAction) {
             Menu {
                 Button(role: .destructive) {
+                    Haptics.warning()
                     Task { await vm.permanentlyDelete(trash.expiredItems, from: trash) }
                 } label: {
                     Label("Verlopen legen (\(trash.expiredItems.count))", systemImage: "trash")
@@ -121,13 +143,14 @@ struct TrashView: View {
                 .disabled(trash.expiredItems.isEmpty)
 
                 Button(role: .destructive) {
-                    Task { await vm.permanentlyDelete(trash.items, from: trash) }
+                    confirmDeleteAll = true
                 } label: {
                     Label("Alles nu definitief verwijderen", systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+            .accessibilityLabel("Meer acties")
         }
     }
 

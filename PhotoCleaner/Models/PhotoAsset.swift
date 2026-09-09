@@ -9,6 +9,8 @@ struct PhotoAsset: Identifiable, Hashable {
     /// Stabiele identifier binnen de bron (bij PhotoKit: `localIdentifier`).
     let id: String
     let creationDate: Date?
+    /// Laatste wijziging (voor het invalideren van gecachte hashes na bewerken).
+    let modificationDate: Date?
     let pixelWidth: Int
     let pixelHeight: Int
     /// Bestandsgrootte in bytes; 0 wanneer (nog) onbekend.
@@ -28,6 +30,7 @@ struct PhotoAsset: Identifiable, Hashable {
         PhotoAsset(
             id: id,
             creationDate: creationDate,
+            modificationDate: modificationDate,
             pixelWidth: pixelWidth,
             pixelHeight: pixelHeight,
             byteSize: size,

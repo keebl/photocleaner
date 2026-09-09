@@ -1,5 +1,10 @@
 import UIKit
 
+extension Notification.Name {
+    /// Wordt gepost als de onderliggende fotobibliotheek verandert.
+    static let photoLibraryDidChange = Notification.Name("photoLibraryDidChange")
+}
+
 /// Toegang tot een fotoverzameling, onafhankelijk van waar de foto's staan.
 ///
 /// `PhotoKitSource` is de eerste implementatie (de iPhone-bibliotheek). Later
@@ -17,6 +22,9 @@ protocol PhotoSource: AnyObject {
 
     /// Gooit een eventuele interne cache weg (na wijzigingen/verwijderingen).
     func invalidateCache()
+
+    /// Schrijft in-memory caches (zoals berekende hashes) weg naar schijf.
+    func flushCaches()
 
     /// Foto's die op een bepaalde maand/dag zijn gemaakt (over alle jaren heen).
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset]

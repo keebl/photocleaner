@@ -29,6 +29,7 @@ final class GooglePhotosSource: PhotoSource {
     func fetchAllPhotos() async -> [PhotoAsset] { [] }
     func assets(withIDs ids: [String]) async -> [PhotoAsset] { [] }
     func invalidateCache() {}
+    func flushCaches() {}
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] { [] }
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? { nil }
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? { nil }
@@ -54,6 +55,7 @@ final class NASFolderSource: PhotoSource {
     func fetchAllPhotos() async -> [PhotoAsset] { [] }
     func assets(withIDs ids: [String]) async -> [PhotoAsset] { [] }
     func invalidateCache() {}
+    func flushCaches() {}
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] { [] }
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? { nil }
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? { nil }

@@ -60,19 +60,29 @@ PhotoCleaner/
 
 ## Functies (v1)
 
-- **Op deze dag** — dagelijkse lokale notificatie in te schakelen bij Instellingen.
-- **Dubbelen** — twee modi: *Exacte dubbelen* (metadata) en *Lijkende foto's*
-  (perceptual hash / dHash) voor bewerkte of gecomprimeerde kopieën.
-- **Prullenbak** — 30 dagen retentie.
+- **Op deze dag** — foto's van een (te kiezen) datum door de jaren heen; swipe of
+  knoppen om te behouden/weggooien; dagelijkse lokale notificatie in te schakelen.
+- **Dubbelen** — *Exacte dubbelen* (metadata) en *Lijkende foto's* (perceptual
+  hash / dHash) voor bewerkte of gecomprimeerde kopieën.
+- **Prullenbak** — 30 dagen retentie, met bevestiging vóór definitief verwijderen.
 - **Fotobron** — iPhone-bibliotheek actief; Google Foto's en NAS voorbereid via
   de `PhotoSource`-abstractie (zie `Sources/RemoteSources.swift`).
+- **Weergave** — Systeem/Licht/Donker (standaard Donker).
+
+## Prestaties & best practices
+
+- Snelle bibliotheekscan (geen trage per-foto resource-calls); bestandsgrootte
+  alleen voor gevonden dubbelen.
+- Beeldverzoeken worden geannuleerd bij uit-beeld-scrollen (geen geheugenpieken).
+- Perceptuele scan: **geen iCloud-downloads**, draait op de achtergrond met
+  voortgang + stopknop, en **hashes worden op schijf bewaard** (Caches,
+  gevalideerd op wijzigingsdatum) → tweede scan vrijwel instant.
+- Automatisch verversen bij bibliotheekwijzigingen (`PHPhotoLibraryChangeObserver`).
+- Haptische feedback, VoiceOver-labels, en caches worden bij het naar de
+  achtergrond gaan weggeschreven.
 
 ## Bekende beperkingen / volgende stappen
 
-- Bestandsgrootte wordt nu voor elke foto tijdens de scan bepaald; bij zeer
-  grote bibliotheken loont het dit lui te doen (alleen voor kandidaten).
-- De perceptual scan laadt per foto een kleine thumbnail; voor duizenden foto's
-  is caching van de hashes een logische optimalisatie.
 - Google Foto's / NAS: architectuur staat klaar; de echte koppeling vereist
   externe stappen (Google-OAuth, netwerkconfig) — zie de doc-comments in
   `Sources/RemoteSources.swift`.

@@ -85,6 +85,9 @@ struct OnThisDayView: View {
             }
         }
         .task(id: dateKey) { await vm.load(for: selectedDate) }
+        .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
+            Task { await vm.load(for: selectedDate) }
+        }
     }
 
     // MARK: - Datumbalk
@@ -95,6 +98,7 @@ struct OnThisDayView: View {
                 Image(systemName: "chevron.left").font(.title3.weight(.semibold))
                     .frame(width: 44, height: 44)
             }
+            .accessibilityLabel("Vorige dag")
 
             Spacer()
 
@@ -106,6 +110,7 @@ struct OnThisDayView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Datum: \(dayTitle). Tik om een datum te kiezen.")
 
             Spacer()
 
@@ -113,6 +118,7 @@ struct OnThisDayView: View {
                 Image(systemName: "chevron.right").font(.title3.weight(.semibold))
                     .frame(width: 44, height: 44)
             }
+            .accessibilityLabel("Volgende dag")
         }
         .padding(.horizontal)
         .padding(.vertical, 6)
@@ -161,8 +167,14 @@ struct OnThisDayView: View {
                                 OnThisDayCard(
                                     asset: asset,
                                     source: source,
-                                    onKeep: { withAnimation { _ = kept.insert(asset.id) } },
-                                    onDiscard: { withAnimation { trash.mark(asset, reason: "Op deze dag") } }
+                                    onKeep: {
+                                        Haptics.tap()
+                                        withAnimation { _ = kept.insert(asset.id) }
+                                    },
+                                    onDiscard: {
+                                        Haptics.warning()
+                                        withAnimation { trash.mark(asset, reason: "Op deze dag") }
+                                    }
                                 )
                                 .padding(.horizontal)
                             }

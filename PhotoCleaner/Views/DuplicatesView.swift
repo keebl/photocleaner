@@ -91,6 +91,7 @@ final class DuplicatesViewModel: ObservableObject {
         scanProgress = 1
         similarGroups = await enrich(PerceptualDetector.group(hashed, maxDistance: 8))
         similarComputed = true
+        source.flushCaches()   // hashes bewaren voor een supersnelle volgende scan
     }
 
     /// Vult de bestandsgrootte aan voor álléén de gegroepeerde foto's (weinig) en
@@ -140,6 +141,7 @@ struct DuplicatesView: View {
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
+                .accessibilityLabel("Opnieuw scannen")
             }
         }
         .task {
@@ -148,6 +150,9 @@ struct DuplicatesView: View {
         }
         .onChange(of: vm.mode) { _, newValue in
             if newValue == .similar { vm.ensureSimilarLoaded() } else { vm.cancelSimilar() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
+            Task { await vm.scan(excluding: trash.trashedIDs) }
         }
         .onDisappear { vm.cancelSimilar() }
     }
@@ -210,6 +215,7 @@ struct DuplicatesView: View {
                     }
 
                     Button(role: .destructive) {
+                        Haptics.warning()
                         withAnimation {
                             for dup in group.duplicates {
                                 trash.mark(dup, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
