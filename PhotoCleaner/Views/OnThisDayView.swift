@@ -36,6 +36,8 @@ struct OnThisDayView: View {
     @State private var keptIDs: Set<String> = []
     /// Volgorde van beslissingen, voor "ongedaan maken".
     @State private var history: [(id: String, kept: Bool)] = []
+    /// Aantal te beoordelen foto's aan het begin van deze dag (voor de voortgang).
+    @State private var sessionTotal = 0
 
     init(source: PhotoSource) {
         self.source = source
@@ -79,6 +81,7 @@ struct OnThisDayView: View {
         .task(id: dateKey) {
             resetSession()
             await vm.load(for: selectedDate)
+            sessionTotal = queue.count
         }
         .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
             Task { await vm.load(for: selectedDate) }
@@ -103,14 +106,24 @@ struct OnThisDayView: View {
             progressBar
             legend
 
-            DeckCard(
-                asset: current,
-                source: source,
-                yearLabel: yearLabel(for: current),
-                onKeep: { keep(current) },
-                onDiscard: { discard(current) }
-            )
-            .id(current.id)   // nieuwe kaart = schone staat
+            ZStack {
+                // Subtiele hint dat er nog meer foto's onder liggen.
+                if queue.count > 1 {
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(.quaternary)
+                        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.separator.opacity(0.4)))
+                        .scaleEffect(0.95)
+                        .offset(y: 16)
+                }
+                DeckCard(
+                    asset: current,
+                    source: source,
+                    yearLabel: yearLabel(for: current),
+                    onKeep: { keep(current) },
+                    onDiscard: { discard(current) }
+                )
+                .id(current.id)   // nieuwe kaart = schone staat
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             undoBar
@@ -121,13 +134,13 @@ struct OnThisDayView: View {
     }
 
     private var progressBar: some View {
-        let total = vm.assets.count
-        let decided = total - queue.count
+        let total = max(sessionTotal, 1)
+        let decided = sessionTotal - queue.count
         return VStack(spacing: 6) {
-            Text("Foto \(min(decided + 1, total)) van \(total)")
+            Text("Foto \(min(decided + 1, sessionTotal)) van \(sessionTotal)")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
-            ProgressView(value: Double(decided), total: Double(max(total, 1)))
+            ProgressView(value: Double(decided), total: Double(total))
                 .tint(.accentColor)
         }
     }
