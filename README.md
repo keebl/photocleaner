@@ -60,8 +60,9 @@ PhotoCleaner/
 
 ## Functies (v1)
 
-- **Op deze dag** — foto's van een (te kiezen) datum door de jaren heen; swipe of
-  knoppen om te behouden/weggooien; dagelijkse lokale notificatie in te schakelen.
+- **Op deze dag** — swipe-stapel: één foto tegelijk van een (te kiezen) datum door
+  de jaren heen. Swipe rechts = behouden, links = weggooien; met voortgang, undo en
+  afrondscherm. Dagelijkse lokale notificatie in te schakelen.
 - **Dubbelen** — *Exacte dubbelen* (metadata) en *Lijkende foto's* (perceptual
   hash / dHash) voor bewerkte of gecomprimeerde kopieën.
 - **Prullenbak** — 30 dagen retentie, met bevestiging vóór definitief verwijderen.
