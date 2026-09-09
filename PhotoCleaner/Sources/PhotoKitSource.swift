@@ -1,30 +1,43 @@
 import Photos
 import UIKit
+import CoreImage
 
 /// `PhotoSource`-implementatie bovenop Apple's PhotoKit (de iPhone-bibliotheek).
 final class PhotoKitSource: PhotoSource {
     let displayName = "iPhone-bibliotheek"
 
-    private let imageManager = PHCachingImageManager()
+    private let imageManager = PHImageManager.default()
 
-    /// Onthoudt de PHAsset achter elke `PhotoAsset.id`, zodat we later thumbnails
-    /// kunnen laden en kunnen verwijderen zonder opnieuw de hele bibliotheek te
-    /// doorzoeken.
+    /// Onthoudt de PHAsset achter elke `PhotoAsset.id`.
     private var assetIndex: [String: PHAsset] = [:]
+    /// Cache van de volledige lijst, zodat tab-wissels en datumnavigatie niet
+    /// telkens de hele bibliotheek opnieuw enumereren.
+    private var cachedAll: [PhotoAsset]?
+    /// Cache van berekende perceptual hashes (per foto-id).
+    private var hashCache: [String: UInt64] = [:]
 
     // MARK: - Ophalen
 
     func fetchAllPhotos() async -> [PhotoAsset] {
+        if let cachedAll { return cachedAll }
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
         let result = PHAsset.fetchAssets(with: options)
+        let assets = mapAndIndex(result)
+        cachedAll = assets
+        return assets
+    }
+
+    func assets(withIDs ids: [String]) async -> [PhotoAsset] {
+        guard !ids.isEmpty else { return [] }
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil)
         return mapAndIndex(result)
     }
 
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] {
-        // PhotoKit kan niet direct op maand/dag filteren, dus filteren we in
-        // geheugen op de creationDate. Prima voor een bibliotheek van deze schaal.
+        // PhotoKit kan niet direct op maand/dag filteren; filter in geheugen op de
+        // (gecachte) lijst. Prima voor een bibliotheek van deze schaal.
         let all = await fetchAllPhotos()
         let calendar = Calendar.current
         return all.filter { asset in
@@ -34,59 +47,90 @@ final class PhotoKitSource: PhotoSource {
         }
     }
 
-    // MARK: - Thumbnails
+    func invalidateCache() {
+        cachedAll = nil
+    }
+
+    // MARK: - Thumbnails (annuleerbaar)
 
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
         guard let phAsset = assetIndex[asset.id] else { return nil }
         let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat   // één callback, veilig voor async
+        options.deliveryMode = .highQualityFormat
         options.resizeMode = .fast
-        options.isNetworkAccessAllowed = true        // haalt indien nodig uit iCloud
+        options.isNetworkAccessAllowed = true
 
-        return await withCheckedContinuation { continuation in
-            var didResume = false
-            imageManager.requestImage(
-                for: phAsset,
-                targetSize: targetSize,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                guard !didResume else { return }
-                didResume = true
-                continuation.resume(returning: image)
+        let box = RequestBox(manager: imageManager)
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                let id = imageManager.requestImage(
+                    for: phAsset,
+                    targetSize: targetSize,
+                    contentMode: .aspectFill,
+                    options: options
+                ) { image, _ in
+                    box.finish { continuation.resume(returning: image) }
+                }
+                box.store(id)
             }
+        } onCancel: {
+            // Scrolt de foto uit beeld? Annuleer het (mogelijk zware) verzoek.
+            box.cancel()
         }
     }
 
     // MARK: - Perceptual hash (lijkende foto's)
 
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? {
+        if let cached = hashCache[asset.id] { return cached }
         guard let phAsset = assetIndex[asset.id] else { return nil }
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.resizeMode = .exact
-        options.isNetworkAccessAllowed = true
 
-        let image: UIImage? = await withCheckedContinuation { continuation in
-            var didResume = false
-            imageManager.requestImage(
-                for: phAsset,
-                targetSize: CGSize(width: 32, height: 32),
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                guard !didResume else { return }
-                didResume = true
-                continuation.resume(returning: image)
+        let options = PHImageRequestOptions()
+        // Lokaal een klein beeld (laten) genereren, maar NOOIT uit iCloud
+        // downloaden — dat downloaden was de grote warmte-/databoosdoener.
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = false
+        options.isSynchronous = false
+
+        let box = RequestBox(manager: imageManager)
+        let image: UIImage? = await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                let id = imageManager.requestImage(
+                    for: phAsset,
+                    targetSize: CGSize(width: 32, height: 32),
+                    contentMode: .aspectFill,
+                    options: options
+                ) { image, _ in
+                    box.finish { continuation.resume(returning: image) }
+                }
+                box.store(id)
             }
+        } onCancel: {
+            box.cancel()
         }
-        return Self.dHash(image)
+
+        guard let hash = Self.dHash(image) else { return nil }
+        hashCache[asset.id] = hash
+        return hash
+    }
+
+    private static let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+
+    /// Haalt een `CGImage` uit een UIImage, ook als die door `fastFormat`
+    /// CIImage-backed is (dan is `.cgImage` nil).
+    private static func cgImage(from image: UIImage) -> CGImage? {
+        if let cg = image.cgImage { return cg }
+        if let ci = image.ciImage {
+            return ciContext.createCGImage(ci, from: ci.extent)
+        }
+        return nil
     }
 
     /// dHash: teken op 9×8 grijswaarden en vergelijk elke pixel met z'n
     /// rechterbuur → 64 bits.
     private static func dHash(_ image: UIImage?) -> UInt64? {
-        guard let cgImage = image?.cgImage else { return nil }
+        guard let image, let cgImage = cgImage(from: image) else { return nil }
         let width = 9, height = 8
         var pixels = [UInt8](repeating: 0, count: width * height)
         let colorSpace = CGColorSpaceCreateDeviceGray()
@@ -106,13 +150,29 @@ final class PhotoKitSource: PhotoSource {
         var bit: UInt64 = 0
         for row in 0..<height {
             for col in 0..<(width - 1) {
-                let left = pixels[row * width + col]
-                let right = pixels[row * width + col + 1]
-                if left > right { hash |= (1 << bit) }
+                if pixels[row * width + col] > pixels[row * width + col + 1] {
+                    hash |= (1 << bit)
+                }
                 bit += 1
             }
         }
         return hash
+    }
+
+    // MARK: - Bestandsgrootte (lui, alleen voor kleine sets)
+
+    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] {
+        var result: [String: Int64] = [:]
+        for asset in assets {
+            guard let phAsset = assetIndex[asset.id] else { continue }
+            for resource in PHAssetResource.assetResources(for: phAsset) {
+                if let size = resource.value(forKey: "fileSize") as? Int64 {
+                    result[asset.id] = size
+                    break
+                }
+            }
+        }
+        return result
     }
 
     // MARK: - Verwijderen
@@ -123,6 +183,7 @@ final class PhotoKitSource: PhotoSource {
         try await PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.deleteAssets(phAssets as NSArray)
         }
+        invalidateCache()
     }
 
     // MARK: - Hulpfuncties
@@ -149,21 +210,36 @@ final class PhotoKitSource: PhotoSource {
             filename: nil
         )
     }
+}
 
-    /// Bestandsgrootte per foto — alleen aanroepen voor kleine sets (bijv. gevonden
-    /// duplicaten), want `PHAssetResource` is relatief traag.
-    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] {
-        var result: [String: Int64] = [:]
-        for asset in assets {
-            guard let phAsset = assetIndex[asset.id] else { continue }
-            let resources = PHAssetResource.assetResources(for: phAsset)
-            for resource in resources {
-                if let size = resource.value(forKey: "fileSize") as? Int64 {
-                    result[asset.id] = size
-                    break
-                }
-            }
-        }
-        return result
+/// Kleine thread-veilige houder voor een PhotoKit-verzoek, zodat we het kunnen
+/// annuleren als de bijbehorende Task wordt afgebroken (bijv. bij scrollen).
+private final class RequestBox {
+    private let manager: PHImageManager
+    private let lock = NSLock()
+    private var requestID: PHImageRequestID?
+    private var cancelled = false
+    private var finished = false
+
+    init(manager: PHImageManager) { self.manager = manager }
+
+    func store(_ id: PHImageRequestID) {
+        lock.lock(); defer { lock.unlock() }
+        if cancelled { manager.cancelImageRequest(id) } else { requestID = id }
+    }
+
+    func cancel() {
+        lock.lock(); defer { lock.unlock() }
+        cancelled = true
+        if let requestID { manager.cancelImageRequest(requestID) }
+    }
+
+    /// Voert de resume precies één keer uit.
+    func finish(_ resume: () -> Void) {
+        lock.lock()
+        if finished { lock.unlock(); return }
+        finished = true
+        lock.unlock()
+        resume()
     }
 }

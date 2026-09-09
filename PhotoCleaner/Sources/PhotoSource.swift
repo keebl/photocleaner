@@ -8,8 +8,15 @@ protocol PhotoSource: AnyObject {
     /// Naam voor in de UI, bijv. "iPhone-bibliotheek".
     var displayName: String { get }
 
-    /// Alle foto's uit de bron (nieuwste eerst).
+    /// Alle foto's uit de bron (nieuwste eerst). Mag intern cachen.
     func fetchAllPhotos() async -> [PhotoAsset]
+
+    /// Alleen de foto's met de opgegeven id's (bijv. voor de prullenbak), zonder
+    /// de hele bibliotheek te laden.
+    func assets(withIDs ids: [String]) async -> [PhotoAsset]
+
+    /// Gooit een eventuele interne cache weg (na wijzigingen/verwijderingen).
+    func invalidateCache()
 
     /// Foto's die op een bepaalde maand/dag zijn gemaakt (over alle jaren heen).
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset]

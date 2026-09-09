@@ -13,10 +13,12 @@ final class DuplicatesViewModel: ObservableObject {
     @Published private(set) var similarGroups: [DuplicateGroup] = []
     @Published private(set) var isLoading = false          // eerste (exacte) scan
     @Published private(set) var isScanningSimilar = false   // zwaardere perceptuele scan
+    @Published private(set) var scanProgress: Double = 0
 
     private let source: PhotoSource
     private var visible: [PhotoAsset] = []
     private var similarComputed = false
+    private var similarTask: Task<Void, Never>?
 
     init(source: PhotoSource) {
         self.source = source
@@ -26,38 +28,67 @@ final class DuplicatesViewModel: ObservableObject {
         mode == .exact ? exactGroups : similarGroups
     }
 
-    /// Snelle basisscan: haalt de bibliotheek op en zoekt exacte dubbelen. De
-    /// perceptuele ("lijkende") scan draait pas op aanvraag.
+    /// Snelle basisscan: haalt de bibliotheek op (gecached) en zoekt exacte
+    /// dubbelen. De perceptuele scan draait pas op aanvraag.
     func scan(excluding hidden: Set<String>) async {
-        isLoading = true
-        defer { isLoading = false }
-
+        cancelSimilar()
         similarComputed = false
         similarGroups = []
+
+        isLoading = true
+        defer { isLoading = false }
 
         let all = await source.fetchAllPhotos()
         visible = all.filter { !hidden.contains($0.id) }
         exactGroups = await enrich(DuplicateDetector.findDuplicates(in: visible))
-
-        if mode == .similar { await computeSimilar() }
     }
 
-    /// Zorgt dat de perceptuele scan is uitgevoerd (bijv. bij het openen van "Lijkend").
-    func ensureSimilarLoaded() async {
-        guard !similarComputed, !isScanningSimilar else { return }
-        await computeSimilar()
+    /// Handmatige verversing: cache weggooien en opnieuw scannen.
+    func refresh(excluding hidden: Set<String>) async {
+        source.invalidateCache()
+        await scan(excluding: hidden)
+        if mode == .similar { ensureSimilarLoaded() }
+    }
+
+    /// Start (indien nodig) de perceptuele scan als annuleerbare achtergrondtaak.
+    func ensureSimilarLoaded() {
+        guard !similarComputed, similarTask == nil else { return }
+        similarTask = Task { [weak self] in
+            await self?.computeSimilar()
+            self?.similarTask = nil
+        }
+    }
+
+    func cancelSimilar() {
+        similarTask?.cancel()
+        similarTask = nil
+        isScanningSimilar = false
     }
 
     private func computeSimilar() async {
         isScanningSimilar = true
+        scanProgress = 0
         defer { isScanningSimilar = false }
 
+        let toScan = visible
+        let total = max(toScan.count, 1)
         var hashed: [(asset: PhotoAsset, hash: UInt64)] = []
-        for asset in visible {
+        hashed.reserveCapacity(toScan.count)
+
+        for (index, asset) in toScan.enumerated() {
+            if Task.isCancelled { return }
             if let hash = await source.perceptualHash(for: asset) {
                 hashed.append((asset, hash))
             }
+            // Regelmatig even ademruimte geven (voorkomt oplopende warmte/UI-lag).
+            if index % 25 == 0 {
+                scanProgress = Double(index) / Double(total)
+                await Task.yield()
+            }
         }
+
+        if Task.isCancelled { return }
+        scanProgress = 1
         similarGroups = await enrich(PerceptualDetector.group(hashed, maxDistance: 8))
         similarComputed = true
     }
@@ -105,18 +136,20 @@ struct DuplicatesView: View {
             .navigationTitle("Dubbelen")
             .toolbar {
                 Button {
-                    Task { await vm.scan(excluding: trash.trashedIDs) }
+                    Task { await vm.refresh(excluding: trash.trashedIDs) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
             }
         }
-        .task { await vm.scan(excluding: trash.trashedIDs) }
-        .onChange(of: vm.mode) { _, newValue in
-            if newValue == .similar {
-                Task { await vm.ensureSimilarLoaded() }
-            }
+        .task {
+            await vm.scan(excluding: trash.trashedIDs)
+            if vm.mode == .similar { vm.ensureSimilarLoaded() }
         }
+        .onChange(of: vm.mode) { _, newValue in
+            if newValue == .similar { vm.ensureSimilarLoaded() } else { vm.cancelSimilar() }
+        }
+        .onDisappear { vm.cancelSimilar() }
     }
 
     @ViewBuilder
@@ -124,7 +157,7 @@ struct DuplicatesView: View {
         if vm.isLoading {
             loading("Bibliotheek scannen…")
         } else if vm.mode == .similar && vm.isScanningSimilar {
-            loading("Lijkende foto's zoeken…")
+            scanningSimilar
         } else if vm.groups.isEmpty {
             emptyState
         } else {
@@ -133,8 +166,23 @@ struct DuplicatesView: View {
     }
 
     private func loading(_ text: String) -> some View {
-        ProgressView(text)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ProgressView(text).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var scanningSimilar: some View {
+        VStack(spacing: 16) {
+            ProgressView(value: vm.scanProgress) {
+                Text("Lijkende foto's zoeken…")
+            }
+            .padding(.horizontal, 40)
+
+            Text("\(Int(vm.scanProgress * 100))%")
+                .font(.caption).foregroundStyle(.secondary)
+
+            Button("Stoppen") { vm.cancelSimilar() }
+                .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {

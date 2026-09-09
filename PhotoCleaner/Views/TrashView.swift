@@ -12,9 +12,9 @@ final class TrashViewModel: ObservableObject {
         self.source = source
     }
 
-    func load() async {
-        let all = await source.fetchAllPhotos()
-        assetsByID = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
+    func load(ids: [String]) async {
+        let assets = await source.assets(withIDs: ids)
+        assetsByID = Dictionary(assets.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     /// Verwijdert de opgegeven items definitief uit de bron en daarna uit de
@@ -60,7 +60,9 @@ struct TrashView: View {
             }
             .navigationTitle("Prullenbak")
             .toolbar { toolbar }
-            .task { await vm.load() }
+            .task(id: trash.items.map(\.id).joined()) {
+                await vm.load(ids: trash.items.map(\.id))
+            }
             .alert("Er ging iets mis", isPresented: Binding(
                 get: { vm.errorMessage != nil },
                 set: { if !$0 { vm.errorMessage = nil } }
