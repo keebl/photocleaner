@@ -262,6 +262,7 @@ private struct OnThisDayCard: View {
     var onDiscard: () -> Void
 
     @State private var offset: CGFloat = 0
+    @State private var removing = false
 
     private let threshold: CGFloat = 110
 
@@ -269,87 +270,82 @@ private struct OnThisDayCard: View {
     private var discardProgress: Double { Double(min(max(-offset / threshold, 0), 1)) }
 
     var body: some View {
-        ZStack {
-            swipeBackground
-            card
-                .offset(x: offset)
-                .gesture(dragGesture)
-        }
+        card
+            .offset(x: offset)
+            .gesture(dragGesture)
+            // VoiceOver-gebruikers kunnen de acties via de rotor uitvoeren.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Foto. Swipe naar rechts om te behouden, naar links om weg te gooien.")
+            .accessibilityAction(named: "Behouden") { onKeep() }
+            .accessibilityAction(named: "Weggooien") { onDiscard() }
     }
 
-    /// Vaste hoogte, zodat elke kaart (staand én liggend) even hoog is en de
-    /// knoppen altijd op dezelfde, zichtbare plek staan.
-    private let imageHeight: CGFloat = 300
+    /// Vaste hoogte, zodat elke kaart (staand én liggend) even hoog is.
+    private let imageHeight: CGFloat = 320
 
     private var card: some View {
-        VStack(spacing: 0) {
-            PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 700, height: 700))
-                .frame(maxWidth: .infinity)
-                .frame(height: imageHeight)
-                .clipped()
-                .background(.quaternary)
-                .overlay {
-                    // Kleur-hint tijdens het slepen
-                    if offset > 0 {
-                        Color.green.opacity(keepProgress * 0.35)
-                    } else if offset < 0 {
-                        Color.red.opacity(discardProgress * 0.35)
-                    }
-                }
-
-            HStack(spacing: 10) {
-                Button(role: .destructive) { onDiscard() } label: {
-                    Label("Weggooien", systemImage: "trash").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button { onKeep() } label: {
-                    Label("Behouden", systemImage: "checkmark").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
-            }
-            .padding(12)
-        }
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.separator.opacity(0.5)))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+        PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 700, height: 700))
+            .frame(maxWidth: .infinity)
+            .frame(height: imageHeight)
+            .clipped()
+            .background(.quaternary)
+            .overlay { swipeFeedback }
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.separator.opacity(0.5)))
+            .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
     }
 
-    /// Achtergrond-indicatoren die zichtbaar worden tijdens het slepen.
-    private var swipeBackground: some View {
-        HStack {
-            Label("Behouden", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .opacity(keepProgress)
-            Spacer()
-            Label("Weggooien", systemImage: "trash.circle.fill")
-                .foregroundStyle(.red)
-                .opacity(discardProgress)
+    /// Feedback óp de foto tijdens het slepen: groen vinkje = behouden,
+    /// rode prullenbak = weggooien.
+    @ViewBuilder
+    private var swipeFeedback: some View {
+        if offset > 0 {
+            ZStack {
+                Color.green.opacity(keepProgress * 0.35)
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 72))
+                    .foregroundStyle(.white)
+                    .opacity(keepProgress)
+            }
+        } else if offset < 0 {
+            ZStack {
+                Color.red.opacity(discardProgress * 0.35)
+                Image(systemName: "trash.circle.fill")
+                    .font(.system(size: 72))
+                    .foregroundStyle(.white)
+                    .opacity(discardProgress)
+            }
         }
-        .font(.headline)
-        .padding(.horizontal, 24)
     }
 
     private var dragGesture: some Gesture {
-        DragGesture()
+        DragGesture(minimumDistance: 12)
             .onChanged { value in
-                // Alleen horizontaal reageren.
+                guard !removing else { return }
+                // Alleen horizontaal reageren (verticaal = scrollen).
                 if abs(value.translation.width) > abs(value.translation.height) {
                     offset = value.translation.width
                 }
             }
             .onEnded { value in
+                guard !removing else { return }
                 if value.translation.width > threshold {
-                    withAnimation(.spring) { offset = 600 }
-                    onKeep()
+                    commit(keep: true)
                 } else if value.translation.width < -threshold {
-                    withAnimation(.spring) { offset = -600 }
-                    onDiscard()
+                    commit(keep: false)
                 } else {
                     withAnimation(.spring) { offset = 0 }
                 }
             }
+    }
+
+    /// Laat de kaart eerst volledig wegglijden en verwijdert 'm daarna pas uit de
+    /// lijst — zo schuift de lijst niet onder je vinger op tijdens het swipen.
+    private func commit(keep: Bool) {
+        removing = true
+        withAnimation(.easeOut(duration: 0.22)) { offset = keep ? 700 : -700 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            if keep { onKeep() } else { onDiscard() }
+        }
     }
 }

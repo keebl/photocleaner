@@ -41,8 +41,28 @@ final class DuplicatesViewModel: ObservableObject {
 
         let all = await source.fetchAllPhotos()
         visible = all.filter { !hidden.contains($0.id) }
-        exactGroups = await enrich(DuplicateDetector.findDuplicates(in: visible))
+        exactGroups = await refineExact(DuplicateDetector.findDuplicates(in: visible))
         hasScanned = true
+    }
+
+    /// Verscherpt de exacte-duplicaatkandidaten (zelfde opnametijd + afmeting) door
+    /// binnen elke kandidaatgroep óók op bestandsgrootte te groeperen. Zo vallen
+    /// bijv. burst-foto's (zelfde seconde/afmeting, andere inhoud → andere grootte)
+    /// af, en blijven alleen écht identieke bestanden over.
+    private func refineExact(_ candidates: [DuplicateGroup]) async -> [DuplicateGroup] {
+        let ids = candidates.flatMap { $0.all }
+        guard !ids.isEmpty else { return [] }
+        let sizes = await source.byteSizes(for: ids)
+
+        var refined: [DuplicateGroup] = []
+        for group in candidates {
+            let sized = group.all.map { $0.withByteSize(sizes[$0.id] ?? 0) }
+            let bySize = Dictionary(grouping: sized, by: { $0.byteSize })
+            for (size, sameSize) in bySize where size > 0 && sameSize.count > 1 {
+                refined.append(DuplicateGroup.make(from: sameSize))
+            }
+        }
+        return refined.sorted { $0.reclaimableBytes > $1.reclaimableBytes }
     }
 
     /// Handmatige verversing: cache weggooien en opnieuw scannen.
