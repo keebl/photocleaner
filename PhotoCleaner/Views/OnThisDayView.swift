@@ -4,7 +4,7 @@ import SwiftUI
 final class OnThisDayViewModel: ObservableObject {
     @Published private(set) var assets: [PhotoAsset] = []
     /// Alleen de allereerste keer tonen we het volledige laadscherm; daarna wordt
-    /// nieuwe content geruisloos ingewisseld (geen geknipper).
+    /// nieuwe content geruisloos ingewisseld.
     @Published private(set) var hasLoaded = false
 
     private let source: PhotoSource
@@ -15,29 +15,14 @@ final class OnThisDayViewModel: ObservableObject {
 
     func load(for date: Date) async {
         let comps = Calendar.current.dateComponents([.month, .day], from: date)
-        let result = await source.fetchPhotos(onMonth: comps.month ?? 1, day: comps.day ?? 1)
-        assets = result
+        assets = await source.fetchPhotos(onMonth: comps.month ?? 1, day: comps.day ?? 1)
         hasLoaded = true
-    }
-
-    /// Foto's gegroepeerd per jaar (nieuwste jaar eerst), na uitfilteren van
-    /// weggetikte en behouden foto's.
-    func groupedByYear(excluding hidden: Set<String>) -> [(year: Int, assets: [PhotoAsset])] {
-        let calendar = Calendar.current
-        var groups: [Int: [PhotoAsset]] = [:]
-        for asset in assets where !hidden.contains(asset.id) {
-            guard let date = asset.creationDate else { continue }
-            let year = calendar.component(.year, from: date)
-            groups[year, default: []].append(asset)
-        }
-        return groups
-            .map { (year: $0.key, assets: $0.value) }
-            .sorted { $0.year > $1.year }
     }
 }
 
-/// "Op deze dag": foto's van een gekozen datum in eerdere jaren, met per foto de
-/// keuze behouden of weggooien. Blader met de dag terug/vooruit of kies een datum.
+/// "Op deze dag" als swipe-stapel: één foto tegelijk groot in beeld. Swipe naar
+/// rechts om te behouden, naar links om weg te gooien; de volgende foto verschijnt.
+/// Geen scrollen, dus geen gebaren-conflict en altijd de juiste foto.
 struct OnThisDayView: View {
     let source: PhotoSource
 
@@ -46,21 +31,27 @@ struct OnThisDayView: View {
 
     @State private var selectedDate = Date()
     @State private var showDatePicker = false
-    /// Foto's die de gebruiker deze sessie bewust heeft behouden.
-    @State private var kept: Set<String> = []
+
+    /// Deze sessie behouden foto's (per dag gereset).
+    @State private var keptIDs: Set<String> = []
+    /// Volgorde van beslissingen, voor "ongedaan maken".
+    @State private var history: [(id: String, kept: Bool)] = []
 
     init(source: PhotoSource) {
         self.source = source
         _vm = StateObject(wrappedValue: OnThisDayViewModel(source: source))
     }
 
-    private var hidden: Set<String> {
-        trash.trashedIDs.union(kept)
-    }
-
     private var isToday: Bool {
         Calendar.current.isDate(selectedDate, inSameDayAs: Date())
     }
+
+    /// Nog te beoordelen foto's (niet behouden en niet in de prullenbak).
+    private var queue: [PhotoAsset] {
+        vm.assets.filter { !keptIDs.contains($0.id) && !trash.contains($0.id) }
+    }
+
+    private var current: PhotoAsset? { queue.first }
 
     var body: some View {
         NavigationStack {
@@ -77,19 +68,172 @@ struct OnThisDayView: View {
                 }
             }
             .navigationTitle("Op deze dag")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if !isToday {
                     Button("Vandaag") { changeDate(to: Date()) }
                 }
             }
-            .sheet(isPresented: $showDatePicker) {
-                datePickerSheet
-            }
+            .sheet(isPresented: $showDatePicker) { datePickerSheet }
         }
-        .task(id: dateKey) { await vm.load(for: selectedDate) }
+        .task(id: dateKey) {
+            resetSession()
+            await vm.load(for: selectedDate)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
             Task { await vm.load(for: selectedDate) }
         }
+    }
+
+    // MARK: - Inhoud
+
+    @ViewBuilder
+    private var content: some View {
+        if vm.assets.isEmpty {
+            emptyState
+        } else if let current {
+            deck(current: current)
+        } else {
+            doneState
+        }
+    }
+
+    private func deck(current: PhotoAsset) -> some View {
+        VStack(spacing: 14) {
+            progressBar
+            legend
+
+            DeckCard(
+                asset: current,
+                source: source,
+                yearLabel: yearLabel(for: current),
+                onKeep: { keep(current) },
+                onDiscard: { discard(current) }
+            )
+            .id(current.id)   // nieuwe kaart = schone staat
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            undoBar
+        }
+        .padding(.horizontal)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+    }
+
+    private var progressBar: some View {
+        let total = vm.assets.count
+        let decided = total - queue.count
+        return VStack(spacing: 6) {
+            Text("Foto \(min(decided + 1, total)) van \(total)")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+            ProgressView(value: Double(decided), total: Double(max(total, 1)))
+                .tint(.accentColor)
+        }
+    }
+
+    private var legend: some View {
+        HStack {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.left")
+                Text("Weggooien")
+            }
+            .foregroundStyle(.red)
+            Spacer()
+            HStack(spacing: 4) {
+                Text("Behouden")
+                Image(systemName: "arrow.right")
+            }
+            .foregroundStyle(.green)
+        }
+        .font(.caption.weight(.medium))
+    }
+
+    @ViewBuilder
+    private var undoBar: some View {
+        if let last = history.last {
+            Button {
+                undo()
+            } label: {
+                Label("Ongedaan maken (\(last.kept ? "behouden" : "weggegooid"))",
+                      systemImage: "arrow.uturn.backward")
+                    .font(.subheadline)
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    private var doneState: some View {
+        let kept = history.filter { $0.kept }.count
+        let tossed = history.filter { !$0.kept }.count
+        return VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.green)
+            Text("Klaar met \(dayTitle)")
+                .font(.title2).bold()
+            Text("\(kept) behouden · \(tossed) weggegooid")
+                .foregroundStyle(.secondary)
+            if history.last != nil {
+                Button {
+                    undo()
+                } label: {
+                    Label("Laatste ongedaan maken", systemImage: "arrow.uturn.backward")
+                }
+                .buttonStyle(.bordered)
+            }
+            Button {
+                changeDate(to: Calendar.current.date(byAdding: .day, value: 1, to: selectedDate) ?? selectedDate)
+            } label: {
+                Label("Volgende dag", systemImage: "chevron.right")
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+
+    private var emptyState: some View {
+        ContentUnavailableView(
+            "Niets op deze dag",
+            systemImage: "calendar.badge.checkmark",
+            description: Text("Geen foto's die op \(dayTitle) in eerdere jaren zijn gemaakt.")
+        )
+    }
+
+    // MARK: - Beslissingen
+
+    private func keep(_ asset: PhotoAsset) {
+        Haptics.tap()
+        withAnimation(.snappy) {
+            keptIDs.insert(asset.id)
+            history.append((asset.id, true))
+        }
+    }
+
+    private func discard(_ asset: PhotoAsset) {
+        Haptics.warning()
+        withAnimation(.snappy) {
+            trash.mark(asset, reason: "Op deze dag")
+            history.append((asset.id, false))
+        }
+    }
+
+    private func undo() {
+        guard let last = history.popLast() else { return }
+        Haptics.tap()
+        withAnimation(.snappy) {
+            if last.kept {
+                keptIDs.remove(last.id)
+            } else {
+                trash.restore(last.id)
+            }
+        }
+    }
+
+    private func resetSession() {
+        keptIDs.removeAll()
+        history.removeAll()
     }
 
     // MARK: - Datumbalk
@@ -128,96 +272,22 @@ struct OnThisDayView: View {
 
     private var datePickerSheet: some View {
         NavigationStack {
-            DatePicker(
-                "Datum",
-                selection: $selectedDate,
-                displayedComponents: .date
-            )
-            .datePickerStyle(.graphical)
-            .padding()
-            .navigationTitle("Kies een datum")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Klaar") { showDatePicker = false }
+            DatePicker("Datum", selection: $selectedDate, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding()
+                .navigationTitle("Kies een datum")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Klaar") { showDatePicker = false }
+                    }
                 }
-            }
         }
         .presentationDetents([.medium, .large])
     }
 
-    // MARK: - Inhoud
-
-    @ViewBuilder
-    private var content: some View {
-        let groups = vm.groupedByYear(excluding: hidden)
-        if groups.isEmpty {
-            ContentUnavailableView(
-                "Niets op deze dag",
-                systemImage: "calendar.badge.checkmark",
-                description: Text("Geen (resterende) foto's die op \(dayTitle) in eerdere jaren zijn gemaakt.")
-            )
-        } else {
-            VStack(spacing: 0) {
-                swipeLegend
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
-                        ForEach(groups, id: \.year) { group in
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text(yearHeader(group.year))
-                                    .font(.title3).bold()
-                                    .padding(.horizontal)
-                                ForEach(group.assets) { asset in
-                                    OnThisDayCard(
-                                        asset: asset,
-                                        source: source,
-                                        onKeep: {
-                                            Haptics.tap()
-                                            withAnimation { _ = kept.insert(asset.id) }
-                                        },
-                                        onDiscard: {
-                                            Haptics.warning()
-                                            withAnimation { trash.mark(asset, reason: "Op deze dag") }
-                                        }
-                                    )
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.top, 4)
-                    .padding(.bottom, 8)
-                }
-                .contentMargins(.bottom, 16, for: .scrollContent)
-            }
-        }
-    }
-
-    /// Vaste legenda die vóór het swipen duidelijk maakt wat links/rechts doet.
-    private var swipeLegend: some View {
-        HStack {
-            HStack(spacing: 4) {
-                Image(systemName: "arrow.left")
-                Text("Weggooien")
-            }
-            .foregroundStyle(.red)
-
-            Spacer()
-
-            HStack(spacing: 4) {
-                Text("Behouden")
-                Image(systemName: "arrow.right")
-            }
-            .foregroundStyle(.green)
-        }
-        .font(.caption.weight(.medium))
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-    }
-
     // MARK: - Datumlogica
 
-    /// Sleutel die de `.task` opnieuw laat lopen als de dag verandert.
     private var dateKey: String {
         let c = Calendar.current.dateComponents([.month, .day], from: selectedDate)
         return "\(c.month ?? 0)-\(c.day ?? 0)"
@@ -231,7 +301,6 @@ struct OnThisDayView: View {
 
     private func changeDate(to date: Date) {
         selectedDate = date
-        kept.removeAll()
     }
 
     private var dayTitle: String {
@@ -241,7 +310,9 @@ struct OnThisDayView: View {
         return f.string(from: selectedDate)
     }
 
-    private func yearHeader(_ year: Int) -> String {
+    private func yearLabel(for asset: PhotoAsset) -> String {
+        guard let date = asset.creationDate else { return "" }
+        let year = Calendar.current.component(.year, from: date)
         let reference = Calendar.current.component(.year, from: selectedDate)
         let ago = reference - year
         switch ago {
@@ -253,84 +324,86 @@ struct OnThisDayView: View {
     }
 }
 
-/// Eén foto-kaart met knoppen én swipe-gebaren: sleep naar rechts om te behouden,
-/// naar links om weg te gooien.
-private struct OnThisDayCard: View {
+/// De bovenste kaart in de stapel: één foto, swipebaar. Omdat er telkens maar
+/// één interactieve kaart is (en geen scrollview), is er nooit twijfel welke foto
+/// je swipet.
+private struct DeckCard: View {
     let asset: PhotoAsset
     let source: PhotoSource
+    let yearLabel: String
     var onKeep: () -> Void
     var onDiscard: () -> Void
 
     @State private var offset: CGFloat = 0
-    @State private var removing = false
+    @State private var committing = false
 
-    private let threshold: CGFloat = 110
+    private let threshold: CGFloat = 90
 
     private var keepProgress: Double { Double(min(max(offset / threshold, 0), 1)) }
     private var discardProgress: Double { Double(min(max(-offset / threshold, 0), 1)) }
 
     var body: some View {
-        card
-            .contentShape(Rectangle())
+        photo
+            .overlay(alignment: .top) { yearBadge }
+            .overlay { feedback }
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.separator.opacity(0.5)))
+            .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
             .offset(x: offset)
+            .rotationEffect(.degrees(Double(offset / 22)))
             .gesture(dragGesture)
-            .zIndex(removing ? 1 : 0)
-            // VoiceOver-gebruikers kunnen de acties via de rotor uitvoeren.
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Foto. Swipe naar rechts om te behouden, naar links om weg te gooien.")
+            .accessibilityLabel("Foto, \(yearLabel). Swipe rechts om te behouden, links om weg te gooien.")
             .accessibilityAction(named: "Behouden") { onKeep() }
             .accessibilityAction(named: "Weggooien") { onDiscard() }
     }
 
-    /// Vaste hoogte, zodat elke kaart (staand én liggend) even hoog is.
-    private let imageHeight: CGFloat = 320
-
-    private var card: some View {
-        PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 700, height: 700))
-            .frame(maxWidth: .infinity)
-            .frame(height: imageHeight)
-            .clipped()
-            .background(.quaternary)
-            .overlay { swipeFeedback }
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.separator.opacity(0.5)))
-            .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+    private var photo: some View {
+        PhotoThumbnail(
+            asset: asset,
+            source: source,
+            targetSize: CGSize(width: 1200, height: 1200),
+            contentMode: .fit
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.opacity(0.9))
     }
 
-    /// Feedback óp de foto tijdens het slepen: groen vinkje = behouden,
-    /// rode prullenbak = weggooien.
+    private var yearBadge: some View {
+        Text(yearLabel)
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(.ultraThinMaterial, in: Capsule())
+            .padding(.top, 12)
+    }
+
     @ViewBuilder
-    private var swipeFeedback: some View {
+    private var feedback: some View {
         if offset > 0 {
-            ZStack {
-                Color.green.opacity(keepProgress * 0.35)
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(.white)
-                    .opacity(keepProgress)
-            }
+            stamp(system: "checkmark.circle.fill", color: .green, opacity: keepProgress)
         } else if offset < 0 {
-            ZStack {
-                Color.red.opacity(discardProgress * 0.35)
-                Image(systemName: "trash.circle.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(.white)
-                    .opacity(discardProgress)
-            }
+            stamp(system: "trash.circle.fill", color: .red, opacity: discardProgress)
+        }
+    }
+
+    private func stamp(system: String, color: Color, opacity: Double) -> some View {
+        ZStack {
+            color.opacity(opacity * 0.3)
+            Image(systemName: system)
+                .font(.system(size: 84))
+                .foregroundStyle(.white)
+                .opacity(opacity)
         }
     }
 
     private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 12)
+        DragGesture(minimumDistance: 10)
             .onChanged { value in
-                guard !removing else { return }
-                // Alleen horizontaal reageren (verticaal = scrollen).
-                if abs(value.translation.width) > abs(value.translation.height) {
-                    offset = value.translation.width
-                }
+                guard !committing else { return }
+                offset = value.translation.width
             }
             .onEnded { value in
-                guard !removing else { return }
+                guard !committing else { return }
                 if value.translation.width > threshold {
                     commit(keep: true)
                 } else if value.translation.width < -threshold {
@@ -341,12 +414,10 @@ private struct OnThisDayCard: View {
             }
     }
 
-    /// Laat de kaart eerst volledig wegglijden en verwijdert 'm daarna pas uit de
-    /// lijst — zo schuift de lijst niet onder je vinger op tijdens het swipen.
     private func commit(keep: Bool) {
-        removing = true
-        withAnimation(.easeOut(duration: 0.22)) { offset = keep ? 700 : -700 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+        committing = true
+        withAnimation(.easeOut(duration: 0.22)) { offset = keep ? 600 : -600 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if keep { onKeep() } else { onDiscard() }
         }
     }

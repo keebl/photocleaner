@@ -6,6 +6,9 @@ struct PhotoThumbnail: View {
     let asset: PhotoAsset
     let source: PhotoSource
     var targetSize: CGSize = CGSize(width: 400, height: 400)
+    /// `.fill` (bijsnijden om te vullen) voor tegels; `.fit` (hele foto tonen)
+    /// voor de grote weergave.
+    var contentMode: ContentMode = .fill
 
     @State private var image: UIImage?
 
@@ -14,7 +17,7 @@ struct PhotoThumbnail: View {
             if let image {
                 Image(uiImage: image)
                     .resizable()
-                    .scaledToFill()
+                    .aspectRatio(contentMode: contentMode)
             } else {
                 Rectangle()
                     .fill(.quaternary)
