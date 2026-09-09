@@ -6,25 +6,26 @@ struct PhotoCleanerApp: App {
     @StateObject private var trash = TrashStore()
     @StateObject private var notifications = NotificationManager()
     @StateObject private var themeManager = ThemeManager()
+    @StateObject private var sources = SourceManager()
 
     @Environment(\.scenePhase) private var scenePhase
 
-    /// De actieve fotobron. Nu vast de iPhone-bibliotheek; later kiesbaar
-    /// (Google Foto's, NAS, ...).
-    private let source: PhotoSource = PhotoKitSource()
-
     var body: some Scene {
         WindowGroup {
-            RootView(source: source)
+            RootView()
                 .environmentObject(library)
                 .environmentObject(trash)
                 .environmentObject(notifications)
                 .environmentObject(themeManager)
+                .environmentObject(sources)
                 .preferredColorScheme(themeManager.theme.colorScheme)
                 .task { await notifications.sync() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { source.flushCaches() }
+            if phase == .background {
+                sources.iphone.flushCaches()
+                sources.nas.flushCaches()
+            }
         }
     }
 }

@@ -3,20 +3,20 @@ import SwiftUI
 /// Toegangspoort + hoofdnavigatie. Zonder toegang tot de bibliotheek tonen we
 /// de uitleg/knop; met toegang de drie tabbladen.
 struct RootView: View {
-    let source: PhotoSource
-
     @EnvironmentObject private var library: PhotoLibrary
+    @EnvironmentObject private var sources: SourceManager
 
     var body: some View {
         Group {
-            if library.access.canReadPhotos {
-                MainTabs(source: source)
-            } else {
+            if sources.kind == .iphone && !library.access.canReadPhotos {
                 PermissionGateView()
+            } else {
+                MainTabs(source: sources.source)
+                    .id(sources.kind)   // wissel van bron = verse view models
             }
         }
         .task {
-            if library.access == .notDetermined {
+            if sources.kind == .iphone && library.access == .notDetermined {
                 await library.requestAccess()
             }
         }

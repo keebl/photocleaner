@@ -5,6 +5,9 @@ struct SettingsView: View {
     @EnvironmentObject private var notifications: NotificationManager
     @EnvironmentObject private var trash: TrashStore
     @EnvironmentObject private var theme: ThemeManager
+    @EnvironmentObject private var sources: SourceManager
+
+    @State private var showFolderPicker = false
 
     var body: some View {
         NavigationStack {
@@ -42,28 +45,42 @@ struct SettingsView: View {
 
                 Section {
                     ForEach(SourceKind.allCases) { kind in
-                        HStack {
-                            Image(systemName: kind.systemImage)
-                                .frame(width: 28)
-                                .foregroundStyle(kind.isAvailable ? Color.accentColor : .secondary)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(kind.displayName)
-                                Text(kind.statusText)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if kind.isAvailable {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
+                        Button {
+                            selectSource(kind)
+                        } label: {
+                            HStack {
+                                Image(systemName: kind.systemImage)
+                                    .frame(width: 28)
+                                    .foregroundStyle(sources.kind == kind ? Color.accentColor : .secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(kind.displayName)
+                                        .foregroundStyle(.primary)
+                                    if kind == .nas {
+                                        Text(sources.nasFolderName ?? "Geen map gekozen")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                if sources.kind == kind {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
                             }
                         }
-                        .opacity(kind.isAvailable ? 1 : 0.6)
+                        .buttonStyle(.plain)
+                    }
+
+                    Button {
+                        showFolderPicker = true
+                    } label: {
+                        Label(sources.nasFolderName == nil ? "NAS-map kiezen…" : "Andere map kiezen…",
+                              systemImage: "folder.badge.plus")
                     }
                 } header: {
                     Text("Fotobron")
                 } footer: {
-                    Text("Nu de iPhone-bibliotheek. Google Foto's en een NAS-map volgen via dezelfde opschoon-logica.")
+                    Text("Koppel je NAS eenmalig in de iOS Bestanden-app (SMB) en kies hier die map. Alles blijft lokaal binnen de app.")
                 }
 
                 Section("Over") {
@@ -72,6 +89,20 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Instellingen")
+            .sheet(isPresented: $showFolderPicker) {
+                FolderPicker { url in
+                    sources.setNASFolder(url)
+                }
+                .ignoresSafeArea()
+            }
+        }
+    }
+
+    private func selectSource(_ kind: SourceKind) {
+        if kind == .nas && sources.nasFolderName == nil {
+            showFolderPicker = true
+        } else {
+            sources.select(kind)
         }
     }
 
