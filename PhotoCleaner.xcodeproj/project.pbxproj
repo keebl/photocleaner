@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXFileReference section */
@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA00000000000000000000E2 /* PhotoCleaner */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PhotoCleaner; sourceTree = "<group>"; };
+		AA00000000000000000000E2 /* PhotoCleaner */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PhotoCleaner; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -242,6 +242,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9AY5U64RU2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PhotoCleaner gebruikt je foto's om dubbelen te vinden en je 'op deze dag'-herinneringen te tonen.";
@@ -269,6 +270,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9AY5U64RU2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PhotoCleaner gebruikt je foto's om dubbelen te vinden en je 'op deze dag'-herinneringen te tonen.";
@@ -292,20 +294,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA00000000000000000000EB /* Build configuration list for PBXProject "PhotoCleaner" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA00000000000000000000EC /* Debug */,
-				AA00000000000000000000ED /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AA00000000000000000000E7 /* Build configuration list for PBXNativeTarget "PhotoCleaner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA00000000000000000000EE /* Debug */,
 				AA00000000000000000000EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA00000000000000000000EB /* Build configuration list for PBXProject "PhotoCleaner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000000EC /* Debug */,
+				AA00000000000000000000ED /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -22,4 +22,16 @@ struct PhotoAsset: Identifiable, Hashable {
     var pixelCount: Int {
         pixelWidth * pixelHeight
     }
+
+    /// Kopie met een ingevulde bestandsgrootte (lui berekend, alleen waar nodig).
+    func withByteSize(_ size: Int64) -> PhotoAsset {
+        PhotoAsset(
+            id: id,
+            creationDate: creationDate,
+            pixelWidth: pixelWidth,
+            pixelHeight: pixelHeight,
+            byteSize: size,
+            filename: filename
+        )
+    }
 }

@@ -21,6 +21,10 @@ protocol PhotoSource: AnyObject {
     /// geen beeld beschikbaar is.
     func perceptualHash(for asset: PhotoAsset) async -> UInt64?
 
+    /// Bestandsgrootte (bytes) per foto-id. Relatief traag; alleen voor kleine sets
+    /// aanroepen (bijv. gevonden duplicaten), niet voor de hele bibliotheek.
+    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64]
+
     /// Verwijdert foto's definitief uit de bron. Bij PhotoKit belanden ze nog in
     /// Apple's "Recent verwijderd" (extra vangnet) en toont iOS een bevestiging.
     func delete(_ assets: [PhotoAsset]) async throws

@@ -11,9 +11,12 @@ final class DuplicatesViewModel: ObservableObject {
     @Published var mode: Mode = ProcessInfo.processInfo.environment["START_DUP_MODE"] == "similar" ? .similar : .exact
     @Published private(set) var exactGroups: [DuplicateGroup] = []
     @Published private(set) var similarGroups: [DuplicateGroup] = []
-    @Published private(set) var isLoading = false
+    @Published private(set) var isLoading = false          // eerste (exacte) scan
+    @Published private(set) var isScanningSimilar = false   // zwaardere perceptuele scan
 
     private let source: PhotoSource
+    private var visible: [PhotoAsset] = []
+    private var similarComputed = false
 
     init(source: PhotoSource) {
         self.source = source
@@ -23,24 +26,53 @@ final class DuplicatesViewModel: ObservableObject {
         mode == .exact ? exactGroups : similarGroups
     }
 
+    /// Snelle basisscan: haalt de bibliotheek op en zoekt exacte dubbelen. De
+    /// perceptuele ("lijkende") scan draait pas op aanvraag.
     func scan(excluding hidden: Set<String>) async {
         isLoading = true
         defer { isLoading = false }
 
+        similarComputed = false
+        similarGroups = []
+
         let all = await source.fetchAllPhotos()
-        let visible = all.filter { !hidden.contains($0.id) }
+        visible = all.filter { !hidden.contains($0.id) }
+        exactGroups = await enrich(DuplicateDetector.findDuplicates(in: visible))
 
-        // Exacte dubbelen op metadata.
-        exactGroups = DuplicateDetector.findDuplicates(in: visible)
+        if mode == .similar { await computeSimilar() }
+    }
 
-        // Lijkende foto's op perceptual hash.
+    /// Zorgt dat de perceptuele scan is uitgevoerd (bijv. bij het openen van "Lijkend").
+    func ensureSimilarLoaded() async {
+        guard !similarComputed, !isScanningSimilar else { return }
+        await computeSimilar()
+    }
+
+    private func computeSimilar() async {
+        isScanningSimilar = true
+        defer { isScanningSimilar = false }
+
         var hashed: [(asset: PhotoAsset, hash: UInt64)] = []
         for asset in visible {
             if let hash = await source.perceptualHash(for: asset) {
                 hashed.append((asset, hash))
             }
         }
-        similarGroups = PerceptualDetector.group(hashed, maxDistance: 8)
+        similarGroups = await enrich(PerceptualDetector.group(hashed, maxDistance: 8))
+        similarComputed = true
+    }
+
+    /// Vult de bestandsgrootte aan voor álléén de gegroepeerde foto's (weinig) en
+    /// herbouwt de groepen zodat "te winnen" en de beste-keuze kloppen.
+    private func enrich(_ groups: [DuplicateGroup]) async -> [DuplicateGroup] {
+        let assets = groups.flatMap { $0.all }
+        guard !assets.isEmpty else { return groups }
+        let sizes = await source.byteSizes(for: assets)
+        return groups
+            .map { group in
+                DuplicateGroup.make(from: group.all.map { $0.withByteSize(sizes[$0.id] ?? 0) })
+            }
+            .sorted { $0.reclaimableBytes > $1.reclaimableBytes }
     }
 }
 
@@ -68,16 +100,7 @@ struct DuplicatesView: View {
                 .pickerStyle(.segmented)
                 .padding()
 
-                Group {
-                    if vm.isLoading {
-                        ProgressView("Bibliotheek scannen…")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if vm.groups.isEmpty {
-                        emptyState
-                    } else {
-                        list
-                    }
-                }
+                content
             }
             .navigationTitle("Dubbelen")
             .toolbar {
@@ -89,6 +112,29 @@ struct DuplicatesView: View {
             }
         }
         .task { await vm.scan(excluding: trash.trashedIDs) }
+        .onChange(of: vm.mode) { _, newValue in
+            if newValue == .similar {
+                Task { await vm.ensureSimilarLoaded() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if vm.isLoading {
+            loading("Bibliotheek scannen…")
+        } else if vm.mode == .similar && vm.isScanningSimilar {
+            loading("Lijkende foto's zoeken…")
+        } else if vm.groups.isEmpty {
+            emptyState
+        } else {
+            list
+        }
+    }
+
+    private func loading(_ text: String) -> some View {
+        ProgressView(text)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {

@@ -30,6 +30,7 @@ final class GooglePhotosSource: PhotoSource {
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] { [] }
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? { nil }
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? { nil }
+    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] { [:] }
     func delete(_ assets: [PhotoAsset]) async throws { throw SourceError.notConfigured(displayName) }
 }
 
@@ -52,5 +53,6 @@ final class NASFolderSource: PhotoSource {
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] { [] }
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? { nil }
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? { nil }
+    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] { [:] }
     func delete(_ assets: [PhotoAsset]) async throws { throw SourceError.notConfigured(displayName) }
 }

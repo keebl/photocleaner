@@ -137,32 +137,33 @@ final class PhotoKitSource: PhotoSource {
         return assets
     }
 
+    /// Snelle map: alleen goedkope eigenschappen. Bestandsgrootte/naam vragen een
+    /// trage `PHAssetResource`-call en berekenen we daarom lui via `byteSizes(for:)`.
     private func map(_ phAsset: PHAsset) -> PhotoAsset {
         PhotoAsset(
             id: phAsset.localIdentifier,
             creationDate: phAsset.creationDate,
             pixelWidth: phAsset.pixelWidth,
             pixelHeight: phAsset.pixelHeight,
-            byteSize: Self.byteSize(of: phAsset),
-            filename: Self.filename(of: phAsset)
+            byteSize: 0,
+            filename: nil
         )
     }
 
-    /// Bestandsgrootte via de asset-resource. `fileSize` is een gangbare KVC-sleutel
-    /// die PhotoKit hiervoor aanbiedt.
-    // TODO(perf): voor zeer grote bibliotheken dit lui berekenen (alleen voor
-    // kandidaat-dubbelen) i.p.v. voor élke foto tijdens de scan.
-    private static func byteSize(of phAsset: PHAsset) -> Int64 {
-        let resources = PHAssetResource.assetResources(for: phAsset)
-        for resource in resources {
-            if let size = resource.value(forKey: "fileSize") as? Int64 {
-                return size
+    /// Bestandsgrootte per foto — alleen aanroepen voor kleine sets (bijv. gevonden
+    /// duplicaten), want `PHAssetResource` is relatief traag.
+    func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] {
+        var result: [String: Int64] = [:]
+        for asset in assets {
+            guard let phAsset = assetIndex[asset.id] else { continue }
+            let resources = PHAssetResource.assetResources(for: phAsset)
+            for resource in resources {
+                if let size = resource.value(forKey: "fileSize") as? Int64 {
+                    result[asset.id] = size
+                    break
+                }
             }
         }
-        return 0
-    }
-
-    private static func filename(of phAsset: PHAsset) -> String? {
-        PHAssetResource.assetResources(for: phAsset).first?.originalFilename
+        return result
     }
 }
