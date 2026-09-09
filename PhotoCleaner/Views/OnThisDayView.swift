@@ -161,9 +161,9 @@ struct OnThisDayView: View {
             VStack(spacing: 0) {
                 swipeLegend
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 28) {
                         ForEach(groups, id: \.year) { group in
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 16) {
                                 Text(yearHeader(group.year))
                                     .font(.title3).bold()
                                     .padding(.horizontal)
@@ -271,8 +271,10 @@ private struct OnThisDayCard: View {
 
     var body: some View {
         card
+            .contentShape(Rectangle())
             .offset(x: offset)
             .gesture(dragGesture)
+            .zIndex(removing ? 1 : 0)
             // VoiceOver-gebruikers kunnen de acties via de rotor uitvoeren.
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Foto. Swipe naar rechts om te behouden, naar links om weg te gooien.")
