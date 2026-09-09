@@ -8,6 +8,18 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
 
     private let imageManager = PHImageManager.default()
 
+    /// In-memory cache van geladen thumbnails, zodat een volgende (voorgeladen)
+    /// foto meteen verschijnt zonder "laden".
+    private let thumbnailCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 12
+        return cache
+    }()
+
+    private func cacheKey(_ id: String, _ size: CGSize) -> NSString {
+        "\(id)|\(Int(size.width))x\(Int(size.height))" as NSString
+    }
+
     /// Beschermt `assetIndex` en `cachedAll` tegen gelijktijdige toegang vanuit
     /// verschillende threads (fetch op de achtergrond vs. de wijzigingsobserver).
     private let stateLock = NSLock()
@@ -99,7 +111,21 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
 
     // MARK: - Thumbnails (annuleerbaar)
 
+    /// Synchrone cache-opzoeking (voor directe weergave zonder "laden").
+    func cachedThumbnail(for asset: PhotoAsset, targetSize: CGSize) -> UIImage? {
+        thumbnailCache.object(forKey: cacheKey(asset.id, targetSize))
+    }
+
+    /// Laadt vast de thumbnails van de opgegeven foto's in de cache (bijv. de
+    /// volgende foto's in de swipe-stapel), zodat ze meteen klaarstaan.
+    func preload(_ assets: [PhotoAsset], targetSize: CGSize) {
+        for asset in assets where cachedThumbnail(for: asset, targetSize: targetSize) == nil {
+            Task { _ = await loadThumbnail(for: asset, targetSize: targetSize) }
+        }
+    }
+
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
+        if let cached = cachedThumbnail(for: asset, targetSize: targetSize) { return cached }
         guard let phAsset = phAsset(for: asset.id) else { return nil }
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
@@ -107,7 +133,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
         options.isNetworkAccessAllowed = true
 
         let box = RequestBox(manager: imageManager)
-        return await withTaskCancellationHandler {
+        let image: UIImage? = await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 let id = imageManager.requestImage(
                     for: phAsset,
@@ -123,6 +149,11 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
             // Scrolt de foto uit beeld? Annuleer het (mogelijk zware) verzoek.
             box.cancel()
         }
+
+        if let image {
+            thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
+        }
+        return image
     }
 
     // MARK: - Perceptual hash (lijkende foto's)

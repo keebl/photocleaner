@@ -32,6 +32,12 @@ protocol PhotoSource: AnyObject {
     /// Laadt een thumbnail voor weergave.
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage?
 
+    /// Direct beschikbare (gecachte) thumbnail, of nil. Voor weergave zonder flits.
+    func cachedThumbnail(for asset: PhotoAsset, targetSize: CGSize) -> UIImage?
+
+    /// Laadt vast thumbnails in de cache (bijv. de volgende foto's).
+    func preload(_ assets: [PhotoAsset], targetSize: CGSize)
+
     /// Perceptual hash (dHash) voor het vinden van *lijkende* foto's. `nil` als er
     /// geen beeld beschikbaar is.
     func perceptualHash(for asset: PhotoAsset) async -> UInt64?

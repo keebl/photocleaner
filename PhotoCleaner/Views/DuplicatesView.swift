@@ -87,6 +87,12 @@ final class DuplicatesViewModel: ObservableObject {
         isScanningSimilar = false
     }
 
+    /// Haalt een afgehandelde groep uit beide lijsten (na "gooi weg").
+    func remove(_ group: DuplicateGroup) {
+        exactGroups.removeAll { $0.id == group.id }
+        similarGroups.removeAll { $0.id == group.id }
+    }
+
     private func computeSimilar() async {
         isScanningSimilar = true
         scanProgress = 0
@@ -238,11 +244,10 @@ struct DuplicatesView: View {
 
                     Button(role: .destructive) {
                         Haptics.warning()
-                        withAnimation {
-                            for dup in group.duplicates {
-                                trash.mark(dup, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
-                            }
+                        for dup in group.duplicates {
+                            trash.mark(dup, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
                         }
+                        withAnimation { vm.remove(group) }
                     } label: {
                         Label("Behoud beste, gooi \(group.duplicates.count) weg", systemImage: "trash")
                     }

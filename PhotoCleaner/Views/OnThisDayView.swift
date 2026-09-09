@@ -82,6 +82,7 @@ struct OnThisDayView: View {
             resetSession()
             await vm.load(for: selectedDate)
             sessionTotal = queue.count
+            preloadUpcoming()
         }
         .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
             Task { await vm.load(for: selectedDate) }
@@ -131,6 +132,15 @@ struct OnThisDayView: View {
         .padding(.horizontal)
         .padding(.top, 10)
         .padding(.bottom, 8)
+        .onChange(of: current.id) { _, _ in preloadUpcoming() }
+    }
+
+    private static let deckImageSize = CGSize(width: 1200, height: 1200)
+
+    /// Laadt de volgende paar foto's vast in de cache, zodat swipen soepel is.
+    private func preloadUpcoming() {
+        let upcoming = Array(queue.dropFirst().prefix(3))
+        source.preload(upcoming, targetSize: Self.deckImageSize)
     }
 
     private var progressBar: some View {

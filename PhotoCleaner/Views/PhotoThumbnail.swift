@@ -12,6 +12,17 @@ struct PhotoThumbnail: View {
 
     @State private var image: UIImage?
 
+    init(asset: PhotoAsset, source: PhotoSource,
+         targetSize: CGSize = CGSize(width: 400, height: 400),
+         contentMode: ContentMode = .fill) {
+        self.asset = asset
+        self.source = source
+        self.targetSize = targetSize
+        self.contentMode = contentMode
+        // Al gecached (voorgeladen)? Toon meteen, zonder placeholder-flits.
+        _image = State(initialValue: source.cachedThumbnail(for: asset, targetSize: targetSize))
+    }
+
     var body: some View {
         ZStack {
             if let image {
@@ -26,7 +37,9 @@ struct PhotoThumbnail: View {
         }
         .clipped()
         .task(id: asset.id) {
-            image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+            if image == nil {
+                image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+            }
         }
     }
 }
