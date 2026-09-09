@@ -2,7 +2,9 @@ import Foundation
 
 /// Een groep foto's die op basis van metadata als duplicaat wordt beschouwd.
 struct DuplicateGroup: Identifiable {
-    let id = UUID()
+    /// Stabiele id op basis van de te behouden foto, zodat SwiftUI de rij (en
+    /// thumbnails) hergebruikt tussen scans i.p.v. opnieuw te laden.
+    var id: String { keep.id }
     /// De foto die we aanraden te behouden (hoogste resolutie / grootste bestand).
     let keep: PhotoAsset
     /// De overige foto's in de groep — kandidaten om weg te gooien.

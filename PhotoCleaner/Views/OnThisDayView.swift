@@ -3,7 +3,9 @@ import SwiftUI
 @MainActor
 final class OnThisDayViewModel: ObservableObject {
     @Published private(set) var assets: [PhotoAsset] = []
-    @Published private(set) var isLoading = false
+    /// Alleen de allereerste keer tonen we het volledige laadscherm; daarna wordt
+    /// nieuwe content geruisloos ingewisseld (geen geknipper).
+    @Published private(set) var hasLoaded = false
 
     private let source: PhotoSource
 
@@ -12,10 +14,10 @@ final class OnThisDayViewModel: ObservableObject {
     }
 
     func load(for date: Date) async {
-        isLoading = true
         let comps = Calendar.current.dateComponents([.month, .day], from: date)
-        assets = await source.fetchPhotos(onMonth: comps.month ?? 1, day: comps.day ?? 1)
-        isLoading = false
+        let result = await source.fetchPhotos(onMonth: comps.month ?? 1, day: comps.day ?? 1)
+        assets = result
+        hasLoaded = true
     }
 
     /// Foto's gegroepeerd per jaar (nieuwste jaar eerst), na uitfilteren van
@@ -66,7 +68,7 @@ struct OnThisDayView: View {
                 dateBar
                 Divider()
                 Group {
-                    if vm.isLoading {
+                    if !vm.hasLoaded {
                         ProgressView("Foto's laden…")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {

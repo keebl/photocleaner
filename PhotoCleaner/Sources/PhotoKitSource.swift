@@ -24,12 +24,20 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
         PHPhotoLibrary.shared().register(self)
     }
 
-    /// Automatisch verversen wanneer de bibliotheek wijzigt (foto toegevoegd,
-    /// verwijderd of bewerkt, ook buiten de app om).
+    private var pendingChangeNotify: DispatchWorkItem?
+
+    /// Automatisch verversen wanneer de bibliotheek wijzigt. Grote iCloud-
+    /// bibliotheken sturen veel wijzigingen kort na elkaar; we voegen die samen
+    /// (debounce) zodat de UI niet blijft herladen/knipperen.
     func photoLibraryDidChange(_ changeInstance: PHChange) {
         invalidateCache()
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .photoLibraryDidChange, object: nil)
+            self.pendingChangeNotify?.cancel()
+            let work = DispatchWorkItem {
+                NotificationCenter.default.post(name: .photoLibraryDidChange, object: nil)
+            }
+            self.pendingChangeNotify = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
         }
     }
 

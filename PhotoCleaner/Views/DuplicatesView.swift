@@ -12,6 +12,7 @@ final class DuplicatesViewModel: ObservableObject {
     @Published private(set) var exactGroups: [DuplicateGroup] = []
     @Published private(set) var similarGroups: [DuplicateGroup] = []
     @Published private(set) var isLoading = false          // eerste (exacte) scan
+    @Published private(set) var hasScanned = false          // eenmaal geladen? dan niet meer blanken
     @Published private(set) var isScanningSimilar = false   // zwaardere perceptuele scan
     @Published private(set) var scanProgress: Double = 0
 
@@ -41,6 +42,7 @@ final class DuplicatesViewModel: ObservableObject {
         let all = await source.fetchAllPhotos()
         visible = all.filter { !hidden.contains($0.id) }
         exactGroups = await enrich(DuplicateDetector.findDuplicates(in: visible))
+        hasScanned = true
     }
 
     /// Handmatige verversing: cache weggooien en opnieuw scannen.
@@ -159,7 +161,7 @@ struct DuplicatesView: View {
 
     @ViewBuilder
     private var content: some View {
-        if vm.isLoading {
+        if vm.isLoading && !vm.hasScanned {
             loading("Bibliotheek scannen…")
         } else if vm.mode == .similar && vm.isScanningSimilar {
             scanningSimilar
