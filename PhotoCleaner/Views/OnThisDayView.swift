@@ -156,34 +156,61 @@ struct OnThisDayView: View {
                 description: Text("Geen (resterende) foto's die op \(dayTitle) in eerdere jaren zijn gemaakt.")
             )
         } else {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 28) {
-                    ForEach(groups, id: \.year) { group in
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(yearHeader(group.year))
-                                .font(.title3).bold()
-                                .padding(.horizontal)
-                            ForEach(group.assets) { asset in
-                                OnThisDayCard(
-                                    asset: asset,
-                                    source: source,
-                                    onKeep: {
-                                        Haptics.tap()
-                                        withAnimation { _ = kept.insert(asset.id) }
-                                    },
-                                    onDiscard: {
-                                        Haptics.warning()
-                                        withAnimation { trash.mark(asset, reason: "Op deze dag") }
-                                    }
-                                )
-                                .padding(.horizontal)
+            VStack(spacing: 0) {
+                swipeLegend
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 28) {
+                        ForEach(groups, id: \.year) { group in
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(yearHeader(group.year))
+                                    .font(.title3).bold()
+                                    .padding(.horizontal)
+                                ForEach(group.assets) { asset in
+                                    OnThisDayCard(
+                                        asset: asset,
+                                        source: source,
+                                        onKeep: {
+                                            Haptics.tap()
+                                            withAnimation { _ = kept.insert(asset.id) }
+                                        },
+                                        onDiscard: {
+                                            Haptics.warning()
+                                            withAnimation { trash.mark(asset, reason: "Op deze dag") }
+                                        }
+                                    )
+                                    .padding(.horizontal)
+                                }
                             }
                         }
                     }
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
                 }
-                .padding(.vertical)
+                .contentMargins(.bottom, 16, for: .scrollContent)
             }
         }
+    }
+
+    /// Vaste legenda die vóór het swipen duidelijk maakt wat links/rechts doet.
+    private var swipeLegend: some View {
+        HStack {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.left")
+                Text("Weggooien")
+            }
+            .foregroundStyle(.red)
+
+            Spacer()
+
+            HStack(spacing: 4) {
+                Text("Behouden")
+                Image(systemName: "arrow.right")
+            }
+            .foregroundStyle(.green)
+        }
+        .font(.caption.weight(.medium))
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Datumlogica
@@ -248,11 +275,16 @@ private struct OnThisDayCard: View {
         }
     }
 
+    /// Vaste hoogte, zodat elke kaart (staand én liggend) even hoog is en de
+    /// knoppen altijd op dezelfde, zichtbare plek staan.
+    private let imageHeight: CGFloat = 300
+
     private var card: some View {
         VStack(spacing: 0) {
             PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 700, height: 700))
-                .aspectRatio(4.0 / 3.0, contentMode: .fit)
                 .frame(maxWidth: .infinity)
+                .frame(height: imageHeight)
+                .clipped()
                 .background(.quaternary)
                 .overlay {
                     // Kleur-hint tijdens het slepen
@@ -264,15 +296,16 @@ private struct OnThisDayCard: View {
                 }
 
             HStack(spacing: 10) {
-                Button { onKeep() } label: {
-                    Label("Behouden", systemImage: "checkmark").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
                 Button(role: .destructive) { onDiscard() } label: {
                     Label("Weggooien", systemImage: "trash").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+
+                Button { onKeep() } label: {
+                    Label("Behouden", systemImage: "checkmark").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
             }
             .padding(12)
         }
