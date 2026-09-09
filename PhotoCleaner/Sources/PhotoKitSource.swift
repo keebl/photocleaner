@@ -8,6 +8,9 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
 
     private let imageManager = PHImageManager.default()
 
+    /// Beschermt `assetIndex` en `cachedAll` tegen gelijktijdige toegang vanuit
+    /// verschillende threads (fetch op de achtergrond vs. de wijzigingsobserver).
+    private let stateLock = NSLock()
     /// Onthoudt de PHAsset achter elke `PhotoAsset.id`.
     private var assetIndex: [String: PHAsset] = [:]
     /// Cache van de volledige lijst, zodat tab-wissels en datumnavigatie niet
@@ -33,20 +36,37 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     // MARK: - Ophalen
 
     func fetchAllPhotos() async -> [PhotoAsset] {
-        if let cachedAll { return cachedAll }
+        stateLock.lock()
+        if let cachedAll { stateLock.unlock(); return cachedAll }
+        stateLock.unlock()
+
+        // Enumereren gebeurt BUITEN de lock (kan traag zijn bij grote
+        // bibliotheken); we bouwen lokaal op en mergen daarna onder de lock.
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
-        let result = PHAsset.fetchAssets(with: options)
-        let assets = mapAndIndex(result)
+        let (assets, index) = mapAndIndex(PHAsset.fetchAssets(with: options))
+
+        stateLock.lock()
+        for (key, value) in index { assetIndex[key] = value }
         cachedAll = assets
+        stateLock.unlock()
         return assets
     }
 
     func assets(withIDs ids: [String]) async -> [PhotoAsset] {
         guard !ids.isEmpty else { return [] }
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil)
-        return mapAndIndex(result)
+        let (assets, index) = mapAndIndex(PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil))
+        stateLock.lock()
+        for (key, value) in index { assetIndex[key] = value }
+        stateLock.unlock()
+        return assets
+    }
+
+    /// Thread-veilige opzoeking van de PHAsset achter een id.
+    private func phAsset(for id: String) -> PHAsset? {
+        stateLock.lock(); defer { stateLock.unlock() }
+        return assetIndex[id]
     }
 
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] {
@@ -62,7 +82,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     }
 
     func invalidateCache() {
-        cachedAll = nil
+        stateLock.lock(); cachedAll = nil; stateLock.unlock()
     }
 
     func flushCaches() {
@@ -72,7 +92,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     // MARK: - Thumbnails (annuleerbaar)
 
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
-        guard let phAsset = assetIndex[asset.id] else { return nil }
+        guard let phAsset = phAsset(for: asset.id) else { return nil }
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.resizeMode = .fast
@@ -103,7 +123,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
         if let cached = hashCache.hash(for: asset.id, modifiedAt: asset.modificationDate) {
             return cached
         }
-        guard let phAsset = assetIndex[asset.id] else { return nil }
+        guard let phAsset = phAsset(for: asset.id) else { return nil }
 
         let options = PHImageRequestOptions()
         // Lokaal een klein beeld (laten) genereren, maar NOOIT uit iCloud
@@ -184,7 +204,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     func byteSizes(for assets: [PhotoAsset]) async -> [String: Int64] {
         var result: [String: Int64] = [:]
         for asset in assets {
-            guard let phAsset = assetIndex[asset.id] else { continue }
+            guard let phAsset = phAsset(for: asset.id) else { continue }
             for resource in PHAssetResource.assetResources(for: phAsset) {
                 if let size = resource.value(forKey: "fileSize") as? Int64 {
                     result[asset.id] = size
@@ -198,7 +218,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     // MARK: - Verwijderen
 
     func delete(_ assets: [PhotoAsset]) async throws {
-        let phAssets = assets.compactMap { assetIndex[$0.id] }
+        let phAssets = assets.compactMap { phAsset(for: $0.id) }
         guard !phAssets.isEmpty else { return }
         try await PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.deleteAssets(phAssets as NSArray)
@@ -208,14 +228,16 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
 
     // MARK: - Hulpfuncties
 
-    private func mapAndIndex(_ result: PHFetchResult<PHAsset>) -> [PhotoAsset] {
+    /// Bouwt (buiten de lock) een lijst PhotoAssets + een lokale index op.
+    private func mapAndIndex(_ result: PHFetchResult<PHAsset>) -> (assets: [PhotoAsset], index: [String: PHAsset]) {
         var assets: [PhotoAsset] = []
+        var index: [String: PHAsset] = [:]
         assets.reserveCapacity(result.count)
         result.enumerateObjects { phAsset, _, _ in
-            self.assetIndex[phAsset.localIdentifier] = phAsset
+            index[phAsset.localIdentifier] = phAsset
             assets.append(self.map(phAsset))
         }
-        return assets
+        return (assets, index)
     }
 
     /// Snelle map: alleen goedkope eigenschappen. Bestandsgrootte/naam vragen een

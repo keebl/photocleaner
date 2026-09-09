@@ -250,7 +250,7 @@ private struct OnThisDayCard: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 1000, height: 1000))
+            PhotoThumbnail(asset: asset, source: source, targetSize: CGSize(width: 700, height: 700))
                 .aspectRatio(4.0 / 3.0, contentMode: .fit)
                 .frame(maxWidth: .infinity)
                 .background(.quaternary)
