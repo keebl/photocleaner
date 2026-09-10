@@ -1,5 +1,6 @@
 import UIKit
 import ImageIO
+import AVFoundation
 import UniformTypeIdentifiers
 
 enum SourceError: LocalizedError {
@@ -32,6 +33,14 @@ final class NASFolderSource: PhotoSource {
 
     private let bookmarkKey = "nasFolderBookmark"
     private let imageExtensions: Set<String> = ["jpg", "jpeg", "png", "heic", "heif", "tiff", "tif", "gif", "bmp"]
+    private let videoExtensions: Set<String> = ["mp4", "mov", "m4v", "avi", "hevc", "3gp"]
+
+    private func kind(for url: URL) -> MediaKind? {
+        let ext = url.pathExtension.lowercased()
+        if imageExtensions.contains(ext) { return .photo }
+        if videoExtensions.contains(ext) { return .video }
+        return nil
+    }
 
     private static let exifFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -136,6 +145,17 @@ final class NASFolderSource: PhotoSource {
         guard let url = URL(string: asset.id) else { return nil }
 
         let maxPixel = Int(max(targetSize.width, targetSize.height))
+        let image = asset.isVideo
+            ? Self.videoPoster(url, maxPixel: maxPixel)
+            : Self.imageThumbnail(url, maxPixel: maxPixel)
+
+        if let image {
+            thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
+        }
+        return image
+    }
+
+    private static func imageThumbnail(_ url: URL, maxPixel: Int) -> UIImage? {
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
@@ -144,10 +164,22 @@ final class NASFolderSource: PhotoSource {
         ]
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
               let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: cg)
+    }
 
-        let image = UIImage(cgImage: cg)
-        thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
-        return image
+    private static func videoPoster(_ url: URL, maxPixel: Int) -> UIImage? {
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: maxPixel, height: maxPixel)
+        let time = CMTime(seconds: 0.5, preferredTimescale: 600)
+        guard let cg = try? generator.copyCGImage(at: time, actualTime: nil) else { return nil }
+        return UIImage(cgImage: cg)
+    }
+
+    func playerItem(for asset: PhotoAsset) async -> AVPlayerItem? {
+        guard asset.isVideo, let url = URL(string: asset.id) else { return nil }
+        return AVPlayerItem(url: url)
     }
 
     // MARK: - Perceptual hash
@@ -203,7 +235,7 @@ final class NASFolderSource: PhotoSource {
 
         var result: [PhotoAsset] = []
         for case let url as URL in enumerator {
-            guard imageExtensions.contains(url.pathExtension.lowercased()) else { continue }
+            guard kind(for: url) != nil else { continue }
             result.append(makeAsset(url))
         }
         return result.sorted { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
@@ -212,10 +244,13 @@ final class NASFolderSource: PhotoSource {
     private func makeAsset(_ url: URL) -> PhotoAsset {
         let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey, .creationDateKey])
         let byteSize = Int64(values?.fileSize ?? 0)
-        let meta = metadata(url)
+        let mediaKind = kind(for: url) ?? .photo
+        // Video's hebben geen leesbare EXIF via ImageIO; gebruik dan de bestandsdatum.
+        let meta = mediaKind == .photo ? metadata(url) : (date: nil, width: 0, height: 0)
         let creation = meta.date ?? values?.creationDate ?? values?.contentModificationDate
         return PhotoAsset(
             id: url.absoluteString,
+            kind: mediaKind,
             creationDate: creation,
             modificationDate: values?.contentModificationDate,
             pixelWidth: meta.width,

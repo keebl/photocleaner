@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 
 extension Notification.Name {
     /// Wordt gepost als de onderliggende fotobibliotheek verandert.
@@ -37,6 +38,9 @@ protocol PhotoSource: AnyObject {
 
     /// Laadt vast thumbnails in de cache (bijv. de volgende foto's).
     func preload(_ assets: [PhotoAsset], targetSize: CGSize)
+
+    /// Speelbare video (nil voor foto's of als niet beschikbaar).
+    func playerItem(for asset: PhotoAsset) async -> AVPlayerItem?
 
     /// Perceptual hash (dHash) voor het vinden van *lijkende* foto's. `nil` als er
     /// geen beeld beschikbaar is.

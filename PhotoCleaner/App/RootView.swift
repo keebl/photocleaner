@@ -32,21 +32,17 @@ private struct MainTabs: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            OnThisDayView(source: source)
-                .tabItem { Label("Op deze dag", systemImage: "calendar") }
+            MediaView(source: source)
+                .tabItem { Label("Media", systemImage: "photo.on.rectangle.angled") }
                 .tag(0)
-
-            DuplicatesView(source: source)
-                .tabItem { Label("Dubbelen", systemImage: "square.on.square") }
-                .tag(1)
 
             TrashView(source: source)
                 .tabItem { Label("Prullenbak", systemImage: "trash") }
-                .tag(2)
+                .tag(1)
 
             SettingsView()
                 .tabItem { Label("Instellingen", systemImage: "gearshape") }
-                .tag(3)
+                .tag(2)
         }
     }
 }

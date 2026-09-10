@@ -1,6 +1,7 @@
 import Photos
 import UIKit
 import CoreImage
+import AVFoundation
 
 /// `PhotoSource`-implementatie bovenop Apple's PhotoKit (de iPhone-bibliotheek).
 final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver {
@@ -64,7 +65,10 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
         // bibliotheken); we bouwen lokaal op en mergen daarna onder de lock.
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+        options.predicate = NSPredicate(
+            format: "mediaType == %d || mediaType == %d",
+            PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue
+        )
         let (assets, index) = mapAndIndex(PHAsset.fetchAssets(with: options))
 
         stateLock.lock()
@@ -284,6 +288,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     private func map(_ phAsset: PHAsset) -> PhotoAsset {
         PhotoAsset(
             id: phAsset.localIdentifier,
+            kind: phAsset.mediaType == .video ? .video : .photo,
             creationDate: phAsset.creationDate,
             modificationDate: phAsset.modificationDate,
             pixelWidth: phAsset.pixelWidth,
@@ -291,6 +296,21 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
             byteSize: 0,
             filename: nil
         )
+    }
+
+    // MARK: - Video afspelen
+
+    func playerItem(for asset: PhotoAsset) async -> AVPlayerItem? {
+        guard let phAsset = phAsset(for: asset.id), phAsset.mediaType == .video else { return nil }
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.deliveryMode = .automatic
+        return await withCheckedContinuation { continuation in
+            var resumed = false
+            PHImageManager.default().requestPlayerItem(forVideo: phAsset, options: options) { item, _ in
+                if !resumed { resumed = true; continuation.resume(returning: item) }
+            }
+        }
     }
 }
 
