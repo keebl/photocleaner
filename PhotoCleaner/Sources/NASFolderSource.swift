@@ -77,14 +77,14 @@ final class NASFolderSource: PhotoSource {
 
     private func activate(_ url: URL) {
         accessing = url.startAccessingSecurityScopedResource()
-        lock.lock(); folderURL = url; cachedAll = nil; lock.unlock()
+        lock.withLock { folderURL = url; cachedAll = nil }
     }
 
     /// Alleen voor tests: wijs rechtstreeks naar een lokale map (eigen container,
     /// geen security-scope nodig).
     func setTestFolder(_ url: URL) {
         accessing = false
-        lock.lock(); folderURL = url; cachedAll = nil; lock.unlock()
+        lock.withLock { folderURL = url; cachedAll = nil }
     }
 
     private func stopAccessing() {
@@ -95,15 +95,13 @@ final class NASFolderSource: PhotoSource {
     // MARK: - Ophalen
 
     func fetchAllPhotos() async -> [PhotoAsset] {
-        lock.lock()
-        if let cachedAll { lock.unlock(); return cachedAll }
-        let folder = folderURL
-        lock.unlock()
+        let (cached, folder) = lock.withLock { (cachedAll, folderURL) }
+        if let cached { return cached }
 
         guard let folder else { return [] }
         let assets = enumerate(folder)
 
-        lock.lock(); cachedAll = assets; lock.unlock()
+        lock.withLock { cachedAll = assets }
         return assets
     }
 
@@ -125,7 +123,7 @@ final class NASFolderSource: PhotoSource {
     }
 
     func invalidateCache() {
-        lock.lock(); cachedAll = nil; lock.unlock()
+        lock.withLock { cachedAll = nil }
     }
 
     func flushCaches() {

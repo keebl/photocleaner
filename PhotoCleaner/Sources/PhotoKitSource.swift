@@ -58,9 +58,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     // MARK: - Ophalen
 
     func fetchAllPhotos() async -> [PhotoAsset] {
-        stateLock.lock()
-        if let cachedAll { stateLock.unlock(); return cachedAll }
-        stateLock.unlock()
+        if let cached = stateLock.withLock({ cachedAll }) { return cached }
 
         // Enumereren gebeurt BUITEN de lock (kan traag zijn bij grote
         // bibliotheken); we bouwen lokaal op en mergen daarna onder de lock.
@@ -72,26 +70,25 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
         )
         let (assets, index) = mapAndIndex(PHAsset.fetchAssets(with: options))
 
-        stateLock.lock()
-        for (key, value) in index { assetIndex[key] = value }
-        cachedAll = assets
-        stateLock.unlock()
+        stateLock.withLock {
+            for (key, value) in index { assetIndex[key] = value }
+            cachedAll = assets
+        }
         return assets
     }
 
     func assets(withIDs ids: [String]) async -> [PhotoAsset] {
         guard !ids.isEmpty else { return [] }
         let (assets, index) = mapAndIndex(PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil))
-        stateLock.lock()
-        for (key, value) in index { assetIndex[key] = value }
-        stateLock.unlock()
+        stateLock.withLock {
+            for (key, value) in index { assetIndex[key] = value }
+        }
         return assets
     }
 
     /// Thread-veilige opzoeking van de PHAsset achter een id.
     private func phAsset(for id: String) -> PHAsset? {
-        stateLock.lock(); defer { stateLock.unlock() }
-        return assetIndex[id]
+        stateLock.withLock { assetIndex[id] }
     }
 
     func fetchPhotos(onMonth month: Int, day: Int) async -> [PhotoAsset] {
@@ -107,7 +104,7 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     }
 
     func invalidateCache() {
-        stateLock.lock(); cachedAll = nil; stateLock.unlock()
+        stateLock.withLock { cachedAll = nil }
     }
 
     func flushCaches() {
