@@ -68,6 +68,10 @@ final class NASFolderSource: PhotoSource {
         var stale = false
         if let url = try? URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &stale) {
             activate(url)
+            // Verlopen bookmark? Vernieuw 'm zodat toegang behouden blijft.
+            if stale, let fresh = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
+                UserDefaults.standard.set(fresh, forKey: bookmarkKey)
+            }
         }
     }
 

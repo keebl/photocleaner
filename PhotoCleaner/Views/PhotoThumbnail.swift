@@ -37,8 +37,14 @@ struct PhotoThumbnail: View {
         }
         .clipped()
         .task(id: asset.id) {
-            if image == nil {
-                image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+            guard image == nil else { return }
+            image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+            // Eén nette retry bij een tijdelijke fout (bijv. iCloud/NAS-hapering).
+            if image == nil, !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                if !Task.isCancelled {
+                    image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+                }
             }
         }
     }
