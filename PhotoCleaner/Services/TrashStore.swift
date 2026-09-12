@@ -15,15 +15,20 @@ struct TrashItem: Codable, Identifiable {
 @MainActor
 final class TrashStore: ObservableObject {
     @Published private(set) var items: [TrashItem] = []
+    /// Levensduur-teller: totaal aantal opgeschoonde items (weggegooid min
+    /// teruggezet). Blijft staan ook nadat items definitief zijn verwijderd.
+    @Published private(set) var totalCleaned: Int
 
     let retentionDays = 30
 
     private let fileURL: URL
     private let calendar = Calendar.current
+    private let totalCleanedKey = "totalCleaned"
 
     init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         fileURL = docs.appendingPathComponent("trash.json")
+        totalCleaned = UserDefaults.standard.integer(forKey: totalCleanedKey)
         load()
     }
 
@@ -57,11 +62,16 @@ final class TrashStore: ObservableObject {
     func mark(_ asset: PhotoAsset, reason: String) {
         guard !contains(asset.id) else { return }
         items.append(TrashItem(id: asset.id, markedDate: Date(), reason: reason))
+        totalCleaned += 1
+        UserDefaults.standard.set(totalCleaned, forKey: totalCleanedKey)
         save()
     }
 
     func restore(_ id: String) {
+        guard contains(id) else { return }
         items.removeAll { $0.id == id }
+        totalCleaned = max(0, totalCleaned - 1)
+        UserDefaults.standard.set(totalCleaned, forKey: totalCleanedKey)
         save()
     }
 

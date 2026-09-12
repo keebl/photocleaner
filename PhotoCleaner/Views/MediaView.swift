@@ -1,26 +1,26 @@
 import SwiftUI
 
-enum MediaType: String, CaseIterable, Identifiable {
-    case opDezeDag
-    case random
-    case filmpjes
-    case dubbelen
-
+/// Primaire keuze: wat voor media (of duplicaten).
+enum MediaTab: String, CaseIterable, Identifiable {
+    case photos, videos, duplicates
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .opDezeDag: return "Op deze dag"
-        case .random:    return "Random"
-        case .filmpjes:  return "Filmpjes"
-        case .dubbelen:  return "Dubbelen"
+        case .photos:     return "Foto's"
+        case .videos:     return "Filmpjes"
+        case .duplicates: return "Dubbelen"
         }
     }
-    var icon: String {
+}
+
+/// Secundaire keuze binnen foto's/filmpjes.
+enum BrowseMode: String, CaseIterable, Identifiable {
+    case random, opDezeDag
+    var id: String { rawValue }
+    var label: String {
         switch self {
-        case .opDezeDag: return "calendar"
-        case .random:    return "shuffle"
-        case .filmpjes:  return "film"
-        case .dubbelen:  return "square.on.square"
+        case .random:    return "Random"
+        case .opDezeDag: return "Op deze dag"
         }
     }
 }
@@ -42,15 +42,16 @@ final class MediaViewModel: ObservableObject {
     var videos: [PhotoAsset] { assets.filter { $0.kind == .video } }
 }
 
-/// Het hoofd-tabblad. Bovenin kies je de bron (iPhone/NAS) en het type
-/// (Op deze dag / Random / Filmpjes / Dubbelen).
+/// Het hoofd-tabblad: bron + type bovenin, daaronder de swipe-stapel of dubbelen.
 struct MediaView: View {
     let source: PhotoSource
 
     @EnvironmentObject private var sources: SourceManager
+    @EnvironmentObject private var trash: TrashStore
     @StateObject private var vm: MediaViewModel
 
-    @AppStorage("mediaType") private var selectedTypeRaw = MediaType.opDezeDag.rawValue
+    @AppStorage("mediaTab") private var tabRaw = MediaTab.photos.rawValue
+    @AppStorage("browseMode") private var modeRaw = BrowseMode.opDezeDag.rawValue
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
     @State private var showFolderPicker = false
@@ -60,9 +61,13 @@ struct MediaView: View {
         _vm = StateObject(wrappedValue: MediaViewModel(source: source))
     }
 
-    private var type: MediaType {
-        get { MediaType(rawValue: selectedTypeRaw) ?? .opDezeDag }
-        nonmutating set { selectedTypeRaw = newValue.rawValue }
+    private var tab: MediaTab {
+        get { MediaTab(rawValue: tabRaw) ?? .photos }
+        nonmutating set { tabRaw = newValue.rawValue }
+    }
+    private var mode: BrowseMode {
+        get { BrowseMode(rawValue: modeRaw) ?? .opDezeDag }
+        nonmutating set { modeRaw = newValue.rawValue }
     }
 
     var body: some View {
@@ -85,26 +90,40 @@ struct MediaView: View {
         }
     }
 
-    // MARK: - Kop (bron + type + datum)
+    // MARK: - Kop
 
     private var header: some View {
         VStack(spacing: 10) {
             HStack {
                 sourceMenu
                 Spacer()
-                if type == .random {
-                    Button {
-                        randomSeed = UUID()
-                    } label: {
-                        Label("Nieuwe volgorde", systemImage: "shuffle").labelStyle(.iconOnly)
-                    }
-                }
+                Text("\(trash.totalCleaned) opgeschoond")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
             }
 
-            typeChips
+            Picker("Type", selection: Binding(get: { tab }, set: { tab = $0 })) {
+                ForEach(MediaTab.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.segmented)
 
-            if type == .opDezeDag {
-                dateBar
+            if tab != .duplicates {
+                HStack(spacing: 10) {
+                    Picker("Weergave", selection: Binding(get: { mode }, set: { mode = $0 })) {
+                        ForEach(BrowseMode.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if mode == .random {
+                        Button { randomSeed = UUID() } label: {
+                            Image(systemName: "shuffle").frame(width: 36, height: 30)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Nieuwe volgorde")
+                    }
+                }
+
+                if mode == .opDezeDag { dateBar }
             }
         }
         .padding(.horizontal)
@@ -114,9 +133,7 @@ struct MediaView: View {
 
     private var sourceMenu: some View {
         Menu {
-            Button {
-                sources.select(.iphone)
-            } label: {
+            Button { sources.select(.iphone) } label: {
                 Label("iPhone-bibliotheek", systemImage: "iphone")
             }
             Button {
@@ -124,9 +141,7 @@ struct MediaView: View {
             } label: {
                 Label(sources.nasFolderName ?? "NAS-map kiezen…", systemImage: "externaldrive")
             }
-            Button {
-                showFolderPicker = true
-            } label: {
+            Button { showFolderPicker = true } label: {
                 Label("Andere NAS-map…", systemImage: "folder.badge.plus")
             }
         } label: {
@@ -139,100 +154,75 @@ struct MediaView: View {
         }
     }
 
-    private var typeChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(MediaType.allCases) { option in
-                    Button {
-                        type = option
-                    } label: {
-                        Label(option.label, systemImage: option.icon)
-                            .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(type == option ? Color.accentColor : Color(.secondarySystemBackground),
-                                        in: Capsule())
-                            .foregroundStyle(type == option ? .white : .primary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    // MARK: - Inhoud per type
+    // MARK: - Inhoud
 
     @ViewBuilder
     private var content: some View {
         if !vm.hasLoaded {
             ProgressView("Laden…").frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if tab == .duplicates {
+            DuplicatesView(source: source)
         } else {
-            switch type {
-            case .opDezeDag: opDezeDagDeck
-            case .random:    randomDeck
-            case .filmpjes:  filmpjesDeck
-            case .dubbelen:  DuplicatesView(source: source)
-            }
+            deck
         }
     }
 
-    private var opDezeDagDeck: some View {
+    private var deck: some View {
+        let base = tab == .videos ? vm.videos : vm.photos
+        let items = mode == .opDezeDag ? onThisDay(base) : shuffled(base, seed: randomSeed)
+        let reason = tab == .videos ? "Filmpje" : (mode == .opDezeDag ? "Op deze dag" : "Random")
+        return ReviewDeck(
+            assets: items,
+            source: source,
+            reason: reason,
+            badge: { mode == .opDezeDag ? yearLabel(for: $0) : dateBadge(for: $0) },
+            emptyTitle: emptyTitle,
+            emptyMessage: emptyMessage
+        )
+        .id("\(tab.rawValue)-\(mode.rawValue)-\(mode == .opDezeDag ? dateKey : randomSeed.uuidString)-\(sources.kind.rawValue)")
+    }
+
+    private func onThisDay(_ base: [PhotoAsset]) -> [PhotoAsset] {
         let comps = Calendar.current.dateComponents([.month, .day], from: selectedDate)
-        let items = vm.photos.filter {
+        return base.filter {
             guard let d = $0.creationDate else { return false }
             let c = Calendar.current.dateComponents([.month, .day], from: d)
             return c.month == comps.month && c.day == comps.day
         }
-        return ReviewDeck(
-            assets: items,
-            source: source,
-            reason: "Op deze dag",
-            badge: { yearLabel(for: $0) },
-            emptyTitle: "Niets op deze dag",
-            emptyMessage: "Geen foto's die op \(dayTitle) in eerdere jaren zijn gemaakt."
-        )
-        .id("dag-\(dateKey)-\(sources.kind.rawValue)")
     }
 
-    private var randomDeck: some View {
-        ReviewDeck(
-            assets: shuffled(vm.photos, seed: randomSeed),
-            source: source,
-            reason: "Random",
-            badge: { dateBadge(for: $0) },
-            emptyTitle: "Geen foto's",
-            emptyMessage: "Er zijn geen foto's in deze bron."
-        )
-        .id("random-\(randomSeed)-\(sources.kind.rawValue)")
+    private var emptyTitle: String {
+        switch (tab, mode) {
+        case (.videos, _):        return "Geen filmpjes"
+        case (_, .opDezeDag):     return "Niets op deze dag"
+        default:                  return "Geen foto's"
+        }
     }
 
-    private var filmpjesDeck: some View {
-        ReviewDeck(
-            assets: vm.videos,
-            source: source,
-            reason: "Filmpje",
-            badge: { dateBadge(for: $0) },
-            emptyTitle: "Geen filmpjes",
-            emptyMessage: "Er zijn geen video's in deze bron."
-        )
-        .id("films-\(sources.kind.rawValue)")
+    private var emptyMessage: String {
+        switch (tab, mode) {
+        case (.videos, .opDezeDag): return "Geen filmpjes van \(dayTitle) in eerdere jaren."
+        case (.videos, .random):    return "Er zijn geen video's in deze bron."
+        case (_, .opDezeDag):       return "Geen foto's die op \(dayTitle) in eerdere jaren zijn gemaakt."
+        default:                    return "Er zijn geen foto's in deze bron."
+        }
     }
 
-    // MARK: - Datumbalk (alleen Op deze dag)
+    // MARK: - Datumbalk
 
     private var dateBar: some View {
         HStack {
             Button { shiftDay(-1) } label: {
-                Image(systemName: "chevron.left").font(.headline).frame(width: 40, height: 36)
+                Image(systemName: "chevron.left").font(.headline).frame(width: 40, height: 34)
             }
             .accessibilityLabel("Vorige dag")
 
             Spacer()
-            DatePicker("", selection: $selectedDate, displayedComponents: .date)
-                .labelsHidden()
+            DatePicker("", selection: $selectedDate, displayedComponents: .date).labelsHidden()
             Spacer()
 
             Button { shiftDay(1) } label: {
-                Image(systemName: "chevron.right").font(.headline).frame(width: 40, height: 36)
+                Image(systemName: "chevron.right").font(.headline).frame(width: 40, height: 34)
             }
             .accessibilityLabel("Volgende dag")
         }

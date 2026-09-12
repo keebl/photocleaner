@@ -40,7 +40,8 @@ final class DuplicatesViewModel: ObservableObject {
         defer { isLoading = false }
 
         let all = await source.fetchAllPhotos()
-        visible = all.filter { !hidden.contains($0.id) }
+        // Dubbelen gaat alleen over foto's; video's hebben hun eigen weergave.
+        visible = all.filter { !hidden.contains($0.id) && $0.kind == .photo }
         exactGroups = await refineExact(DuplicateDetector.findDuplicates(in: visible))
         hasScanned = true
     }

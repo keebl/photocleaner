@@ -19,6 +19,7 @@ struct ReviewDeck: View {
     @State private var history: [(id: String, kept: Bool)] = []
     @State private var sessionTotal = 0
     @State private var playing: PhotoAsset?
+    @State private var inspecting: PhotoAsset?
 
     private static let deckImageSize = CGSize(width: 1200, height: 1200)
 
@@ -40,6 +41,13 @@ struct ReviewDeck: View {
         .fullScreenCover(item: $playing) { asset in
             VideoPlayerScreen(asset: asset, source: source)
         }
+        .fullScreenCover(item: $inspecting) { asset in
+            PhotoZoomView(asset: asset, source: source)
+        }
+    }
+
+    private func inspect(_ asset: PhotoAsset) {
+        if asset.isVideo { playing = asset } else { inspecting = asset }
     }
 
     private func deck(current: PhotoAsset) -> some View {
@@ -61,7 +69,7 @@ struct ReviewDeck: View {
                     badge: badge(current),
                     onKeep: { keep(current) },
                     onDiscard: { discard(current) },
-                    onPlay: current.isVideo ? { playing = current } : nil
+                    onTap: { inspect(current) }
                 )
                 .id(current.id)
             }
@@ -179,7 +187,7 @@ private struct DeckCard: View {
     let badge: String?
     var onKeep: () -> Void
     var onDiscard: () -> Void
-    var onPlay: (() -> Void)?
+    var onTap: () -> Void
 
     @State private var offset: CGFloat = 0
     @State private var committing = false
@@ -195,7 +203,7 @@ private struct DeckCard: View {
             .offset(x: offset)
             .rotationEffect(.degrees(Double(offset / 22)))
             .gesture(dragGesture)
-            .onTapGesture { onPlay?() }
+            .onTapGesture { onTap() }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText)
             .accessibilityAction(named: "Behouden") { onKeep() }
@@ -236,11 +244,20 @@ private struct DeckCard: View {
 
     @ViewBuilder
     private var playButton: some View {
-        if onPlay != nil && offset == 0 {
-            Image(systemName: "play.circle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.white, .black.opacity(0.35))
-                .shadow(radius: 6)
+        if offset == 0 {
+            if asset.isVideo {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.white, .black.opacity(0.35))
+                    .shadow(radius: 6)
+            } else {
+                // Subtiele hint dat je kunt inzoomen.
+                Image(systemName: "arrow.up.left.and.arrow.down.right.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white, .black.opacity(0.35))
+                    .padding(10)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            }
         }
     }
 
