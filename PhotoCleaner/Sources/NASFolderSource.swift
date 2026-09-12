@@ -186,6 +186,11 @@ final class NASFolderSource: PhotoSource {
         return AVPlayerItem(url: url)
     }
 
+    func shareItems(for asset: PhotoAsset) async -> [Any] {
+        guard let url = URL(string: asset.id) else { return [] }
+        return [url]
+    }
+
     // MARK: - Perceptual hash
 
     func perceptualHash(for asset: PhotoAsset) async -> UInt64? {

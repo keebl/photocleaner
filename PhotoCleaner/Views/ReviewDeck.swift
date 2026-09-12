@@ -224,6 +224,7 @@ private struct DeckCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.9))
         .overlay(alignment: .top) { badgeView }
+        .overlay(alignment: .topTrailing) { shareOverlay }
         .overlay { feedback }
         .overlay { playButton }
         .clipShape(RoundedRectangle(cornerRadius: 22))
@@ -239,6 +240,18 @@ private struct DeckCard: View {
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(.ultraThinMaterial, in: Capsule())
                 .padding(.top, 12)
+        }
+    }
+
+    @ViewBuilder
+    private var shareOverlay: some View {
+        if offset == 0 {
+            ShareButton(asset: asset, source: source)
+                .font(.title3)
+                .foregroundStyle(.white)
+                .padding(8)
+                .background(.black.opacity(0.3), in: Circle())
+                .padding(10)
         }
     }
 
@@ -324,15 +337,18 @@ struct VideoPlayerScreen: View {
                 ProgressView().tint(.white)
             }
             VStack {
-                HStack {
+                HStack(spacing: 18) {
                     Spacer()
+                    ShareButton(asset: asset, source: source)
+                        .font(.title2)
+                        .foregroundStyle(.white)
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title)
                             .foregroundStyle(.white, .black.opacity(0.4))
                     }
-                    .padding()
                 }
+                .padding()
                 Spacer()
             }
         }

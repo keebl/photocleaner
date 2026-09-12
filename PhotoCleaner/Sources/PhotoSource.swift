@@ -42,6 +42,9 @@ protocol PhotoSource: AnyObject {
     /// Speelbare video (nil voor foto's of als niet beschikbaar).
     func playerItem(for asset: PhotoAsset) async -> AVPlayerItem?
 
+    /// Items om te delen (een bestand-URL of afbeelding). Leeg als niet beschikbaar.
+    func shareItems(for asset: PhotoAsset) async -> [Any]
+
     /// Perceptual hash (dHash) voor het vinden van *lijkende* foto's. `nil` als er
     /// geen beeld beschikbaar is.
     func perceptualHash(for asset: PhotoAsset) async -> UInt64?

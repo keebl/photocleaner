@@ -34,15 +34,18 @@ struct PhotoZoomView: View {
             }
 
             VStack {
-                HStack {
+                HStack(spacing: 18) {
                     Spacer()
+                    ShareButton(asset: asset, source: source)
+                        .font(.title2)
+                        .foregroundStyle(.white)
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title)
                             .foregroundStyle(.white, .black.opacity(0.4))
                     }
-                    .padding()
                 }
+                .padding()
                 Spacer()
             }
         }

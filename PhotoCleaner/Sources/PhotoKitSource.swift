@@ -2,6 +2,7 @@ import Photos
 import UIKit
 import CoreImage
 import AVFoundation
+import UniformTypeIdentifiers
 
 /// `PhotoSource`-implementatie bovenop Apple's PhotoKit (de iPhone-bibliotheek).
 final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver {
@@ -309,6 +310,51 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
             var resumed = false
             PHImageManager.default().requestPlayerItem(forVideo: phAsset, options: options) { item, _ in
                 if !resumed { resumed = true; continuation.resume(returning: item) }
+            }
+        }
+    }
+
+    // MARK: - Delen
+
+    func shareItems(for asset: PhotoAsset) async -> [Any] {
+        guard let phAsset = phAsset(for: asset.id) else { return [] }
+
+        if phAsset.mediaType == .video {
+            let options = PHVideoRequestOptions()
+            options.isNetworkAccessAllowed = true
+            return await withCheckedContinuation { continuation in
+                var resumed = false
+                PHImageManager.default().requestAVAsset(forVideo: phAsset, options: options) { avAsset, _, _ in
+                    guard !resumed else { return }
+                    resumed = true
+                    if let url = (avAsset as? AVURLAsset)?.url {
+                        continuation.resume(returning: [url])
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                }
+            }
+        }
+
+        let options = PHImageRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
+        return await withCheckedContinuation { continuation in
+            var resumed = false
+            PHImageManager.default().requestImageDataAndOrientation(for: phAsset, options: options) { data, uti, _, _ in
+                guard !resumed else { return }
+                resumed = true
+                guard let data else { continuation.resume(returning: []); return }
+                let ext = uti.flatMap { UTType($0)?.preferredFilenameExtension } ?? "jpg"
+                let url = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString)
+                    .appendingPathExtension(ext)
+                do {
+                    try data.write(to: url, options: .atomic)
+                    continuation.resume(returning: [url])
+                } catch {
+                    continuation.resume(returning: [])
+                }
             }
         }
     }

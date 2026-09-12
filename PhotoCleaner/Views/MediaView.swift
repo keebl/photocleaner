@@ -25,6 +25,26 @@ enum BrowseMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Hoe breed "op deze dag" getrokken wordt.
+enum DateScope: String, CaseIterable, Identifiable {
+    case day, month, year
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .day:   return "Dag"
+        case .month: return "Maand"
+        case .year:  return "Jaar"
+        }
+    }
+    var component: Calendar.Component {
+        switch self {
+        case .day:   return .day
+        case .month: return .month
+        case .year:  return .year
+        }
+    }
+}
+
 @MainActor
 final class MediaViewModel: ObservableObject {
     @Published private(set) var assets: [PhotoAsset] = []
@@ -52,9 +72,12 @@ struct MediaView: View {
 
     @AppStorage("mediaTab") private var tabRaw = MediaTab.photos.rawValue
     @AppStorage("browseMode") private var modeRaw = BrowseMode.opDezeDag.rawValue
+    @AppStorage("dateScope") private var scopeRaw = DateScope.day.rawValue
+    @AppStorage("sortOldFirst") private var sortOldFirst = false
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
     @State private var showFolderPicker = false
+    @State private var showDatePicker = false
 
     init(source: PhotoSource) {
         self.source = source
@@ -69,6 +92,10 @@ struct MediaView: View {
         get { BrowseMode(rawValue: modeRaw) ?? .opDezeDag }
         nonmutating set { modeRaw = newValue.rawValue }
     }
+    private var scope: DateScope {
+        get { DateScope(rawValue: scopeRaw) ?? .day }
+        nonmutating set { scopeRaw = newValue.rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -82,6 +109,21 @@ struct MediaView: View {
             .sheet(isPresented: $showFolderPicker) {
                 FolderPicker { url in sources.setNASFolder(url) }
                     .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showDatePicker) {
+                NavigationStack {
+                    DatePicker("Datum", selection: $selectedDate, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .padding()
+                        .navigationTitle("Kies een datum")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Klaar") { showDatePicker = false }
+                            }
+                        }
+                }
+                .presentationDetents([.medium, .large])
             }
         }
         .task { await vm.load() }
@@ -117,7 +159,25 @@ struct MediaView: View {
                 }
                 .pickerStyle(.segmented)
 
-                if mode == .opDezeDag { dateBar }
+                if mode == .opDezeDag {
+                    HStack(spacing: 10) {
+                        Picker("Bereik", selection: Binding(get: { scope }, set: { scope = $0 })) {
+                            ForEach(DateScope.allCases) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+
+                        Button {
+                            sortOldFirst.toggle()
+                        } label: {
+                            Image(systemName: sortOldFirst ? "arrow.up" : "arrow.down")
+                                .frame(width: 36, height: 30)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel(sortOldFirst ? "Oudste eerst" : "Nieuwste eerst")
+                    }
+
+                    periodBar
+                }
             }
         }
         .padding(.horizontal)
@@ -169,77 +229,108 @@ struct MediaView: View {
             assets: items,
             source: source,
             reason: reason,
-            badge: { mode == .opDezeDag ? yearLabel(for: $0) : dateBadge(for: $0) },
+            badge: { badge(for: $0) },
             emptyTitle: emptyTitle,
             emptyMessage: emptyMessage
         )
-        .id("\(tab.rawValue)-\(mode.rawValue)-\(mode == .opDezeDag ? dateKey : randomSeed.uuidString)-\(sources.kind.rawValue)")
+        .id("\(tab.rawValue)-\(mode.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)")
     }
 
+    private var deckKey: String {
+        mode == .opDezeDag ? "\(scope.rawValue)-\(periodKey)" : randomSeed.uuidString
+    }
+
+    /// Filtert op het gekozen bereik (dag/maand/jaar) en sorteert op richting.
     private func onThisDay(_ base: [PhotoAsset]) -> [PhotoAsset] {
-        let comps = Calendar.current.dateComponents([.month, .day], from: selectedDate)
-        return base.filter {
-            guard let d = $0.creationDate else { return false }
-            let c = Calendar.current.dateComponents([.month, .day], from: d)
-            return c.month == comps.month && c.day == comps.day
+        let cal = Calendar.current
+        let ref = cal.dateComponents([.year, .month, .day], from: selectedDate)
+        let filtered = base.filter { asset in
+            guard let d = asset.creationDate else { return false }
+            let c = cal.dateComponents([.year, .month, .day], from: d)
+            switch scope {
+            case .day:   return c.month == ref.month && c.day == ref.day
+            case .month: return c.month == ref.month
+            case .year:  return c.year == ref.year
+            }
         }
+        return filtered.sorted { a, b in
+            let da = a.creationDate ?? .distantPast
+            let db = b.creationDate ?? .distantPast
+            return sortOldFirst ? da < db : da > db
+        }
+    }
+
+    private func badge(for asset: PhotoAsset) -> String? {
+        if mode == .random { return dateBadge(for: asset) }
+        return scope == .year ? dateBadge(for: asset) : yearLabel(for: asset)
     }
 
     private var emptyTitle: String {
-        switch (tab, mode) {
-        case (.videos, _):        return "Geen filmpjes"
-        case (_, .opDezeDag):     return "Niets op deze dag"
-        default:                  return "Geen foto's"
-        }
+        if tab == .videos { return "Geen filmpjes" }
+        return mode == .opDezeDag ? "Niets gevonden" : "Geen foto's"
     }
 
     private var emptyMessage: String {
-        switch (tab, mode) {
-        case (.videos, .opDezeDag): return "Geen filmpjes van \(dayTitle) in eerdere jaren."
-        case (.videos, .random):    return "Er zijn geen video's in deze bron."
-        case (_, .opDezeDag):       return "Geen foto's die op \(dayTitle) in eerdere jaren zijn gemaakt."
-        default:                    return "Er zijn geen foto's in deze bron."
-        }
+        let kind = tab == .videos ? "filmpjes" : "foto's"
+        if mode == .random { return "Er zijn geen \(kind) in deze bron." }
+        return "Geen \(kind) voor \(periodTitle)."
     }
 
-    // MARK: - Datumbalk
+    // MARK: - Periodebalk
 
-    private var dateBar: some View {
+    private var periodBar: some View {
         HStack {
-            Button { shiftDay(-1) } label: {
-                Image(systemName: "chevron.left").font(.headline).frame(width: 40, height: 34)
+            Button { shiftPeriod(-1) } label: {
+                Image(systemName: "chevron.left").font(.headline).frame(width: 44, height: 34)
             }
-            .accessibilityLabel("Vorige dag")
+            .accessibilityLabel("Vorige")
 
             Spacer()
-            DatePicker("", selection: $selectedDate, displayedComponents: .date).labelsHidden()
+            Button { showDatePicker = true } label: {
+                Text(periodTitle).font(.headline)
+            }
+            .buttonStyle(.plain)
             Spacer()
 
-            Button { shiftDay(1) } label: {
-                Image(systemName: "chevron.right").font(.headline).frame(width: 40, height: 34)
+            Button { shiftPeriod(1) } label: {
+                Image(systemName: "chevron.right").font(.headline).frame(width: 44, height: 34)
             }
-            .accessibilityLabel("Volgende dag")
+            .accessibilityLabel("Volgende")
         }
     }
 
     // MARK: - Helpers
 
-    private var dateKey: String {
-        let c = Calendar.current.dateComponents([.month, .day], from: selectedDate)
-        return "\(c.month ?? 0)-\(c.day ?? 0)"
+    private var periodKey: String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
+        switch scope {
+        case .day:   return "\(c.month ?? 0)-\(c.day ?? 0)"
+        case .month: return "m\(c.month ?? 0)"
+        case .year:  return "y\(c.year ?? 0)"
+        }
     }
 
-    private func shiftDay(_ days: Int) {
-        if let d = Calendar.current.date(byAdding: .day, value: days, to: selectedDate) {
+    private func shiftPeriod(_ delta: Int) {
+        if let d = Calendar.current.date(byAdding: scope.component, value: delta, to: selectedDate) {
             selectedDate = d
         }
     }
 
-    private var dayTitle: String {
+    private var periodTitle: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "nl_NL")
-        f.dateFormat = "d MMMM"
-        return f.string(from: selectedDate)
+        switch scope {
+        case .day:
+            f.dateFormat = "d MMMM"
+            return f.string(from: selectedDate)
+        case .month:
+            f.dateFormat = "LLLL"
+            let s = f.string(from: selectedDate)
+            return s.prefix(1).uppercased() + s.dropFirst()
+        case .year:
+            f.dateFormat = "yyyy"
+            return f.string(from: selectedDate)
+        }
     }
 
     private func dateBadge(for asset: PhotoAsset) -> String? {
