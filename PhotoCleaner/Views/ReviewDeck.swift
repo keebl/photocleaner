@@ -88,10 +88,12 @@ struct ReviewDeck: View {
     }
 
     private var progressBar: some View {
-        let total = max(sessionTotal, 1)
-        let decided = sessionTotal - queue.count
+        // Groeit de wachtrij (nieuwe foto's/undo)? Houd het totaal minstens zo
+        // groot, zodat 'decided' nooit negatief of buiten bereik raakt.
+        let total = max(sessionTotal, queue.count, 1)
+        let decided = min(max(total - queue.count, 0), total)
         return VStack(spacing: 6) {
-            Text("\(min(decided + 1, sessionTotal)) van \(sessionTotal)")
+            Text("\(min(decided + 1, total)) van \(total)")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
             ProgressView(value: Double(decided), total: Double(total))
