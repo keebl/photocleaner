@@ -4,6 +4,32 @@ Stapsgewijs. De meeste stappen kun alleen jíj doen (ze hangen aan jouw Apple-ac
 en vereisen je wachtwoord/2FA); ik kan de code, iconen, teksten en build-instellingen
 voorbereiden.
 
+## Security, performance & hardening — status
+
+**Al gedaan (in de code):**
+- **Privacy-manifest** (`PrivacyInfo.xcprivacy`): geen tracking, geen dataverzameling;
+  required-reason API's gedeclareerd (UserDefaults, bestandstijden). Verplicht sinds 2024.
+- **Export-compliance**: `ITSAppUsesNonExemptEncryption = NO` — geen encryptie-vraag bij upload.
+- **Foto-toegang** met duidelijke uitleg (`NSPhotoLibraryUsageDescription`).
+- **Lokaal & sandboxed**: geen netwerk, accounts of analytics. NAS-toegang via
+  security-scoped bookmark (verloopt-bookmark wordt automatisch ververst).
+- **Robuustheid**: thread-safe caches (lock), annuleerbare beeldverzoeken,
+  achtergrond-scan met voortgang + stopknop, thumbnail-retry bij hapering,
+  geheugen-cache met limiet, geen iCloud-downloads tijdens scannen, foutmelding
+  bij mislukt verwijderen, 30-dagen prullenbak vóór definitief wissen.
+- **App-icoon** (1024px, geen alpha) en launch screen aanwezig.
+
+**Wat jij nog moet doen (account/store):**
+- Apple Developer Program (US$ 99/jr) + App Store Connect-app aanmaken.
+- **Privacybeleid-URL** (verplicht bij foto-toegang) — tekst kan ik leveren, jij host 'm.
+- In App Store Connect het **privacy-label** op "Data Not Collected" zetten (klopt met het manifest).
+- **Screenshots** (6.7"/6.9") — de simulator-shots zijn een basis.
+- Bundle ID naar je eigen domein (bijv. `nl.guusvanzeijl.photocleaner`) — kan ik omzetten.
+
+**Mogelijke volgende optimalisaties (optioneel):**
+- Perceptuele hashes al berekenen tijdens rustige momenten (nu bij eerste "Lijkend"-scan).
+- Video-duplicaten via een echte video-vingerafdruk (nu alleen exacte bestanden).
+
 ## 0. Wat je nodig hebt
 
 - **Apple Developer Program-lidmaatschap**: **US$ 99 / jaar**.
