@@ -85,6 +85,10 @@ struct MediaView: View {
             }
         }
         .task { await vm.load() }
+        .onChange(of: modeRaw) { _, newValue in
+            // Elke keer dat je Random opent, een verse volgorde.
+            if newValue == BrowseMode.random.rawValue { randomSeed = UUID() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
             Task { await vm.load() }
         }
@@ -108,20 +112,10 @@ struct MediaView: View {
             .pickerStyle(.segmented)
 
             if tab != .duplicates {
-                HStack(spacing: 10) {
-                    Picker("Weergave", selection: Binding(get: { mode }, set: { mode = $0 })) {
-                        ForEach(BrowseMode.allCases) { Text($0.label).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-
-                    if mode == .random {
-                        Button { randomSeed = UUID() } label: {
-                            Image(systemName: "shuffle").frame(width: 36, height: 30)
-                        }
-                        .buttonStyle(.bordered)
-                        .accessibilityLabel("Nieuwe volgorde")
-                    }
+                Picker("Weergave", selection: Binding(get: { mode }, set: { mode = $0 })) {
+                    ForEach(BrowseMode.allCases) { Text($0.label).tag($0) }
                 }
+                .pickerStyle(.segmented)
 
                 if mode == .opDezeDag { dateBar }
             }

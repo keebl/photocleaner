@@ -40,8 +40,8 @@ final class DuplicatesViewModel: ObservableObject {
         defer { isLoading = false }
 
         let all = await source.fetchAllPhotos()
-        // Dubbelen gaat alleen over foto's; video's hebben hun eigen weergave.
-        visible = all.filter { !hidden.contains($0.id) && $0.kind == .photo }
+        // Exacte dubbelen: foto's én video's (identieke bestanden).
+        visible = all.filter { !hidden.contains($0.id) }
         exactGroups = await refineExact(DuplicateDetector.findDuplicates(in: visible))
         hasScanned = true
     }
@@ -99,7 +99,8 @@ final class DuplicatesViewModel: ObservableObject {
         scanProgress = 0
         defer { isScanningSimilar = false }
 
-        let toScan = visible
+        // Lijkende foto's alleen op foto's; posterframe-hashes van video's zijn onbetrouwbaar.
+        let toScan = visible.filter { $0.kind == .photo }
         let total = max(toScan.count, 1)
         var hashed: [(asset: PhotoAsset, hash: UInt64)] = []
         hashed.reserveCapacity(toScan.count)
@@ -145,9 +146,24 @@ struct DuplicatesView: View {
     @EnvironmentObject private var trash: TrashStore
     @StateObject private var vm: DuplicatesViewModel
 
+    @State private var inspecting: PhotoAsset?
+    @State private var playing: PhotoAsset?
+
     init(source: PhotoSource) {
         self.source = source
         _vm = StateObject(wrappedValue: DuplicatesViewModel(source: source))
+    }
+
+    private func inspect(_ asset: PhotoAsset) {
+        if asset.isVideo { playing = asset } else { inspecting = asset }
+    }
+
+    private func resolve(_ group: DuplicateGroup, keeperID: String) {
+        Haptics.warning()
+        for asset in group.all where asset.id != keeperID {
+            trash.mark(asset, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
+        }
+        withAnimation { vm.remove(group) }
     }
 
     var body: some View {
@@ -184,6 +200,12 @@ struct DuplicatesView: View {
             Task { await vm.scan(excluding: trash.trashedIDs) }
         }
         .onDisappear { vm.cancelSimilar() }
+        .fullScreenCover(item: $inspecting) { asset in
+            PhotoZoomView(asset: asset, source: source)
+        }
+        .fullScreenCover(item: $playing) { asset in
+            VideoPlayerScreen(asset: asset, source: source)
+        }
     }
 
     @ViewBuilder
@@ -232,47 +254,114 @@ struct DuplicatesView: View {
 
     private var list: some View {
         List {
+            if vm.mode == .similar {
+                Text("Tik een foto aan om te vergroten. Kies met het vinkje welke je wilt behouden.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .listRowSeparator(.hidden)
+            }
             ForEach(vm.groups) { group in
-                Section {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(group.all) { asset in
-                                thumb(asset, isKeeper: asset.id == group.keep.id)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-
-                    Button(role: .destructive) {
-                        Haptics.warning()
-                        for dup in group.duplicates {
-                            trash.mark(dup, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
-                        }
-                        withAnimation { vm.remove(group) }
-                    } label: {
-                        Label("Behoud beste, gooi \(group.duplicates.count) weg", systemImage: "trash")
-                    }
-                } header: {
-                    Text("\(group.count) exemplaren · \(ByteFormatter.string(group.reclaimableBytes)) te winnen")
-                }
+                DuplicateGroupCell(
+                    group: group,
+                    source: source,
+                    selectable: vm.mode == .similar,
+                    onInspect: { inspect($0) },
+                    onResolve: { keeperID in resolve(group, keeperID: keeperID) }
+                )
             }
         }
     }
+}
 
-    private func thumb(_ asset: PhotoAsset, isKeeper: Bool) -> some View {
-        PhotoThumbnail(asset: asset, source: source)
+/// Eén duplicaat-groep: bekijk elk item (tik = vergroten/afspelen), kies welke je
+/// behoudt, en gooi de rest weg.
+private struct DuplicateGroupCell: View {
+    let group: DuplicateGroup
+    let source: PhotoSource
+    /// Bij lijkende foto's kies je zelf de beste; bij exacte maakt het niet uit.
+    let selectable: Bool
+    var onInspect: (PhotoAsset) -> Void
+    var onResolve: (_ keeperID: String) -> Void
+
+    @State private var keeperID: String
+
+    init(group: DuplicateGroup, source: PhotoSource, selectable: Bool,
+         onInspect: @escaping (PhotoAsset) -> Void,
+         onResolve: @escaping (String) -> Void) {
+        self.group = group
+        self.source = source
+        self.selectable = selectable
+        self.onInspect = onInspect
+        self.onResolve = onResolve
+        _keeperID = State(initialValue: group.keep.id)
+    }
+
+    private var reclaimable: Int64 {
+        group.all.filter { $0.id != keeperID }.reduce(0) { $0 + $1.byteSize }
+    }
+
+    var body: some View {
+        Section {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(group.all) { asset in
+                        candidate(asset)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Button(role: .destructive) {
+                onResolve(keeperID)
+            } label: {
+                Label("Behoud gekozen, gooi \(group.count - 1) weg", systemImage: "trash")
+            }
+        } header: {
+            Text("\(group.count) exemplaren · \(ByteFormatter.string(reclaimable)) te winnen")
+        }
+    }
+
+    private func candidate(_ asset: PhotoAsset) -> some View {
+        let isKeeper = asset.id == keeperID
+        return PhotoThumbnail(asset: asset, source: source)
             .frame(width: 132, height: 132)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(alignment: .topLeading) {
-                if isKeeper {
-                    Text("Behouden")
-                        .font(.caption2).bold()
-                        .padding(4)
-                        .background(.green, in: Capsule())
-                        .foregroundStyle(.white)
-                        .padding(4)
+            .overlay(alignment: .bottomTrailing) {
+                if asset.isVideo {
+                    Image(systemName: "play.circle.fill")
+                        .foregroundStyle(.white, .black.opacity(0.4))
+                        .padding(6)
                 }
             }
+            .overlay {
+                if isKeeper {
+                    RoundedRectangle(cornerRadius: 12).strokeBorder(.green, lineWidth: 3)
+                }
+            }
+            .overlay(alignment: .topLeading) { selectionBadge(asset, isKeeper: isKeeper) }
+            .contentShape(Rectangle())
+            .onTapGesture { onInspect(asset) }
+    }
+
+    @ViewBuilder
+    private func selectionBadge(_ asset: PhotoAsset, isKeeper: Bool) -> some View {
+        if selectable {
+            Button { keeperID = asset.id } label: {
+                Image(systemName: isKeeper ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(isKeeper ? .green : .white)
+                    .padding(5)
+                    .background(.black.opacity(0.3), in: Circle())
+                    .padding(5)
+            }
+            .buttonStyle(.plain)
+        } else if isKeeper {
+            Text("Behouden")
+                .font(.caption2).bold()
+                .padding(4)
+                .background(.green, in: Capsule())
+                .foregroundStyle(.white)
+                .padding(4)
+        }
     }
 }
 

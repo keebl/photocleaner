@@ -308,7 +308,7 @@ private struct DeckCard: View {
 }
 
 /// Volledig scherm om een video af te spelen.
-private struct VideoPlayerScreen: View {
+struct VideoPlayerScreen: View {
     let asset: PhotoAsset
     let source: PhotoSource
 
