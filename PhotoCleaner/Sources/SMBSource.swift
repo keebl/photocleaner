@@ -36,8 +36,20 @@ final class SMBSource: PhotoSource {
     }()
     private let hashCache = HashCache(filename: "smbHashes.json")
 
-    private let imageExtensions: Set<String> = ["jpg", "jpeg", "png", "heic", "heif", "tiff", "tif", "gif", "bmp", "webp"]
-    private let videoExtensions: Set<String> = ["mp4", "mov", "m4v", "avi", "hevc", "3gp", "mkv"]
+    private let imageExtensions: Set<String> = [
+        "jpg", "jpeg", "png", "heic", "heif", "tiff", "tif", "gif", "bmp", "webp", "avif",
+        // RAW-formaten van veelgebruikte camera's
+        "dng", "cr2", "cr3", "nef", "nrw", "arw", "srf", "sr2", "orf", "rw2", "raf", "pef", "raw"
+    ]
+    private let videoExtensions: Set<String> = ["mp4", "mov", "m4v", "avi", "hevc", "3gp", "mkv", "m2ts", "mts"]
+
+    /// Mappen die we bij het doorzoeken overslaan: verborgen mappen en de speciale
+    /// systeemmappen van NAS'en (Synology-thumbnails, prullenbak, snapshots).
+    private func isSkippableFolder(_ name: String) -> Bool {
+        if name.hasPrefix(".") { return true }
+        let junk: Set<String> = ["@eaDir", "#recycle", "#snapshot", "@tmp", "@sharesnap", "lost+found"]
+        return junk.contains(name)
+    }
 
     // MARK: - Instellen / verbinden
 
@@ -75,19 +87,29 @@ final class SMBSource: PhotoSource {
     func fetchAllPhotos() async -> [PhotoAsset] {
         if let cached = stateLock.withLock({ cachedAll }) { return cached }
         guard let creds = stateLock.withLock({ configuredCreds }) else { return [] }
+        guard let client = try? await connector.client() else { return [] }
 
-        do {
-            let client = try await connector.client()
-            let entries = try await client.contentsOfDirectory(
-                atPath: creds.normalizedFolder, recursive: true
-            )
-            let assets = entries.compactMap { makeAsset(from: $0) }
-                .sorted { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
-            stateLock.withLock { cachedAll = assets }
-            return assets
-        } catch {
-            return []
+        // Zelf map-voor-map doorzoeken in plaats van één grote recursieve aanroep:
+        // een onleesbare of verborgen (systeem)map wordt overgeslagen i.p.v. de hele
+        // zoekopdracht te laten mislukken.
+        var assets: [PhotoAsset] = []
+        var pending = [creds.normalizedFolder]
+        while let dir = pending.popLast() {
+            guard let entries = try? await client.contentsOfDirectory(atPath: dir, recursive: false)
+            else { continue }
+            for entry in entries {
+                guard let path = entry.path else { continue }
+                if entry.isDirectory {
+                    if isSkippableFolder(entry.name ?? "") { continue }
+                    pending.append(path)
+                } else if let asset = makeAsset(from: entry) {
+                    assets.append(asset)
+                }
+            }
         }
+        assets.sort { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
+        stateLock.withLock { cachedAll = assets }
+        return assets
     }
 
     func assets(withIDs ids: [String]) async -> [PhotoAsset] {
