@@ -8,8 +8,7 @@ extension Notification.Name {
 
 /// Toegang tot een fotoverzameling, onafhankelijk van waar de foto's staan.
 ///
-/// `PhotoKitSource` is de eerste implementatie (de iPhone-bibliotheek). Later
-/// kunnen `GooglePhotosSource`, `NASFolderSource`, ... hier ook op mappen.
+/// `PhotoKitSource` leest de iPhone-bibliotheek; `SMBSource` een NAS via SMB.
 protocol PhotoSource: AnyObject {
     /// Naam voor in de UI, bijv. "iPhone-bibliotheek".
     var displayName: String { get }

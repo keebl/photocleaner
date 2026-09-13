@@ -1,7 +1,7 @@
 import Foundation
 
-/// De fotobronnen die de app (nu of later) kan gebruiken. De iPhone-bibliotheek
-/// is actief; Google Foto's en NAS zijn voorbereid via de `PhotoSource`-abstractie.
+/// De fotobronnen die de app kan gebruiken: de iPhone-bibliotheek en een NAS die
+/// je rechtstreeks in de app koppelt via SMB.
 enum SourceKind: String, CaseIterable, Identifiable {
     case iphone
     case nas
@@ -11,7 +11,7 @@ enum SourceKind: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .iphone: return "iPhone-bibliotheek"
-        case .nas:    return "NAS-map"
+        case .nas:    return "NAS (SMB)"
         }
     }
 

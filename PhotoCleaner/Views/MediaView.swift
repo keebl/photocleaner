@@ -67,7 +67,7 @@ struct MediaView: View {
     @AppStorage("sortOldFirst") private var sortOldFirst = false
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
-    @State private var showFolderPicker = false
+    @State private var showSMBConnect = false
     @State private var showDatePicker = false
 
     init(source: PhotoSource) {
@@ -99,9 +99,8 @@ struct MediaView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
-            .sheet(isPresented: $showFolderPicker) {
-                FolderPicker { url in sources.setNASFolder(url) }
-                    .ignoresSafeArea()
+            .sheet(isPresented: $showSMBConnect) {
+                SMBConnectView(source: sources.smb) { sources.activateSMB() }
             }
             .sheet(isPresented: $showDatePicker) {
                 NavigationStack {
@@ -156,13 +155,17 @@ struct MediaView: View {
             Button { sources.select(.iphone) } label: {
                 Label("iPhone-bibliotheek", systemImage: "iphone")
             }
-            Button {
-                if sources.nasFolderName == nil { showFolderPicker = true } else { sources.select(.nas) }
-            } label: {
-                Label(sources.nasFolderName ?? "NAS-map kiezen…", systemImage: "externaldrive")
-            }
-            Button { showFolderPicker = true } label: {
-                Label("Andere NAS-map…", systemImage: "folder.badge.plus")
+            if sources.hasSMB {
+                Button { sources.select(.nas) } label: {
+                    Label(sources.smbName ?? "NAS (SMB)", systemImage: "externaldrive.connected.to.line.below")
+                }
+                Button { showSMBConnect = true } label: {
+                    Label("NAS-koppeling wijzigen…", systemImage: "gearshape")
+                }
+            } else {
+                Button { showSMBConnect = true } label: {
+                    Label("NAS koppelen…", systemImage: "externaldrive.badge.plus")
+                }
             }
         } label: {
             HStack(spacing: 5) {

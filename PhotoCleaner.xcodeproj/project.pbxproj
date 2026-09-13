@@ -6,6 +6,10 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA00000000000000000000F2 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000F1 /* AMSMB2 */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		AA00000000000000000000E1 /* PhotoCleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PhotoCleaner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -19,6 +23,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA00000000000000000000F2 /* AMSMB2 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -60,6 +65,9 @@
 				AA00000000000000000000E2 /* PhotoCleaner */,
 			);
 			name = PhotoCleaner;
+			packageProductDependencies = (
+				AA00000000000000000000F1 /* AMSMB2 */,
+			);
 			productName = PhotoCleaner;
 			productReference = AA00000000000000000000E1 /* PhotoCleaner.app */;
 			productType = "com.apple.product-type.application";
@@ -88,6 +96,9 @@
 				Base,
 			);
 			mainGroup = AA00000000000000000000E4;
+			packageReferences = (
+				AA00000000000000000000F0 /* XCRemoteSwiftPackageReference "AMSMB2" */,
+			);
 			productRefGroup = AA00000000000000000000E5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -315,6 +326,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA00000000000000000000F0 /* XCRemoteSwiftPackageReference "AMSMB2" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/amosavian/AMSMB2.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA00000000000000000000F1 /* AMSMB2 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA00000000000000000000F0 /* XCRemoteSwiftPackageReference "AMSMB2" */;
+			productName = AMSMB2;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA00000000000000000000EA /* Project object */;
 }

@@ -24,7 +24,7 @@ struct PhotoCleanerApp: App {
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
                 sources.iphone.flushCaches()
-                sources.nas.flushCaches()
+                sources.smb.flushCaches()
             }
         }
     }

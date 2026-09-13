@@ -7,7 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var theme: ThemeManager
     @EnvironmentObject private var sources: SourceManager
 
-    @State private var showFolderPicker = false
+    @State private var showSMBConnect = false
 
     var body: some View {
         NavigationStack {
@@ -56,7 +56,7 @@ struct SettingsView: View {
                                     Text(kind.displayName)
                                         .foregroundStyle(.primary)
                                     if kind == .nas {
-                                        Text(sources.nasFolderName ?? "Geen map gekozen")
+                                        Text(sources.smbName ?? "Nog niet gekoppeld")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -72,15 +72,15 @@ struct SettingsView: View {
                     }
 
                     Button {
-                        showFolderPicker = true
+                        showSMBConnect = true
                     } label: {
-                        Label(sources.nasFolderName == nil ? "NAS-map kiezen…" : "Andere map kiezen…",
-                              systemImage: "folder.badge.plus")
+                        Label(sources.hasSMB ? "NAS-koppeling wijzigen…" : "NAS koppelen…",
+                              systemImage: sources.hasSMB ? "gearshape" : "externaldrive.badge.plus")
                     }
                 } header: {
                     Text("Fotobron")
                 } footer: {
-                    Text("Koppel je NAS eenmalig in de iOS Bestanden-app (SMB) en kies hier die map. Alles blijft lokaal binnen de app.")
+                    Text("Koppel je NAS rechtstreeks in de app via SMB: serveradres, share en inloggegevens. Je wachtwoord staat veilig in de Keychain.")
                 }
 
                 Section("Over") {
@@ -89,18 +89,15 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Instellingen")
-            .sheet(isPresented: $showFolderPicker) {
-                FolderPicker { url in
-                    sources.setNASFolder(url)
-                }
-                .ignoresSafeArea()
+            .sheet(isPresented: $showSMBConnect) {
+                SMBConnectView(source: sources.smb) { sources.activateSMB() }
             }
         }
     }
 
     private func selectSource(_ kind: SourceKind) {
-        if kind == .nas && sources.nasFolderName == nil {
-            showFolderPicker = true
+        if kind == .nas && !sources.hasSMB {
+            showSMBConnect = true
         } else {
             sources.select(kind)
         }
