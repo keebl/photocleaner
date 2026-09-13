@@ -8,7 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		AA00000000000000000000F2 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000F1 /* AMSMB2 */; };
+		AA00000000000000000000F3 /* AMSMB2 in Embed Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000F1 /* AMSMB2 */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA00000000000000000000F4 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AA00000000000000000000F3 /* AMSMB2 in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AA00000000000000000000E1 /* PhotoCleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PhotoCleaner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -56,6 +71,7 @@
 				AA00000000000000000000E8 /* Sources */,
 				AA00000000000000000000E3 /* Frameworks */,
 				AA00000000000000000000E9 /* Resources */,
+				AA00000000000000000000F4 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
