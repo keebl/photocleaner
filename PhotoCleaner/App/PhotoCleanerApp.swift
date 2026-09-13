@@ -4,6 +4,7 @@ import SwiftUI
 struct PhotoCleanerApp: App {
     @StateObject private var library = PhotoLibrary()
     @StateObject private var trash = TrashStore()
+    @StateObject private var keep = KeepStore()
     @StateObject private var notifications = NotificationManager()
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var sources = SourceManager()
@@ -15,6 +16,7 @@ struct PhotoCleanerApp: App {
             RootView()
                 .environmentObject(library)
                 .environmentObject(trash)
+                .environmentObject(keep)
                 .environmentObject(notifications)
                 .environmentObject(themeManager)
                 .environmentObject(sources)

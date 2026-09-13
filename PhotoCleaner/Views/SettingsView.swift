@@ -4,10 +4,12 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var notifications: NotificationManager
     @EnvironmentObject private var trash: TrashStore
+    @EnvironmentObject private var keep: KeepStore
     @EnvironmentObject private var theme: ThemeManager
     @EnvironmentObject private var sources: SourceManager
 
     @State private var showSMBConnect = false
+    @State private var confirmResetKept = false
 
     var body: some View {
         NavigationStack {
@@ -83,6 +85,20 @@ struct SettingsView: View {
                     Text("Koppel je NAS rechtstreeks in de app via SMB: serveradres, share en inloggegevens. Je wachtwoord staat veilig in de Keychain.")
                 }
 
+                Section {
+                    LabeledContent("Behouden foto's", value: "\(keep.ids.count)")
+                    Button(role: .destructive) {
+                        confirmResetKept = true
+                    } label: {
+                        Label("Behoud-keuzes wissen", systemImage: "arrow.counterclockwise")
+                    }
+                    .disabled(keep.ids.isEmpty)
+                } header: {
+                    Text("Opschonen")
+                } footer: {
+                    Text("Foto's die je hebt behouden komen niet meer terug in de opschoon-weergaven. Wissen laat ze weer verschijnen.")
+                }
+
                 Section("Over") {
                     LabeledContent("Prullenbak-retentie", value: "\(trash.retentionDays) dagen")
                     LabeledContent("Versie", value: appVersion)
@@ -91,6 +107,19 @@ struct SettingsView: View {
             .navigationTitle("Instellingen")
             .sheet(isPresented: $showSMBConnect) {
                 SMBConnectView(source: sources.smb) { sources.activateSMB() }
+            }
+            .confirmationDialog(
+                "Alle \(keep.ids.count) behoud-keuzes wissen?",
+                isPresented: $confirmResetKept,
+                titleVisibility: .visible
+            ) {
+                Button("Wissen", role: .destructive) {
+                    Haptics.warning()
+                    keep.reset()
+                }
+                Button("Annuleren", role: .cancel) {}
+            } message: {
+                Text("De foto's zelf blijven ongemoeid; ze verschijnen weer in de opschoon-weergaven.")
             }
         }
     }

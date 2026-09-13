@@ -14,8 +14,8 @@ struct ReviewDeck: View {
     var emptyMessage = "Er zijn hier geen items."
 
     @EnvironmentObject private var trash: TrashStore
+    @EnvironmentObject private var keep: KeepStore
 
-    @State private var keptIDs: Set<String> = []
     @State private var history: [(id: String, kept: Bool)] = []
     @State private var sessionTotal = 0
     @State private var playing: PhotoAsset?
@@ -24,7 +24,7 @@ struct ReviewDeck: View {
     private static let deckImageSize = CGSize(width: 1200, height: 1200)
 
     private var queue: [PhotoAsset] {
-        assets.filter { !keptIDs.contains($0.id) && !trash.contains($0.id) }
+        assets.filter { !keep.contains($0.id) && !trash.contains($0.id) }
     }
     private var current: PhotoAsset? { queue.first }
 
@@ -67,7 +67,7 @@ struct ReviewDeck: View {
                     asset: current,
                     source: source,
                     badge: badge(current),
-                    onKeep: { keep(current) },
+                    onKeep: { keepAsset(current) },
                     onDiscard: { discard(current) },
                     onTap: { inspect(current) }
                 )
@@ -152,10 +152,10 @@ struct ReviewDeck: View {
 
     // MARK: - Beslissingen
 
-    private func keep(_ asset: PhotoAsset) {
+    private func keepAsset(_ asset: PhotoAsset) {
         Haptics.tap()
         withAnimation(.snappy) {
-            keptIDs.insert(asset.id)
+            keep.keep(asset.id)
             history.append((asset.id, true))
         }
     }
@@ -172,7 +172,7 @@ struct ReviewDeck: View {
         guard let last = history.popLast() else { return }
         Haptics.tap()
         withAnimation(.snappy) {
-            if last.kept { keptIDs.remove(last.id) } else { trash.restore(last.id) }
+            if last.kept { keep.unkeep(last.id) } else { trash.restore(last.id) }
         }
     }
 
