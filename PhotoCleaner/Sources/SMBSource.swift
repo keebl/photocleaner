@@ -102,6 +102,9 @@ final class SMBSource: PhotoSource {
         }
 
         let assets = await walk(creds)
+        // Bij annulering (bijv. wisselen van bron tijdens de scan) geen halve
+        // lijst cachen.
+        guard !Task.isCancelled else { return assets }
         stateLock.withLock { cachedAll = assets }
         saveDiskListing(assets, for: creds)
         return assets
@@ -120,6 +123,7 @@ final class SMBSource: PhotoSource {
         var assets: [PhotoAsset] = []
         var level = [creds.normalizedFolder]
         while !level.isEmpty {
+            if Task.isCancelled { return assets }
             var next: [String] = []
             for chunk in level.chunked(into: pool.count) {
                 let found = await withTaskGroup(of: (files: [PhotoAsset], subs: [String]).self) { group in
