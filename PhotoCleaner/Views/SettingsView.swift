@@ -79,10 +79,19 @@ struct SettingsView: View {
                         Label(sources.hasSMB ? "NAS-koppeling wijzigen…" : "NAS koppelen…",
                               systemImage: sources.hasSMB ? "gearshape" : "externaldrive.badge.plus")
                     }
+
+                    if sources.hasSMB {
+                        Button {
+                            Haptics.tap()
+                            sources.smb.clearCaches()
+                        } label: {
+                            Label("NAS-cache legen", systemImage: "arrow.clockwise.circle")
+                        }
+                    }
                 } header: {
                     Text("Fotobron")
                 } footer: {
-                    Text("Koppel je NAS rechtstreeks in de app via SMB: serveradres, share en inloggegevens. Je wachtwoord staat veilig in de Keychain.")
+                    Text("Koppel je NAS rechtstreeks in de app via SMB: serveradres, share en inloggegevens. Je wachtwoord staat veilig in de Keychain. ‘NAS-cache legen’ gooit de bewaarde mappenlijst en previews weg voor een verse start (foto’s blijven ongemoeid).")
                 }
 
                 Section {

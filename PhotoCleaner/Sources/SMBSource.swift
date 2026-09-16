@@ -441,6 +441,16 @@ final class SMBSource: PhotoSource {
         guard let creds else { return }
         try? FileManager.default.removeItem(at: diskListingURL(for: creds))
     }
+
+    /// Wist alle NAS-caches: mappenlijst + previews (op schijf én in geheugen). De
+    /// koppeling en foto's blijven ongemoeid; de volgende scan/preview komt vers van
+    /// de NAS. Handig om te testen of een echt-verse start soepel is.
+    func clearCaches() {
+        invalidateCache()                 // geheugen- en schijf-mappenlijst
+        thumbnailCache.removeAllObjects() // previews in geheugen
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.removeItem(at: caches.appendingPathComponent("smbThumbs", isDirectory: true))
+    }
 }
 
 /// Kleine pool van SMB-verbindingen zodat meerdere leesacties (mappen listen,
