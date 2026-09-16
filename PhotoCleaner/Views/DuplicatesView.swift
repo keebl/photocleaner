@@ -13,6 +13,7 @@ final class DuplicatesViewModel: ObservableObject {
     @Published private(set) var similarGroups: [DuplicateGroup] = []
     @Published private(set) var isLoading = false          // eerste (exacte) scan
     @Published private(set) var hasScanned = false          // eenmaal geladen? dan niet meer blanken
+    @Published private(set) var isRefreshing = false        // handmatige 'opnieuw scannen'
     @Published private(set) var isScanningSimilar = false   // zwaardere perceptuele scan
     @Published private(set) var scanProgress: Double = 0
 
@@ -68,6 +69,8 @@ final class DuplicatesViewModel: ObservableObject {
 
     /// Handmatige verversing: cache weggooien en opnieuw scannen.
     func refresh(excluding hidden: Set<String>) async {
+        isRefreshing = true
+        defer { isRefreshing = false }
         source.invalidateCache()
         await scan(excluding: hidden)
         if mode == .similar { ensureSimilarLoaded() }
@@ -185,12 +188,16 @@ struct DuplicatesView: View {
             }
             .navigationTitle("Dubbelen")
             .toolbar {
-                Button {
-                    Task { await vm.refresh(excluding: trash.trashedIDs) }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
+                if vm.isRefreshing {
+                    ProgressView()
+                } else {
+                    Button {
+                        Task { await vm.refresh(excluding: trash.trashedIDs) }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .accessibilityLabel("Opnieuw scannen")
                 }
-                .accessibilityLabel("Opnieuw scannen")
             }
         }
         .task {
@@ -215,8 +222,8 @@ struct DuplicatesView: View {
 
     @ViewBuilder
     private var content: some View {
-        if vm.isLoading && !vm.hasScanned {
-            loading("Bibliotheek scannen…")
+        if vm.isLoading && (!vm.hasScanned || vm.isRefreshing) {
+            loading(vm.isRefreshing ? "Opnieuw scannen…" : "Bibliotheek scannen…")
         } else if vm.mode == .similar && vm.isScanningSimilar {
             scanningSimilar
         } else if vm.groups.isEmpty {

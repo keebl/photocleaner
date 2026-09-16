@@ -33,7 +33,7 @@ final class SMBSource: PhotoSource {
     private var configuredCreds: SMBCredentials?
 
     init() {
-        pool = SMBPool(connector: connector, max: 4)
+        pool = SMBPool(connector: connector, max: 6)
     }
 
     private let thumbnailCache: NSCache<NSString, UIImage> = {
