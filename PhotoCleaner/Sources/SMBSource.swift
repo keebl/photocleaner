@@ -1,6 +1,7 @@
 import UIKit
 import ImageIO
 import AVFoundation
+import UniformTypeIdentifiers
 import AMSMB2
 
 enum SMBError: LocalizedError {
@@ -28,6 +29,10 @@ final class SMBSource: PhotoSource {
     /// Pool van extra verbindingen zodat mappen listen én previews downloaden
     /// parallel kunnen (met bovengrens, zodat de NAS niet overbelast raakt).
     private let pool: SMBPool
+    /// Begrenst hoeveel video-posters tegelijk worden gemaakt (zwaarder dan foto's).
+    private let videoGate = SMBGate(max: 2)
+    /// Serie-queue voor de resource-loader-callbacks van video-posters.
+    private static let loaderQueue = DispatchQueue(label: "photocleaner.smb.videoloader")
     private let stateLock = NSLock()
     private var cachedAll: [PhotoAsset]?
     private var configuredCreds: SMBCredentials?
@@ -237,21 +242,25 @@ final class SMBSource: PhotoSource {
 
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
         if let cached = cachedThumbnail(for: asset, targetSize: targetSize) { return cached }
-        // Video's: geen poster over het netwerk halen (te zwaar). De UI toont dan
-        // een filmsymbool; afspelen downloadt het bestand wél op verzoek.
-        guard !asset.isVideo else { return nil }
 
         let maxPixel = Int(max(targetSize.width, targetSize.height))
 
-        // 1) Schijfcache: een eerder gegenereerde preview staat direct klaar, ook
-        //    na herstart. Zo hoeft elke foto maar één keer van de NAS te komen.
+        // 1) Schijfcache: een eerder gegenereerde preview (foto óf video-poster)
+        //    staat direct klaar, ook na herstart. Zo komt elk item maar één keer
+        //    (deels) van de NAS.
         let diskURL = thumbURL(for: asset, maxPixel: maxPixel)
         if let image = UIImage(contentsOfFile: diskURL.path) {
             thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
             return image
         }
 
-        guard let image = await downloadThumbnail(for: asset, maxPixel: maxPixel) else { return nil }
+        // 2) Genereren: video → posterframe (alleen de benodigde stukjes streamen),
+        //    foto → miniatuur (prefix, anders volledig).
+        let generated = asset.isVideo
+            ? await videoPoster(for: asset, maxPixel: maxPixel)
+            : await downloadThumbnail(for: asset, maxPixel: maxPixel)
+        guard let image = generated else { return nil }
+
         thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
         writeThumb(image, to: diskURL)
         return image
@@ -285,6 +294,56 @@ final class SMBSource: PhotoSource {
         ]
         guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
         return UIImage(cgImage: cg)
+    }
+
+    // MARK: - Video-poster (streamt alleen de benodigde byte-ranges)
+
+    /// Maakt een posterframe van een video op de NAS zónder het hele bestand te
+    /// downloaden: AVFoundation vraagt via een resource-loader alleen de nodige
+    /// stukjes op, die wij uit de share lezen. `nil` als het niet lukt (dan toont de
+    /// UI een film-icoon). Begrensd tot een paar tegelijk.
+    private func videoPoster(for asset: PhotoAsset, maxPixel: Int) async -> UIImage? {
+        guard asset.byteSize > 0 else { return nil }
+        let ext = (asset.id as NSString).pathExtension.lowercased()
+        let contentType = UTType(filenameExtension: ext)?.identifier ?? "public.movie"
+
+        await videoGate.acquire()
+        let image = await withCheckedContinuation { (cont: CheckedContinuation<UIImage?, Never>) in
+            guard let url = URL(string: "smbposter://\(UUID().uuidString)") else {
+                cont.resume(returning: nil); return
+            }
+            let avAsset = AVURLAsset(url: url)
+            let loader = SMBVideoLoader(path: asset.id, size: asset.byteSize, contentType: contentType) {
+                [weak self] path, offset, length in
+                await self?.readRange(path: path, offset: offset, length: length) ?? nil
+            }
+            avAsset.resourceLoader.setDelegate(loader, queue: Self.loaderQueue)
+
+            let generator = AVAssetImageGenerator(asset: avAsset)
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: maxPixel, height: maxPixel)
+            generator.requestedTimeToleranceBefore = CMTime(seconds: 3, preferredTimescale: 600)
+            generator.requestedTimeToleranceAfter = CMTime(seconds: 3, preferredTimescale: 600)
+            let time = CMTime(seconds: 1, preferredTimescale: 600)
+
+            var resumed = false
+            generator.generateCGImagesAsynchronously(forTimes: [NSValue(time: time)]) { _, cg, _, _, _ in
+                _ = (loader, avAsset, generator)   // vasthouden tijdens het genereren
+                guard !resumed else { return }
+                resumed = true
+                cont.resume(returning: cg.map { UIImage(cgImage: $0) })
+            }
+        }
+        await videoGate.release()
+        return image
+    }
+
+    /// Leest een willekeurige byte-range uit een bestand op de share.
+    private func readRange(path: String, offset: Int64, length: Int) async -> Data? {
+        guard length > 0 else { return Data() }
+        return await pool.withConnection { client in
+            try await client.contents(atPath: path, range: offset..<(offset + Int64(length)))
+        }
     }
 
     // MARK: - Preview-schijfcache
@@ -450,6 +509,87 @@ final class SMBSource: PhotoSource {
         thumbnailCache.removeAllObjects() // previews in geheugen
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         try? FileManager.default.removeItem(at: caches.appendingPathComponent("smbThumbs", isDirectory: true))
+    }
+}
+
+/// Eenvoudige async-poort (semafoor) om het aantal gelijktijdige zware taken te
+/// begrenzen, bijv. het maken van video-posters.
+private actor SMBGate {
+    private let maxCount: Int
+    private var inUse = 0
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(max: Int) { self.maxCount = Swift.max(1, max) }
+
+    func acquire() async {
+        if inUse < maxCount { inUse += 1; return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func release() {
+        if !waiters.isEmpty {
+            waiters.removeFirst().resume()   // slot wordt doorgegeven
+        } else {
+            inUse = Swift.max(0, inUse - 1)
+        }
+    }
+}
+
+/// Serveert byte-ranges van een NAS-bestand aan AVFoundation, zodat een video-poster
+/// gemaakt kan worden zonder het hele bestand te downloaden. Levert alleen de stukjes
+/// die de image-generator opvraagt.
+private final class SMBVideoLoader: NSObject, AVAssetResourceLoaderDelegate {
+    private let path: String
+    private let size: Int64
+    private let contentType: String
+    private let read: (String, Int64, Int) async -> Data?
+
+    init(path: String, size: Int64, contentType: String,
+         read: @escaping (String, Int64, Int) async -> Data?) {
+        self.path = path
+        self.size = size
+        self.contentType = contentType
+        self.read = read
+    }
+
+    func resourceLoader(_ resourceLoader: AVAssetResourceLoader,
+                        shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
+        if let info = loadingRequest.contentInformationRequest {
+            info.contentType = contentType
+            info.contentLength = size
+            info.isByteRangeAccessSupported = true
+        }
+        guard let dataRequest = loadingRequest.dataRequest else {
+            loadingRequest.finishLoading()
+            return true
+        }
+
+        let offset = dataRequest.currentOffset
+        let length = dataRequest.requestsAllDataToEndOfResource
+            ? Int(Swift.max(0, size - offset))
+            : dataRequest.requestedLength
+
+        Task { [read, path] in
+            var pos = offset
+            var remaining = length
+            while remaining > 0 {
+                if loadingRequest.isCancelled { return }
+                let chunk = Swift.min(remaining, 4 * 1024 * 1024)
+                guard let data = await read(path, pos, chunk), !data.isEmpty else {
+                    if !loadingRequest.isCancelled {
+                        loadingRequest.finishLoading(with: NSError(domain: "smbvideo", code: -1))
+                    }
+                    return
+                }
+                if loadingRequest.isCancelled { return }
+                dataRequest.respond(with: data)
+                pos += Int64(data.count)
+                remaining -= data.count
+                if data.count < chunk { break }   // einde bestand
+            }
+            if !loadingRequest.isCancelled { loadingRequest.finishLoading() }
+        }
+        return true
     }
 }
 
