@@ -25,9 +25,16 @@ final class SMBSource: PhotoSource {
     let displayName = "NAS (SMB)"
 
     private let connector = SMBConnector()
+    /// Pool van extra verbindingen zodat mappen listen én previews downloaden
+    /// parallel kunnen (met bovengrens, zodat de NAS niet overbelast raakt).
+    private let pool: SMBPool
     private let stateLock = NSLock()
     private var cachedAll: [PhotoAsset]?
     private var configuredCreds: SMBCredentials?
+
+    init() {
+        pool = SMBPool(connector: connector, max: 4)
+    }
 
     private let thumbnailCache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
@@ -73,6 +80,7 @@ final class SMBSource: PhotoSource {
         clearDiskListing(for: creds)   // nieuwe koppeling → verse scan
         stateLock.withLock { configuredCreds = creds; cachedAll = nil }
         thumbnailCache.removeAllObjects()
+        await pool.drain()             // pool opnieuw opbouwen met de nieuwe gegevens
     }
 
     /// Verbreekt en wist de configuratie volledig.
@@ -83,12 +91,10 @@ final class SMBSource: PhotoSource {
         clearDiskListing(for: old)
         SMBCredentials.clear()
         thumbnailCache.removeAllObjects()
-        Task { await connector.reset() }
+        Task { await connector.reset(); await pool.drain() }
     }
 
     // MARK: - Ophalen
-
-    private static let walkPoolSize = 5
 
     func fetchAllPhotos() async -> [PhotoAsset] {
         if let cached = stateLock.withLock({ cachedAll }) { return cached }
@@ -110,36 +116,31 @@ final class SMBSource: PhotoSource {
         return assets
     }
 
-    /// Doorzoekt de gekozen map + submappen, met meerdere mappen tegelijk via een
-    /// kleine pool van verbindingen (fors sneller dan één-voor-één). Onleesbare of
-    /// verborgen (systeem)mappen worden overgeslagen i.p.v. de scan te laten falen.
+    /// Doorzoekt de gekozen map + submappen. Per niveau worden alle mappen parallel
+    /// gelezen; de verbindingspool begrenst hoeveel er echt tegelijk lopen.
+    /// Onleesbare of verborgen (systeem)mappen worden overgeslagen i.p.v. de scan
+    /// te laten falen. Stopt netjes bij annulering (bijv. bronwissel).
     private func walk(_ creds: SMBCredentials) async -> [PhotoAsset] {
-        guard let first = try? await connector.client() else { return [] }
-        var pool: [SMB2Manager] = [first]
-        for _ in 1..<Self.walkPoolSize {
-            if let extra = try? await connector.makeConnectedClient() { pool.append(extra) }
-        }
-
         var assets: [PhotoAsset] = []
         var level = [creds.normalizedFolder]
         while !level.isEmpty {
             if Task.isCancelled { return assets }
-            var next: [String] = []
-            for chunk in level.chunked(into: pool.count) {
-                let found = await withTaskGroup(of: (files: [PhotoAsset], subs: [String]).self) { group in
-                    for (i, dir) in chunk.enumerated() {
-                        let manager = pool[i]
-                        group.addTask { await self.listDirectory(manager, path: dir) }
+            let dirs = level
+            let found = await withTaskGroup(of: (files: [PhotoAsset], subs: [String]).self) { group in
+                for dir in dirs {
+                    group.addTask {
+                        await self.pool.withConnection { client in
+                            await self.listDirectory(client, path: dir)
+                        } ?? (files: [], subs: [])
                     }
-                    var files: [PhotoAsset] = []
-                    var subs: [String] = []
-                    for await result in group { files += result.files; subs += result.subs }
-                    return (files: files, subs: subs)
                 }
-                assets += found.files
-                next += found.subs
+                var files: [PhotoAsset] = []
+                var subs: [String] = []
+                for await result in group { files += result.files; subs += result.subs }
+                return (files: files, subs: subs)
             }
-            level = next
+            assets += found.files
+            level = found.subs
         }
         assets.sort { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
         return assets
@@ -372,14 +373,11 @@ final class SMBSource: PhotoSource {
     // MARK: - Hulpfuncties
 
     private func readData(path: String, maxBytes: Int? = nil) async -> Data? {
-        do {
-            let client = try await connector.client()
+        await pool.withConnection { client in
             if let maxBytes {
                 return try await client.contents(atPath: path, range: 0..<Int64(maxBytes))
             }
             return try await client.contents(atPath: path)
-        } catch {
-            return nil
         }
     }
 
@@ -445,11 +443,56 @@ final class SMBSource: PhotoSource {
     }
 }
 
-private extension Array {
-    /// Verdeelt de array in stukken van hoogstens `size` elementen.
-    func chunked(into size: Int) -> [[Element]] {
-        guard size > 0 else { return [self] }
-        return stride(from: 0, to: count, by: size).map { Array(self[$0..<Swift.min($0 + size, count)]) }
+/// Kleine pool van SMB-verbindingen zodat meerdere leesacties (mappen listen,
+/// previews downloaden) tegelijk kunnen lopen, met een harde bovengrens zodat de
+/// NAS niet overbelast raakt. Verbindingen worden lui aangemaakt en hergebruikt.
+private actor SMBPool {
+    private let connector: SMBConnector
+    private let maxConnections: Int
+    private var idle: [SMB2Manager] = []
+    private var created = 0
+    private var waiters: [CheckedContinuation<SMB2Manager, Never>] = []
+
+    init(connector: SMBConnector, max: Int) {
+        self.connector = connector
+        self.maxConnections = Swift.max(1, max)
+    }
+
+    /// Leent een verbinding, voert `body` uit en geeft de verbinding daarna terug.
+    /// Levert `nil` als er geen verbinding kon worden opgezet of `body` faalt.
+    func withConnection<T>(_ body: (SMB2Manager) async throws -> T) async -> T? {
+        guard let client = await acquire() else { return nil }
+        defer { release(client) }
+        return try? await body(client)
+    }
+
+    /// Vergeet de inactieve verbindingen (na (dis)connect). In-gebruik-zijnde
+    /// verbindingen worden bij teruggave weer opgenomen; drain gebeurt buiten een
+    /// actieve scan, dus dat is in de praktijk niet problematisch.
+    func drain() {
+        idle.removeAll()
+        created = waiters.isEmpty ? 0 : created
+    }
+
+    private func acquire() async -> SMB2Manager? {
+        if let client = idle.popLast() { return client }
+        if created < maxConnections {
+            created += 1
+            if let client = try? await connector.makeConnectedClient() { return client }
+            created -= 1
+            return nil
+        }
+        return await withCheckedContinuation { (cont: CheckedContinuation<SMB2Manager, Never>) in
+            waiters.append(cont)
+        }
+    }
+
+    private func release(_ client: SMB2Manager) {
+        if !waiters.isEmpty {
+            waiters.removeFirst().resume(returning: client)
+        } else {
+            idle.append(client)
+        }
     }
 }
 
