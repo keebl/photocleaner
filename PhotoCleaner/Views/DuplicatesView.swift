@@ -234,7 +234,12 @@ struct DuplicatesView: View {
     }
 
     private func loading(_ text: String) -> some View {
-        ProgressView(text).frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack(spacing: 12) {
+            ProgressView()
+            Text(text).foregroundStyle(.secondary)
+            ElapsedTimeText()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var scanningSimilar: some View {
@@ -397,6 +402,21 @@ private struct DuplicateGroupCell: View {
                 .background(.green, in: Capsule())
                 .foregroundStyle(.white)
                 .padding(4)
+        }
+    }
+}
+
+/// Meelopende seconden-teller tijdens het scannen, zodat je ziet dat er iets
+/// gebeurt (en hoe lang het duurt).
+private struct ElapsedTimeText: View {
+    @State private var start = Date()
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let seconds = max(0, Int(context.date.timeIntervalSince(start)))
+            Text(seconds > 0 ? "\(seconds)s" : " ")
+                .font(.caption).monospacedDigit()
+                .foregroundStyle(.tertiary)
         }
     }
 }

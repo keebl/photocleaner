@@ -11,6 +11,7 @@ struct PhotoThumbnail: View {
     var contentMode: ContentMode = .fill
 
     @State private var image: UIImage?
+    @State private var isLoading: Bool
 
     init(asset: PhotoAsset, source: PhotoSource,
          targetSize: CGSize = CGSize(width: 400, height: 400),
@@ -20,7 +21,9 @@ struct PhotoThumbnail: View {
         self.targetSize = targetSize
         self.contentMode = contentMode
         // Al gecached (voorgeladen)? Toon meteen, zonder placeholder-flits.
-        _image = State(initialValue: source.cachedThumbnail(for: asset, targetSize: targetSize))
+        let cached = source.cachedThumbnail(for: asset, targetSize: targetSize)
+        _image = State(initialValue: cached)
+        _isLoading = State(initialValue: cached == nil)
     }
 
     var body: some View {
@@ -29,23 +32,35 @@ struct PhotoThumbnail: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
-            } else {
-                Rectangle()
-                    .fill(.quaternary)
+            } else if isLoading {
+                Rectangle().fill(.quaternary)
                     .overlay { ProgressView() }
+            } else {
+                // Geladen, maar geen voorbeeld beschikbaar (bijv. een video op de
+                // NAS — die halen we bewust niet op). Toon een rustig symbool i.p.v.
+                // een eindeloze spinner.
+                Rectangle().fill(.quaternary)
+                    .overlay {
+                        Image(systemName: asset.isVideo ? "film" : "photo")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
             }
         }
         .clipped()
         .task(id: asset.id) {
             guard image == nil else { return }
-            image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+            isLoading = true
+            var result = await source.loadThumbnail(for: asset, targetSize: targetSize)
             // Eén nette retry bij een tijdelijke fout (bijv. iCloud/NAS-hapering).
-            if image == nil, !Task.isCancelled {
+            if result == nil, !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 400_000_000)
                 if !Task.isCancelled {
-                    image = await source.loadThumbnail(for: asset, targetSize: targetSize)
+                    result = await source.loadThumbnail(for: asset, targetSize: targetSize)
                 }
             }
+            image = result
+            isLoading = false
         }
     }
 }
