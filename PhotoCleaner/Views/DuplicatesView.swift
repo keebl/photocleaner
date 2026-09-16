@@ -322,7 +322,7 @@ private struct DuplicateGroupCell: View {
 
     private func candidate(_ asset: PhotoAsset) -> some View {
         let isKeeper = asset.id == keeperID
-        return PhotoThumbnail(asset: asset, source: source)
+        let thumb = PhotoThumbnail(asset: asset, source: source)
             .frame(width: 132, height: 132)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(alignment: .bottomTrailing) {
@@ -340,6 +340,18 @@ private struct DuplicateGroupCell: View {
             .overlay(alignment: .topLeading) { selectionBadge(asset, isKeeper: isKeeper) }
             .contentShape(Rectangle())
             .onTapGesture { onInspect(asset) }
+
+        return VStack(alignment: .leading, spacing: 3) {
+            thumb
+            if let folder = asset.folder {
+                Label(folder, systemImage: "folder")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+                    .frame(width: 132, alignment: .leading)
+            }
+        }
     }
 
     @ViewBuilder

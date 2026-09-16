@@ -70,46 +70,93 @@ final class SMBSource: PhotoSource {
         try await connector.connectAndValidate(creds, password: password)
         creds.save()
         KeychainStore.set(password, for: SMBCredentials.keychainKey)
+        clearDiskListing(for: creds)   // nieuwe koppeling → verse scan
         stateLock.withLock { configuredCreds = creds; cachedAll = nil }
         thumbnailCache.removeAllObjects()
     }
 
     /// Verbreekt en wist de configuratie volledig.
     func disconnect() {
+        let old = stateLock.withLock { () -> SMBCredentials? in
+            let c = configuredCreds; configuredCreds = nil; cachedAll = nil; return c
+        }
+        clearDiskListing(for: old)
         SMBCredentials.clear()
-        stateLock.withLock { configuredCreds = nil; cachedAll = nil }
         thumbnailCache.removeAllObjects()
         Task { await connector.reset() }
     }
 
     // MARK: - Ophalen
 
+    private static let walkPoolSize = 5
+
     func fetchAllPhotos() async -> [PhotoAsset] {
         if let cached = stateLock.withLock({ cachedAll }) { return cached }
         guard let creds = stateLock.withLock({ configuredCreds }) else { return [] }
-        guard let client = try? await connector.client() else { return [] }
 
-        // Zelf map-voor-map doorzoeken in plaats van één grote recursieve aanroep:
-        // een onleesbare of verborgen (systeem)map wordt overgeslagen i.p.v. de hele
-        // zoekopdracht te laten mislukken.
+        // Schijfcache: na de eerste scan is heropenen (of naar 'Dubbelen' gaan)
+        // vrijwel instant. 'Opnieuw scannen' of een verwijdering wist de cache.
+        if let disk = loadDiskListing(for: creds) {
+            stateLock.withLock { cachedAll = disk }
+            return disk
+        }
+
+        let assets = await walk(creds)
+        stateLock.withLock { cachedAll = assets }
+        saveDiskListing(assets, for: creds)
+        return assets
+    }
+
+    /// Doorzoekt de gekozen map + submappen, met meerdere mappen tegelijk via een
+    /// kleine pool van verbindingen (fors sneller dan één-voor-één). Onleesbare of
+    /// verborgen (systeem)mappen worden overgeslagen i.p.v. de scan te laten falen.
+    private func walk(_ creds: SMBCredentials) async -> [PhotoAsset] {
+        guard let first = try? await connector.client() else { return [] }
+        var pool: [SMB2Manager] = [first]
+        for _ in 1..<Self.walkPoolSize {
+            if let extra = try? await connector.makeConnectedClient() { pool.append(extra) }
+        }
+
         var assets: [PhotoAsset] = []
-        var pending = [creds.normalizedFolder]
-        while let dir = pending.popLast() {
-            guard let entries = try? await client.contentsOfDirectory(atPath: dir, recursive: false)
-            else { continue }
-            for entry in entries {
-                guard let path = entry.path else { continue }
-                if entry.isDirectory {
-                    if isSkippableFolder(entry.name ?? "") { continue }
-                    pending.append(path)
-                } else if let asset = makeAsset(from: entry) {
-                    assets.append(asset)
+        var level = [creds.normalizedFolder]
+        while !level.isEmpty {
+            var next: [String] = []
+            for chunk in level.chunked(into: pool.count) {
+                let found = await withTaskGroup(of: (files: [PhotoAsset], subs: [String]).self) { group in
+                    for (i, dir) in chunk.enumerated() {
+                        let manager = pool[i]
+                        group.addTask { await self.listDirectory(manager, path: dir) }
+                    }
+                    var files: [PhotoAsset] = []
+                    var subs: [String] = []
+                    for await result in group { files += result.files; subs += result.subs }
+                    return (files: files, subs: subs)
                 }
+                assets += found.files
+                next += found.subs
             }
+            level = next
         }
         assets.sort { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
-        stateLock.withLock { cachedAll = assets }
         return assets
+    }
+
+    /// Lijst één map (niet-recursief) en verdeel in bestanden en submappen.
+    private func listDirectory(_ manager: SMB2Manager, path: String)
+        async -> (files: [PhotoAsset], subs: [String]) {
+        guard let entries = try? await manager.contentsOfDirectory(atPath: path, recursive: false)
+        else { return ([], []) }
+        var files: [PhotoAsset] = []
+        var subs: [String] = []
+        for entry in entries {
+            guard let p = entry.path else { continue }
+            if entry.isDirectory {
+                if !isSkippableFolder(entry.name ?? "") { subs.append(p) }
+            } else if let asset = makeAsset(from: entry) {
+                files.append(asset)
+            }
+        }
+        return (files, subs)
     }
 
     func assets(withIDs ids: [String]) async -> [PhotoAsset] {
@@ -130,14 +177,16 @@ final class SMBSource: PhotoSource {
                     modificationDate: attrs.contentModificationDate,
                     pixelWidth: 0, pixelHeight: 0,
                     byteSize: attrs.fileSize ?? 0,
-                    filename: (id as NSString).lastPathComponent
+                    filename: (id as NSString).lastPathComponent,
+                    folder: Self.parentFolder(id)
                 ))
             } else {
                 // Minimaal, zodat het item in de prullenbak toch verwijderbaar blijft.
                 result.append(PhotoAsset(
                     id: id, kind: kind, creationDate: nil, modificationDate: nil,
                     pixelWidth: 0, pixelHeight: 0, byteSize: 0,
-                    filename: (id as NSString).lastPathComponent
+                    filename: (id as NSString).lastPathComponent,
+                    folder: Self.parentFolder(id)
                 ))
             }
         }
@@ -155,7 +204,10 @@ final class SMBSource: PhotoSource {
     }
 
     func invalidateCache() {
-        stateLock.withLock { cachedAll = nil }
+        let creds = stateLock.withLock { () -> SMBCredentials? in
+            let c = configuredCreds; cachedAll = nil; return c
+        }
+        clearDiskListing(for: creds)
     }
 
     func flushCaches() {
@@ -289,8 +341,53 @@ final class SMBSource: PhotoSource {
             modificationDate: entry.contentModificationDate,
             pixelWidth: 0, pixelHeight: 0,
             byteSize: entry.fileSize ?? 0,
-            filename: entry.name ?? (path as NSString).lastPathComponent
+            filename: entry.name ?? (path as NSString).lastPathComponent,
+            folder: Self.parentFolder(path)
         )
+    }
+
+    /// De map waarin een bestand staat, relatief t.o.v. de share (zonder de
+    /// bestandsnaam). Leeg pad (wortel van de share) → nil.
+    static func parentFolder(_ path: String) -> String? {
+        let dir = (path as NSString).deletingLastPathComponent
+        let trimmed = dir.trimmingCharacters(in: CharacterSet(charactersIn: "/ "))
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    // MARK: - Schijfcache van de mappenlijst
+
+    private func diskListingURL(for creds: SMBCredentials) -> URL {
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let raw = "\(creds.host)|\(creds.share)|\(creds.normalizedFolder)"
+        let safe = String(raw.unicodeScalars.map {
+            CharacterSet.alphanumerics.contains($0) ? Character($0) : "_"
+        })
+        return caches.appendingPathComponent("smbListing-\(safe).json")
+    }
+
+    private func loadDiskListing(for creds: SMBCredentials) -> [PhotoAsset]? {
+        guard let data = try? Data(contentsOf: diskListingURL(for: creds)),
+              let assets = try? JSONDecoder().decode([PhotoAsset].self, from: data),
+              !assets.isEmpty else { return nil }
+        return assets
+    }
+
+    private func saveDiskListing(_ assets: [PhotoAsset], for creds: SMBCredentials) {
+        guard !assets.isEmpty, let data = try? JSONEncoder().encode(assets) else { return }
+        try? data.write(to: diskListingURL(for: creds), options: .atomic)
+    }
+
+    private func clearDiskListing(for creds: SMBCredentials?) {
+        guard let creds else { return }
+        try? FileManager.default.removeItem(at: diskListingURL(for: creds))
+    }
+}
+
+private extension Array {
+    /// Verdeelt de array in stukken van hoogstens `size` elementen.
+    func chunked(into size: Int) -> [[Element]] {
+        guard size > 0 else { return [self] }
+        return stride(from: 0, to: count, by: size).map { Array(self[$0..<Swift.min($0 + size, count)]) }
     }
 }
 
@@ -353,6 +450,16 @@ private actor SMBConnector {
             connecting = nil
             throw error
         }
+    }
+
+    /// Maakt een extra, zelfstandig verbonden client (voor de parallelle
+    /// mappen-walk). Gebruikt dezelfde bewaarde gegevens als de hoofverbinding.
+    func makeConnectedClient() async throws -> SMB2Manager {
+        guard let creds else { throw SMBError.notConfigured }
+        let password = KeychainStore.get(SMBCredentials.keychainKey) ?? ""
+        let m = try Self.make(creds, password: password)
+        try await m.connectShare(name: creds.share)
+        return m
     }
 
     private static func make(_ c: SMBCredentials, password: String) throws -> SMB2Manager {

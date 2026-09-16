@@ -5,12 +5,12 @@ import Foundation
 /// Bewust losgekoppeld van PhotoKit's `PHAsset`, zodat we later andere bronnen
 /// (Google Foto's, een NAS-map, ...) op dezelfde `PhotoSource`-abstractie kunnen
 /// aansluiten zonder de UI of de opschoon-logica te wijzigen.
-enum MediaKind: String, Hashable {
+enum MediaKind: String, Hashable, Codable {
     case photo
     case video
 }
 
-struct PhotoAsset: Identifiable, Hashable {
+struct PhotoAsset: Identifiable, Hashable, Codable {
     /// Stabiele identifier binnen de bron (bij PhotoKit: `localIdentifier`).
     let id: String
     var kind: MediaKind = .photo
@@ -22,6 +22,9 @@ struct PhotoAsset: Identifiable, Hashable {
     /// Bestandsgrootte in bytes; 0 wanneer (nog) onbekend.
     let byteSize: Int64
     let filename: String?
+    /// Map waarin het bestand staat (alleen bij mapgebaseerde bronnen zoals NAS);
+    /// handig om te zien wélke kopie je weggooit. `nil` bij PhotoKit.
+    var folder: String? = nil
 
     var megapixels: Double {
         Double(pixelWidth * pixelHeight) / 1_000_000
@@ -43,7 +46,8 @@ struct PhotoAsset: Identifiable, Hashable {
             pixelWidth: pixelWidth,
             pixelHeight: pixelHeight,
             byteSize: size,
-            filename: filename
+            filename: filename,
+            folder: folder
         )
     }
 }
