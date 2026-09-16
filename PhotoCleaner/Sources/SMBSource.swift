@@ -31,7 +31,7 @@ final class SMBSource: PhotoSource {
 
     private let thumbnailCache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
-        cache.countLimit = 12
+        cache.countLimit = 200   // voorbeeldjes zijn klein; voorkomt herhaald downloaden
         return cache
     }()
     private let hashCache = HashCache(filename: "smbHashes.json")
@@ -230,6 +230,10 @@ final class SMBSource: PhotoSource {
         }
     }
 
+    /// Hoeveel bytes we eerst van een bestand lezen om (indien aanwezig) de
+    /// ingebedde miniatuur eruit te halen — scheelt enorm veel data over SMB.
+    private static let thumbnailPrefixBytes = 512 * 1024
+
     func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
         if let cached = cachedThumbnail(for: asset, targetSize: targetSize) { return cached }
         // Video's: geen poster over het netwerk halen (te zwaar). De UI toont dan
@@ -237,21 +241,36 @@ final class SMBSource: PhotoSource {
         guard !asset.isVideo else { return nil }
 
         let maxPixel = Int(max(targetSize.width, targetSize.height))
+
+        // 1) Alleen het begin van het bestand ophalen. Past het hele (kleine)
+        //    bestand daarin, dan decoderen we dat; anders proberen we de ingebedde
+        //    miniatuur. Zo hoeven we grote foto's niet volledig te downloaden.
+        let wholeFileFits = asset.byteSize > 0 && asset.byteSize <= Int64(Self.thumbnailPrefixBytes)
+        if let prefix = await readData(path: asset.id, maxBytes: Self.thumbnailPrefixBytes),
+           let image = Self.imageThumbnail(from: prefix, maxPixel: maxPixel, allowFullDecode: wholeFileFits) {
+            thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
+            return image
+        }
+
+        // 2) Geen ingebedde miniatuur gevonden → toch het hele bestand ophalen.
         guard let data = await readData(path: asset.id),
-              let image = Self.imageThumbnail(from: data, maxPixel: maxPixel) else { return nil }
+              let image = Self.imageThumbnail(from: data, maxPixel: maxPixel, allowFullDecode: true) else { return nil }
         thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
         return image
     }
 
-    private static func imageThumbnail(from data: Data, maxPixel: Int) -> UIImage? {
+    private static func imageThumbnail(from data: Data, maxPixel: Int, allowFullDecode: Bool) -> UIImage? {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            // Bij een prefix géén volledige decode forceren (data is dan onvolledig);
+            // dan alleen een reeds ingebedde miniatuur gebruiken.
+            kCGImageSourceCreateThumbnailFromImageAlways: allowFullDecode,
+            kCGImageSourceCreateThumbnailFromImageIfAbsent: allowFullDecode,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixel,
             kCGImageSourceShouldCacheImmediately: true
         ]
-        guard let src = CGImageSourceCreateWithData(data as CFData, nil),
-              let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
         return UIImage(cgImage: cg)
     }
 
@@ -316,9 +335,12 @@ final class SMBSource: PhotoSource {
 
     // MARK: - Hulpfuncties
 
-    private func readData(path: String) async -> Data? {
+    private func readData(path: String, maxBytes: Int? = nil) async -> Data? {
         do {
             let client = try await connector.client()
+            if let maxBytes {
+                return try await client.contents(atPath: path, range: 0..<Int64(maxBytes))
+            }
             return try await client.contents(atPath: path)
         } catch {
             return nil

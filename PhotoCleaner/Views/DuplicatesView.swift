@@ -148,6 +148,10 @@ struct DuplicatesView: View {
 
     @State private var inspecting: PhotoAsset?
     @State private var playing: PhotoAsset?
+    /// Aantal groepen dat we tonen; in batches uitbreidbaar zodat niet alles
+    /// tegelijk hoeft te laden (previews van de NAS zijn relatief zwaar).
+    @State private var visibleCount = Self.batchSize
+    private static let batchSize = 10
 
     init(source: PhotoSource) {
         self.source = source
@@ -194,6 +198,7 @@ struct DuplicatesView: View {
             if vm.mode == .similar { vm.ensureSimilarLoaded() }
         }
         .onChange(of: vm.mode) { _, newValue in
+            visibleCount = Self.batchSize
             if newValue == .similar { vm.ensureSimilarLoaded() } else { vm.cancelSimilar() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .photoLibraryDidChange)) { _ in
@@ -259,7 +264,7 @@ struct DuplicatesView: View {
                     .font(.caption).foregroundStyle(.secondary)
                     .listRowSeparator(.hidden)
             }
-            ForEach(vm.groups) { group in
+            ForEach(vm.groups.prefix(visibleCount)) { group in
                 DuplicateGroupCell(
                     group: group,
                     source: source,
@@ -267,6 +272,18 @@ struct DuplicatesView: View {
                     onInspect: { inspect($0) },
                     onResolve: { keeperID in resolve(group, keeperID: keeperID) }
                 )
+            }
+
+            if vm.groups.count > visibleCount {
+                Button {
+                    visibleCount += Self.batchSize
+                } label: {
+                    let remaining = vm.groups.count - visibleCount
+                    Label("Toon meer (\(remaining) resterend)", systemImage: "chevron.down")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .listRowSeparator(.hidden)
             }
         }
     }
