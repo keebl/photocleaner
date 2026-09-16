@@ -242,21 +242,33 @@ final class SMBSource: PhotoSource {
 
         let maxPixel = Int(max(targetSize.width, targetSize.height))
 
-        // 1) Alleen het begin van het bestand ophalen. Past het hele (kleine)
-        //    bestand daarin, dan decoderen we dat; anders proberen we de ingebedde
-        //    miniatuur. Zo hoeven we grote foto's niet volledig te downloaden.
-        let wholeFileFits = asset.byteSize > 0 && asset.byteSize <= Int64(Self.thumbnailPrefixBytes)
-        if let prefix = await readData(path: asset.id, maxBytes: Self.thumbnailPrefixBytes),
-           let image = Self.imageThumbnail(from: prefix, maxPixel: maxPixel, allowFullDecode: wholeFileFits) {
+        // 1) Schijfcache: een eerder gegenereerde preview staat direct klaar, ook
+        //    na herstart. Zo hoeft elke foto maar één keer van de NAS te komen.
+        let diskURL = thumbURL(for: asset, maxPixel: maxPixel)
+        if let image = UIImage(contentsOfFile: diskURL.path) {
             thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
             return image
         }
 
-        // 2) Geen ingebedde miniatuur gevonden → toch het hele bestand ophalen.
-        guard let data = await readData(path: asset.id),
-              let image = Self.imageThumbnail(from: data, maxPixel: maxPixel, allowFullDecode: true) else { return nil }
+        guard let image = await downloadThumbnail(for: asset, maxPixel: maxPixel) else { return nil }
         thumbnailCache.setObject(image, forKey: cacheKey(asset.id, targetSize))
+        writeThumb(image, to: diskURL)
         return image
+    }
+
+    /// Haalt (zo zuinig mogelijk) een preview van de NAS: eerst alleen het begin
+    /// van het bestand voor de ingebedde miniatuur, anders het hele bestand.
+    private func downloadThumbnail(for asset: PhotoAsset, maxPixel: Int) async -> UIImage? {
+        // Past het hele (kleine) bestand in de prefix, dan kunnen we dat volledig
+        // decoderen; anders alleen een reeds ingebedde miniatuur gebruiken.
+        let wholeFileFits = asset.byteSize > 0 && asset.byteSize <= Int64(Self.thumbnailPrefixBytes)
+        if let prefix = await readData(path: asset.id, maxBytes: Self.thumbnailPrefixBytes),
+           let image = Self.imageThumbnail(from: prefix, maxPixel: maxPixel, allowFullDecode: wholeFileFits) {
+            return image
+        }
+        // Geen ingebedde miniatuur (bijv. sommige HEIC) → toch het hele bestand.
+        guard let data = await readData(path: asset.id) else { return nil }
+        return Self.imageThumbnail(from: data, maxPixel: maxPixel, allowFullDecode: true)
     }
 
     private static func imageThumbnail(from data: Data, maxPixel: Int, allowFullDecode: Bool) -> UIImage? {
@@ -272,6 +284,30 @@ final class SMBSource: PhotoSource {
         ]
         guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
         return UIImage(cgImage: cg)
+    }
+
+    // MARK: - Preview-schijfcache
+
+    private func thumbURL(for asset: PhotoAsset, maxPixel: Int) -> URL {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("smbThumbs", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        // Modificatiedatum in de sleutel → wijzigt het bestand, dan verse preview.
+        let mod = Int(asset.modificationDate?.timeIntervalSince1970 ?? 0)
+        return dir.appendingPathComponent(Self.stableHash("\(asset.id)|\(maxPixel)|\(mod)") + ".jpg")
+    }
+
+    private func writeThumb(_ image: UIImage, to url: URL) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    /// Stabiele hash (niet de per-sessie gerandomiseerde `hashValue`) voor
+    /// bestandsnamen die tussen sessies gelijk moeten blijven.
+    private static func stableHash(_ s: String) -> String {
+        var h: UInt64 = 5381
+        for b in s.utf8 { h = (h &* 33) ^ UInt64(b) }
+        return String(h, radix: 16)
     }
 
     // MARK: - Video / delen
