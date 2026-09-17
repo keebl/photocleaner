@@ -1,6 +1,6 @@
 import UIKit
 import ImageIO
-import AVFoundation
+@preconcurrency import AVFoundation
 import UniformTypeIdentifiers
 import AMSMB2
 

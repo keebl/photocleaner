@@ -165,9 +165,9 @@ struct DuplicatesView: View {
         if asset.isVideo { playing = asset } else { inspecting = asset }
     }
 
-    private func resolve(_ group: DuplicateGroup, keeperID: String) {
+    private func resolve(_ group: DuplicateGroup, keepIDs: Set<String>) {
         Haptics.warning()
-        for asset in group.all where asset.id != keeperID {
+        for asset in group.all where !keepIDs.contains(asset.id) {
             trash.mark(asset, reason: vm.mode == .exact ? "Dubbel" : "Lijkend")
         }
         withAnimation { vm.remove(group) }
@@ -271,18 +271,15 @@ struct DuplicatesView: View {
 
     private var list: some View {
         List {
-            if vm.mode == .similar {
-                Text("Tik een foto aan om te vergroten. Kies met het vinkje welke je wilt behouden.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .listRowSeparator(.hidden)
-            }
+            Text("Vink aan wat je wilt houden; de rest gaat naar de prullenbak. Tik een foto aan om te vergroten.")
+                .font(.caption).foregroundStyle(.secondary)
+                .listRowSeparator(.hidden)
             ForEach(vm.groups.prefix(visibleCount)) { group in
                 DuplicateGroupCell(
                     group: group,
                     source: source,
-                    selectable: vm.mode == .similar,
                     onInspect: { inspect($0) },
-                    onResolve: { keeperID in resolve(group, keeperID: keeperID) }
+                    onResolve: { keepIDs in resolve(group, keepIDs: keepIDs) }
                 )
             }
 
@@ -301,31 +298,31 @@ struct DuplicatesView: View {
     }
 }
 
-/// Eén duplicaat-groep: bekijk elk item (tik = vergroten/afspelen), kies welke je
-/// behoudt, en gooi de rest weg.
+/// Eén duplicaat-groep: bekijk elk item (tik = vergroten/afspelen), vink aan welke
+/// je wilt **houden** (meerdere mag), en gooi de rest weg.
 private struct DuplicateGroupCell: View {
     let group: DuplicateGroup
     let source: PhotoSource
-    /// Bij lijkende foto's kies je zelf de beste; bij exacte maakt het niet uit.
-    let selectable: Bool
     var onInspect: (PhotoAsset) -> Void
-    var onResolve: (_ keeperID: String) -> Void
+    var onResolve: (_ keepIDs: Set<String>) -> Void
 
-    @State private var keeperID: String
+    /// De aangevinkte exemplaren die behouden blijven. Standaard alleen de 'beste'.
+    @State private var keptIDs: Set<String>
 
-    init(group: DuplicateGroup, source: PhotoSource, selectable: Bool,
+    init(group: DuplicateGroup, source: PhotoSource,
          onInspect: @escaping (PhotoAsset) -> Void,
-         onResolve: @escaping (String) -> Void) {
+         onResolve: @escaping (Set<String>) -> Void) {
         self.group = group
         self.source = source
-        self.selectable = selectable
         self.onInspect = onInspect
         self.onResolve = onResolve
-        _keeperID = State(initialValue: group.keep.id)
+        _keptIDs = State(initialValue: [group.keep.id])
     }
 
+    private var deleteCount: Int { group.all.count - keptIDs.count }
+
     private var reclaimable: Int64 {
-        group.all.filter { $0.id != keeperID }.reduce(0) { $0 + $1.byteSize }
+        group.all.filter { !keptIDs.contains($0.id) }.reduce(0) { $0 + $1.byteSize }
     }
 
     var body: some View {
@@ -340,17 +337,19 @@ private struct DuplicateGroupCell: View {
             }
 
             Button(role: .destructive) {
-                onResolve(keeperID)
+                onResolve(keptIDs)
             } label: {
-                Label("Behoud gekozen, gooi \(group.count - 1) weg", systemImage: "trash")
+                Label(deleteCount == 1 ? "Gooi 1 weg" : "Gooi \(deleteCount) weg",
+                      systemImage: "trash")
             }
+            .disabled(deleteCount == 0)
         } header: {
-            Text("\(group.count) exemplaren · \(ByteFormatter.string(reclaimable)) te winnen")
+            Text("\(group.count) exemplaren · \(keptIDs.count) houden · \(ByteFormatter.string(reclaimable)) te winnen")
         }
     }
 
     private func candidate(_ asset: PhotoAsset) -> some View {
-        let isKeeper = asset.id == keeperID
+        let isKept = keptIDs.contains(asset.id)
         let thumb = PhotoThumbnail(asset: asset, source: source)
             .frame(width: 132, height: 132)
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -362,11 +361,11 @@ private struct DuplicateGroupCell: View {
                 }
             }
             .overlay {
-                if isKeeper {
-                    RoundedRectangle(cornerRadius: 12).strokeBorder(.green, lineWidth: 3)
-                }
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(isKept ? .green : .red.opacity(0.7),
+                                  lineWidth: isKept ? 3 : 1.5)
             }
-            .overlay(alignment: .topLeading) { selectionBadge(asset, isKeeper: isKeeper) }
+            .overlay(alignment: .topLeading) { keepToggle(asset, isKept: isKept) }
             .contentShape(Rectangle())
             .onTapGesture { onInspect(asset) }
 
@@ -383,26 +382,21 @@ private struct DuplicateGroupCell: View {
         }
     }
 
-    @ViewBuilder
-    private func selectionBadge(_ asset: PhotoAsset, isKeeper: Bool) -> some View {
-        if selectable {
-            Button { keeperID = asset.id } label: {
-                Image(systemName: isKeeper ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundStyle(isKeeper ? .green : .white)
-                    .padding(5)
-                    .background(.black.opacity(0.3), in: Circle())
-                    .padding(5)
-            }
-            .buttonStyle(.plain)
-        } else if isKeeper {
-            Text("Behouden")
-                .font(.caption2).bold()
-                .padding(4)
-                .background(.green, in: Capsule())
-                .foregroundStyle(.white)
-                .padding(4)
+    /// Rondje dat een groen vinkje wordt als je het aantikt → houden.
+    private func keepToggle(_ asset: PhotoAsset, isKept: Bool) -> some View {
+        Button {
+            Haptics.tap()
+            if isKept { keptIDs.remove(asset.id) } else { keptIDs.insert(asset.id) }
+        } label: {
+            Image(systemName: isKept ? "checkmark.circle.fill" : "circle")
+                .font(.title2)
+                .foregroundStyle(isKept ? .green : .white)
+                .padding(5)
+                .background(.black.opacity(0.35), in: Circle())
+                .padding(5)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isKept ? "Behouden, tik om weg te gooien" : "Weggooien, tik om te behouden")
     }
 }
 

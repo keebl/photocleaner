@@ -32,16 +32,23 @@ struct PhotoThumbnail: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
+            } else if asset.isVideo {
+                // Meteen een film-icoon (geen spinner). Lukt het posterframe, dan
+                // vervangt dat dit vanzelf; lukt het niet, dan blijft het icoon.
+                Rectangle().fill(.quaternary)
+                    .overlay {
+                        Image(systemName: "film")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
             } else if isLoading {
                 Rectangle().fill(.quaternary)
                     .overlay { ProgressView() }
             } else {
-                // Geladen, maar geen voorbeeld beschikbaar (bijv. een video op de
-                // NAS — die halen we bewust niet op). Toon een rustig symbool i.p.v.
-                // een eindeloze spinner.
+                // Foto geladen maar geen voorbeeld beschikbaar → rustig symbool.
                 Rectangle().fill(.quaternary)
                     .overlay {
-                        Image(systemName: asset.isVideo ? "film" : "photo")
+                        Image(systemName: "photo")
                             .font(.title2)
                             .foregroundStyle(.secondary)
                     }
