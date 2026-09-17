@@ -95,8 +95,14 @@ struct MediaView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { sourceMenu }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Text("\(trash.totalCleaned) opgeschoond")
-                        .font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "trash")
+                        Text("\(trash.totalCleaned)")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(trash.totalCleaned) opgeschoond")
                 }
             }
             .sheet(isPresented: $showSMBConnect) {
