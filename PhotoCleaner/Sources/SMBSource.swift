@@ -307,15 +307,20 @@ final class SMBSource: PhotoSource {
         let ext = (asset.id as NSString).pathExtension.lowercased()
         let contentType = UTType(filenameExtension: ext)?.identifier ?? "public.movie"
 
+        // Vang alleen de pool (een Sendable actor), niet de hele bron, zodat de
+        // read-closure veilig over threads gebruikt kan worden.
+        let pool = self.pool
         await videoGate.acquire()
         let image = await withCheckedContinuation { (cont: CheckedContinuation<UIImage?, Never>) in
             guard let url = URL(string: "smbposter://\(UUID().uuidString)") else {
                 cont.resume(returning: nil); return
             }
             let avAsset = AVURLAsset(url: url)
-            let loader = SMBVideoLoader(path: asset.id, size: asset.byteSize, contentType: contentType) {
-                [weak self] path, offset, length in
-                await self?.readRange(path: path, offset: offset, length: length) ?? nil
+            let loader = SMBVideoLoader(path: asset.id, size: asset.byteSize, contentType: contentType) { path, offset, length in
+                guard length > 0 else { return Data() }
+                return await pool.withConnection { client in
+                    try await client.contents(atPath: path, range: offset..<(offset + Int64(length)))
+                }
             }
             avAsset.resourceLoader.setDelegate(loader, queue: Self.loaderQueue)
 
@@ -336,14 +341,6 @@ final class SMBSource: PhotoSource {
         }
         await videoGate.release()
         return image
-    }
-
-    /// Leest een willekeurige byte-range uit een bestand op de share.
-    private func readRange(path: String, offset: Int64, length: Int) async -> Data? {
-        guard length > 0 else { return Data() }
-        return await pool.withConnection { client in
-            try await client.contents(atPath: path, range: offset..<(offset + Int64(length)))
-        }
     }
 
     // MARK: - Preview-schijfcache
@@ -538,14 +535,14 @@ private actor SMBGate {
 /// Serveert byte-ranges van een NAS-bestand aan AVFoundation, zodat een video-poster
 /// gemaakt kan worden zonder het hele bestand te downloaden. Levert alleen de stukjes
 /// die de image-generator opvraagt.
-private final class SMBVideoLoader: NSObject, AVAssetResourceLoaderDelegate {
+private final class SMBVideoLoader: NSObject, AVAssetResourceLoaderDelegate, @unchecked Sendable {
     private let path: String
     private let size: Int64
     private let contentType: String
-    private let read: (String, Int64, Int) async -> Data?
+    private let read: @Sendable (String, Int64, Int) async -> Data?
 
     init(path: String, size: Int64, contentType: String,
-         read: @escaping (String, Int64, Int) async -> Data?) {
+         read: @escaping @Sendable (String, Int64, Int) async -> Data?) {
         self.path = path
         self.size = size
         self.contentType = contentType
