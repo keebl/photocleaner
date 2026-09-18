@@ -60,6 +60,7 @@ struct MediaView: View {
 
     @EnvironmentObject private var sources: SourceManager
     @EnvironmentObject private var trash: TrashStore
+    @EnvironmentObject private var keep: KeepStore
     @StateObject private var vm: MediaViewModel
 
     @AppStorage("mediaTab") private var tabRaw = MediaTab.photos.rawValue
@@ -226,15 +227,74 @@ struct MediaView: View {
         let base = tab == .videos ? vm.videos : vm.photos
         let items = browse.isRandom ? shuffled(base, seed: randomSeed) : filtered(base)
         let reason = tab == .videos ? "Filmpje" : (browse.isRandom ? "Random" : "Op deze dag")
+        // Alleen bij dag/maand/jaar: spring naar de volgende periode met nog te
+        // beoordelen items.
+        let nextDate = browse.isRandom ? nil : nextPeriodDate(in: base)
         return ReviewDeck(
             assets: items,
             source: source,
             reason: reason,
             badge: { badge(for: $0) },
             emptyTitle: emptyTitle,
-            emptyMessage: emptyMessage
+            emptyMessage: emptyMessage,
+            onNext: nextDate.map { date in { withAnimation { selectedDate = date } } },
+            nextLabel: nextLabel
         )
         .id("\(tab.rawValue)-\(browse.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)")
+    }
+
+    private var nextLabel: String {
+        switch browse {
+        case .day:   return "Volgende dag met foto's"
+        case .month: return "Volgende maand met foto's"
+        case .year:  return "Volgend jaar met foto's"
+        case .random: return "Volgende"
+        }
+    }
+
+    /// Zoekt de eerstvolgende periode (dag/maand/jaar) ná de huidige die nog
+    /// onbeoordeelde items heeft. Wrapt rond de kalender/jaren; `nil` als er niets
+    /// meer te doen is (of de huidige periode de enige is).
+    private func nextPeriodDate(in base: [PhotoAsset]) -> Date? {
+        let cal = Calendar.current
+        let undecided = base.filter { !keep.contains($0.id) && !trash.contains($0.id) && $0.creationDate != nil }
+        guard !undecided.isEmpty else { return nil }
+
+        switch browse {
+        case .day:
+            let keys = Set(undecided.compactMap { asset -> Int? in
+                let c = cal.dateComponents([.month, .day], from: asset.creationDate!)
+                guard let m = c.month, let d = c.day else { return nil }
+                return m * 100 + d
+            })
+            var probe = selectedDate
+            for _ in 1...366 {
+                guard let next = cal.date(byAdding: .day, value: 1, to: probe) else { break }
+                probe = next
+                let c = cal.dateComponents([.month, .day], from: probe)
+                if let m = c.month, let d = c.day, keys.contains(m * 100 + d) { return probe }
+            }
+        case .month:
+            let months = Set(undecided.compactMap { cal.dateComponents([.month], from: $0.creationDate!).month })
+            var probe = selectedDate
+            for _ in 1...12 {
+                guard let next = cal.date(byAdding: .month, value: 1, to: probe) else { break }
+                probe = next
+                if let m = cal.dateComponents([.month], from: probe).month, months.contains(m) { return probe }
+            }
+        case .year:
+            let years = Set(undecided.compactMap { cal.dateComponents([.year], from: $0.creationDate!).year })
+            let current = cal.component(.year, from: selectedDate)
+            // eerst een later jaar; anders rond naar het vroegste jaar
+            guard let target = years.filter({ $0 > current }).min() ?? years.filter({ $0 < current }).min()
+            else { return nil }
+            var comps = cal.dateComponents([.month, .day], from: selectedDate)
+            comps.year = target
+            return cal.date(from: comps)
+        case .random:
+            return nil
+        }
+        return nil
     }
 
     private var deckKey: String {

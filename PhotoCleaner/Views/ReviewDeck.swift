@@ -12,6 +12,10 @@ struct ReviewDeck: View {
     var badge: (PhotoAsset) -> String? = { _ in nil }
     var emptyTitle = "Niets te tonen"
     var emptyMessage = "Er zijn hier geen items."
+    /// Springt naar de volgende periode (dag/maand/jaar) met onbeoordeelde items.
+    /// `nil` = niet beschikbaar (bijv. random-modus, of niets meer te doen).
+    var onNext: (() -> Void)? = nil
+    var nextLabel = "Volgende met foto's"
 
     @EnvironmentObject private var trash: TrashStore
     @EnvironmentObject private var keep: KeepStore
@@ -31,7 +35,7 @@ struct ReviewDeck: View {
     var body: some View {
         Group {
             if assets.isEmpty {
-                ContentUnavailableView(emptyTitle, systemImage: "sparkles", description: Text(emptyMessage))
+                emptyStateView
             } else if let current {
                 deck(current: current)
             } else {
@@ -126,6 +130,14 @@ struct ReviewDeck: View {
         }
     }
 
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            ContentUnavailableView(emptyTitle, systemImage: "sparkles", description: Text(emptyMessage))
+            nextButton
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private var doneState: some View {
         let kept = history.filter { $0.kept }.count
         let tossed = history.filter { !$0.kept }.count
@@ -137,6 +149,7 @@ struct ReviewDeck: View {
                 .font(.title2).bold()
             Text("\(kept) behouden · \(tossed) weggegooid")
                 .foregroundStyle(.secondary)
+            nextButton
             if history.last != nil {
                 Button {
                     undo()
@@ -148,6 +161,19 @@ struct ReviewDeck: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+
+    @ViewBuilder
+    private var nextButton: some View {
+        if let onNext {
+            Button {
+                Haptics.tap()
+                onNext()
+            } label: {
+                Label(nextLabel, systemImage: "arrow.forward.circle.fill")
+            }
+            .buttonStyle(.borderedProminent)
+        }
     }
 
     // MARK: - Beslissingen
