@@ -6,6 +6,8 @@ struct RootView: View {
     @EnvironmentObject private var library: PhotoLibrary
     @EnvironmentObject private var sources: SourceManager
 
+    @AppStorage("didOnboard") private var didOnboard = false
+
     var body: some View {
         Group {
             if sources.kind == .iphone && !library.access.canReadPhotos {
@@ -14,6 +16,9 @@ struct RootView: View {
                 MainTabs(source: sources.source)
                     .id(sources.kind)   // wissel van bron = verse view models
             }
+        }
+        .fullScreenCover(isPresented: Binding(get: { !didOnboard }, set: { didOnboard = !$0 })) {
+            OnboardingView { didOnboard = true }
         }
         .task {
             if sources.kind == .iphone && library.access == .notDetermined {
