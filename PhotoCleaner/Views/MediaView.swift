@@ -96,12 +96,14 @@ struct MediaView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { sourceMenu }
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "trash")
-                        Text("\(trash.totalCleaned)")
+                        Text("\(trash.totalCleaned)").monospacedDigit()
                     }
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(trash.totalCleaned) opgeschoond")
                 }
