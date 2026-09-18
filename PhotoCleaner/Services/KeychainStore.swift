@@ -17,8 +17,15 @@ enum KeychainStore {
 
         var attributes = query
         attributes[kSecValueData as String] = data
-        // Alleen leesbaar als het toestel ontgrendeld is (geweest); niet in back-ups
-        // naar andere toestellen.
+        // Bewuste afweging (Security Hotspot – beoordeeld als veilig):
+        // Dit item vereist géén losse authenticatie (Face ID/Touch ID) bij het lezen.
+        // Dat is hier nodig omdat het NAS-wachtwoord automatisch gelezen moet worden
+        // om te (her)verbinden en om meerdere SMB-verbindingen (previews/scan) te
+        // openen; een biometrie-prompt per lezing zou die achtergrond/parallelle
+        // toegang breken en de gebruikerservaring verslechteren.
+        // Wél restrictief beschermd: `ThisDeviceOnly` (nooit iCloud-sync of back-up
+        // naar een ander toestel) en `AfterFirstUnlock` (alleen leesbaar nadat het
+        // toestel sinds de start één keer is ontgrendeld).
         attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         return SecItemAdd(attributes as CFDictionary, nil) == errSecSuccess
     }
