@@ -26,9 +26,9 @@ struct RootView: View {
 private struct MainTabs: View {
     let source: PhotoSource
 
-    /// Begin-tab; standaard 0. Via de env-var START_TAB te sturen voor
-    /// (screenshot)tests.
-    @State private var selection: Int = Int(ProcessInfo.processInfo.environment["START_TAB"] ?? "") ?? 0
+    /// Actieve tab, bewaard zodat andere schermen ernaartoe kunnen navigeren
+    /// (bijv. de teller → Prullenbak). Via env-var START_TAB te sturen voor tests.
+    @AppStorage("selectedTab") private var selection = 0
 
     var body: some View {
         TabView(selection: $selection) {
@@ -43,6 +43,11 @@ private struct MainTabs: View {
             SettingsView()
                 .tabItem { Label("Instellingen", systemImage: "gearshape") }
                 .tag(2)
+        }
+        .onAppear {
+            if let tab = ProcessInfo.processInfo.environment["START_TAB"].flatMap(Int.init) {
+                selection = tab
+            }
         }
     }
 }

@@ -20,6 +20,7 @@ struct ReviewDeck: View {
     @EnvironmentObject private var trash: TrashStore
     @EnvironmentObject private var keep: KeepStore
 
+    @AppStorage("didSeeSwipeHint") private var didSeeSwipeHint = false
     @State private var history: [(id: String, kept: Bool)] = []
     @State private var sessionTotal = 0
     @State private var playing: PhotoAsset?
@@ -76,6 +77,8 @@ struct ReviewDeck: View {
                     onTap: { inspect(current) }
                 )
                 .id(current.id)
+
+                if !didSeeSwipeHint { swipeCoach }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -89,6 +92,39 @@ struct ReviewDeck: View {
             preloadUpcoming()
         }
         .onChange(of: current.id) { _, _ in preloadUpcoming() }
+    }
+
+    /// Eenmalige uitleg over het vegen, over de eerste kaart.
+    private var swipeCoach: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            HStack(spacing: 24) {
+                VStack(spacing: 6) {
+                    Image(systemName: "arrow.left").font(.title)
+                    Text("Weggooien").font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(.red)
+                VStack(spacing: 6) {
+                    Image(systemName: "arrow.right").font(.title)
+                    Text("Behouden").font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(.green)
+            }
+            Label("Tik op de foto om te vergroten", systemImage: "arrow.up.left.and.arrow.down.right")
+                .font(.footnote)
+                .foregroundStyle(.white)
+            Text("Veeg om te kiezen")
+                .font(.headline)
+                .foregroundStyle(.white)
+            Button("Begrepen") { withAnimation { didSeeSwipeHint = true } }
+                .buttonStyle(.borderedProminent)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.black.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .transition(.opacity)
+        .accessibilityAddTraits(.isModal)
     }
 
     private var progressBar: some View {
@@ -180,6 +216,7 @@ struct ReviewDeck: View {
 
     private func keepAsset(_ asset: PhotoAsset) {
         Haptics.tap()
+        didSeeSwipeHint = true
         withAnimation(.snappy) {
             keep.keep(asset.id)
             history.append((asset.id, true))
@@ -188,6 +225,7 @@ struct ReviewDeck: View {
 
     private func discard(_ asset: PhotoAsset) {
         Haptics.warning()
+        didSeeSwipeHint = true
         withAnimation(.snappy) {
             trash.mark(asset, reason: reason)
             history.append((asset.id, false))

@@ -66,6 +66,7 @@ struct MediaView: View {
     @AppStorage("mediaTab") private var tabRaw = MediaTab.photos.rawValue
     @AppStorage("browse") private var browseRaw = Browse.day.rawValue
     @AppStorage("sortOldFirst") private var sortOldFirst = false
+    @AppStorage("selectedTab") private var selectedTab = 0
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
     @State private var showSMBConnect = false
@@ -95,17 +96,23 @@ struct MediaView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { sourceMenu }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "trash")
-                        Text("\(trash.totalCleaned)").monospacedDigit()
+                if trash.totalCleaned > 0 {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Haptics.tap()
+                            selectedTab = 1   // naar de Prullenbak
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trash")
+                                Text("\(trash.totalCleaned)").monospacedDigit()
+                            }
+                            .font(.subheadline)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                        }
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("\(trash.totalCleaned) opgeschoond, open prullenbak")
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(trash.totalCleaned) opgeschoond")
                 }
             }
             .sheet(isPresented: $showSMBConnect) {
@@ -194,21 +201,31 @@ struct MediaView: View {
             .accessibilityLabel("Vorige")
 
             Button { showDatePicker = true } label: {
-                Text(periodTitle).font(.headline).frame(maxWidth: .infinity)
+                HStack(spacing: 5) {
+                    Image(systemName: "calendar").font(.subheadline)
+                    Text(periodTitle).font(.headline)
+                }
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
+            .accessibilityHint("Kies een datum")
 
             Button { shiftPeriod(1) } label: {
                 Image(systemName: "chevron.right").font(.headline).frame(width: 40, height: 34)
             }
             .accessibilityLabel("Volgende")
 
-            Button { sortOldFirst.toggle() } label: {
-                Image(systemName: sortOldFirst ? "arrow.up" : "arrow.down")
+            Menu {
+                Picker("Volgorde", selection: $sortOldFirst) {
+                    Label("Nieuwste eerst", systemImage: "arrow.down").tag(false)
+                    Label("Oudste eerst", systemImage: "arrow.up").tag(true)
+                }
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
                     .frame(width: 34, height: 34)
             }
             .buttonStyle(.bordered)
-            .accessibilityLabel(sortOldFirst ? "Oudste eerst" : "Nieuwste eerst")
+            .accessibilityLabel("Sorteervolgorde")
         }
     }
 
