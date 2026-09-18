@@ -22,6 +22,7 @@ struct ReviewDeck: View {
 
     @AppStorage("didSeeSwipeHint") private var didSeeSwipeHint = false
     @State private var history: [(id: String, kept: Bool)] = []
+    @State private var freedBytes: Int64 = 0
     @State private var sessionTotal = 0
     @State private var playing: PhotoAsset?
     @State private var inspecting: PhotoAsset?
@@ -185,6 +186,11 @@ struct ReviewDeck: View {
                 .font(.title2).bold()
             Text("\(kept) behouden · \(tossed) weggegooid")
                 .foregroundStyle(.secondary)
+            if freedBytes > 0 {
+                Label("\(ByteFormatter.string(freedBytes)) bespaard", systemImage: "internaldrive")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.green)
+            }
             nextButton
             if history.last != nil {
                 Button {
@@ -197,6 +203,7 @@ struct ReviewDeck: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+        .task(id: tossed) { await computeFreedBytes() }
     }
 
     @ViewBuilder
@@ -230,6 +237,16 @@ struct ReviewDeck: View {
             trash.mark(asset, reason: reason)
             history.append((asset.id, false))
         }
+    }
+
+    /// Berekent hoeveel opslag de weggegooide items van deze sessie ongeveer
+    /// vrijmaken (grootte wordt zo nodig lui bij de bron opgevraagd).
+    private func computeFreedBytes() async {
+        let tossedIDs = Set(history.filter { !$0.kept }.map(\.id))
+        guard !tossedIDs.isEmpty else { freedBytes = 0; return }
+        let tossedAssets = assets.filter { tossedIDs.contains($0.id) }
+        let sizes = await source.byteSizes(for: tossedAssets)
+        freedBytes = sizes.values.reduce(0, +)
     }
 
     private func undo() {
