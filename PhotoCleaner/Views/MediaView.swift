@@ -67,6 +67,7 @@ struct MediaView: View {
     @AppStorage("browse") private var browseRaw = Browse.day.rawValue
     @AppStorage("sortOldFirst") private var sortOldFirst = false
     @AppStorage("selectedTab") private var selectedTab = 0
+    @AppStorage("gridMode") private var gridMode = false
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
     @State private var showSMBConnect = false
@@ -96,6 +97,17 @@ struct MediaView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { sourceMenu }
+                if tab != .duplicates {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Haptics.tap()
+                            gridMode.toggle()
+                        } label: {
+                            Image(systemName: gridMode ? "rectangle.portrait" : "square.grid.2x2")
+                        }
+                        .accessibilityLabel(gridMode ? "Toon als veegstapel" : "Toon als raster")
+                    }
+                }
                 if trash.totalCleaned > 0 {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -238,28 +250,37 @@ struct MediaView: View {
         } else if tab == .duplicates {
             DuplicatesView(source: source)
         } else {
-            deck
+            reviewContent
         }
     }
 
-    private var deck: some View {
+    @ViewBuilder
+    private var reviewContent: some View {
         let base = tab == .videos ? vm.videos : vm.photos
         let items = browse.isRandom ? shuffled(base, seed: randomSeed) : filtered(base)
         let reason = tab == .videos ? "Filmpje" : (browse.isRandom ? "Random" : "Op deze dag")
         // Alleen bij dag/maand/jaar: spring naar de volgende periode met nog te
         // beoordelen items.
         let nextDate = browse.isRandom ? nil : nextPeriodDate(in: base)
-        return ReviewDeck(
-            assets: items,
-            source: source,
-            reason: reason,
-            badge: { badge(for: $0) },
-            emptyTitle: emptyTitle,
-            emptyMessage: emptyMessage,
-            onNext: nextDate.map { date in { withAnimation { selectedDate = date } } },
-            nextLabel: nextLabel
-        )
-        .id("\(tab.rawValue)-\(browse.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)")
+        let onNext: (() -> Void)? = nextDate.map { date in { withAnimation { selectedDate = date } } }
+
+        Group {
+            if gridMode {
+                GridReviewView(
+                    assets: items, source: source, reason: reason,
+                    emptyTitle: emptyTitle, emptyMessage: emptyMessage,
+                    onNext: onNext, nextLabel: nextLabel
+                )
+            } else {
+                ReviewDeck(
+                    assets: items, source: source, reason: reason,
+                    badge: { badge(for: $0) },
+                    emptyTitle: emptyTitle, emptyMessage: emptyMessage,
+                    onNext: onNext, nextLabel: nextLabel
+                )
+            }
+        }
+        .id("\(tab.rawValue)-\(browse.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)-\(gridMode)")
     }
 
     private var nextLabel: String {
