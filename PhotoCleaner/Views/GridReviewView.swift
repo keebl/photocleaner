@@ -20,8 +20,9 @@ struct GridReviewView: View {
     @State private var inspecting: PhotoAsset?
     @State private var playing: PhotoAsset?
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 4)
-    private static let thumbSize = CGSize(width: 400, height: 400)
+    private static let spacing: CGFloat = 3
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: 2)
+    private static let thumbSize = CGSize(width: 800, height: 800)
 
     private var queue: [PhotoAsset] {
         assets.filter { !keep.contains($0.id) && !trash.contains($0.id) }
@@ -41,30 +42,39 @@ struct GridReviewView: View {
 
     private var grid: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 2) {
-                    ForEach(queue) { cell($0) }
+            GeometryReader { geo in
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: Self.spacing) {
+                        ForEach(queue) { cell($0, height: tileHeight(in: geo.size)) }
+                    }
+                    .padding(Self.spacing)
                 }
-                .padding(2)
             }
             actionBar
         }
     }
 
-    private func cell(_ asset: PhotoAsset) -> some View {
+    /// Hoogte per tegel zodat er precies 2 rijen (dus 2×2 = 4 foto's) op het scherm
+    /// passen; bij meer foto's scrol je verder.
+    private func tileHeight(in size: CGSize) -> CGFloat {
+        max(120, (size.height - Self.spacing * 3) / 2)
+    }
+
+    private func cell(_ asset: PhotoAsset, height: CGFloat) -> some View {
         let isSelected = selected.contains(asset.id)
-        // Vaste vierkante tegel: de lege vierkant bepaalt de maat, de foto vult 'm
-        // (bijgesneden) — zo blijft het raster strak, ongeacht liggend/staand.
+        // Vaste rechthoekige tegel (2 kolommen, 2 rijen op het scherm): de foto vult
+        // 'm bijgesneden — zo blijft het raster strak, ongeacht liggend/staand.
         return Color.clear
-            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
             .overlay {
                 PhotoThumbnail(asset: asset, source: source, targetSize: Self.thumbSize, contentMode: .fill)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 6).fill(.red.opacity(0.28))
-                    RoundedRectangle(cornerRadius: 6).strokeBorder(.red, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.28))
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(.red, lineWidth: 3)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
