@@ -11,6 +11,13 @@ enum MediaTab: String, CaseIterable, Identifiable {
         case .duplicates: return "Dubbelen"
         }
     }
+    var systemImage: String {
+        switch self {
+        case .photos:     return "photo"
+        case .videos:     return "video"
+        case .duplicates: return "square.on.square"
+        }
+    }
 }
 
 /// Hoe je door de foto's/filmpjes bladert. Random, of "op deze dag" verbreed naar
@@ -27,6 +34,14 @@ enum Browse: String, CaseIterable, Identifiable {
         }
     }
     var isRandom: Bool { self == .random }
+    var systemImage: String {
+        switch self {
+        case .random: return "shuffle"
+        case .day:    return "calendar"
+        case .month:  return "calendar"
+        case .year:   return "calendar"
+        }
+    }
     var component: Calendar.Component {
         switch self {
         case .day, .random: return .day
@@ -161,23 +176,49 @@ struct MediaView: View {
 
     private var header: some View {
         VStack(spacing: 10) {
-            Picker("Type", selection: Binding(get: { tab }, set: { tab = $0 })) {
-                ForEach(MediaTab.allCases) { Text($0.label).tag($0) }
+            HStack(spacing: 10) {
+                typeMenu
+                if tab != .duplicates { browseMenu }
+                Spacer(minLength: 0)
             }
-            .pickerStyle(.segmented)
 
-            if tab != .duplicates {
-                Picker("Bladeren", selection: Binding(get: { browse }, set: { browse = $0 })) {
-                    ForEach(Browse.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-
-                if !browse.isRandom { periodBar }
-            }
+            if tab != .duplicates && !browse.isRandom { periodBar }
         }
         .padding(.horizontal)
         .padding(.top, 8)
         .padding(.bottom, 6)
+    }
+
+    private var typeMenu: some View {
+        Menu {
+            Picker("Type", selection: Binding(get: { tab }, set: { tab = $0 })) {
+                ForEach(MediaTab.allCases) { Label($0.label, systemImage: $0.systemImage).tag($0) }
+            }
+        } label: {
+            dropdownLabel(icon: tab.systemImage, text: tab.label)
+        }
+    }
+
+    private var browseMenu: some View {
+        Menu {
+            Picker("Bladeren", selection: Binding(get: { browse }, set: { browse = $0 })) {
+                ForEach(Browse.allCases) { Label($0.label, systemImage: $0.systemImage).tag($0) }
+            }
+        } label: {
+            dropdownLabel(icon: browse.systemImage, text: browse.label)
+        }
+    }
+
+    private func dropdownLabel(icon: String, text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(text).fontWeight(.medium)
+            Image(systemName: "chevron.down").font(.caption2).foregroundStyle(.secondary)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.quaternary, in: Capsule())
     }
 
     private var sourceMenu: some View {
