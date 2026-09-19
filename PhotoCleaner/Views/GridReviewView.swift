@@ -127,36 +127,55 @@ struct GridReviewView: View {
         .accessibilityLabel(isSelected ? "Geselecteerd, tik om te annuleren" : "Selecteer")
     }
 
-    @ViewBuilder
-    private var actionBar: some View {
-        if !selected.isEmpty {
-            HStack(spacing: 12) {
-                Button { keepSelected() } label: {
-                    Label("Behoud \(selected.count)", systemImage: "checkmark")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .tint(.green)
+    private var allSelected: Bool { !queue.isEmpty && selected.count == queue.count }
 
-                Button(role: .destructive) {
-                    deleteSelected()
-                } label: {
-                    Label("Gooi \(selected.count) weg", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
+    private var actionBar: some View {
+        VStack(spacing: 8) {
+            if !selected.isEmpty {
+                HStack(spacing: 12) {
+                    Button { keepSelected() } label: {
+                        Label("Behoud \(selected.count)", systemImage: "checkmark")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.green)
+
+                    Button(role: .destructive) {
+                        deleteSelected()
+                    } label: {
+                        Label("Gooi \(selected.count) weg", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
-            .background(.bar)
-        } else {
-            Text("Tik een foto om te bekijken · selecteer met het rondje om te behouden of weg te gooien")
-                .font(.caption).foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(.bar)
+
+            HStack {
+                Button { toggleSelectAll() } label: {
+                    Label(allSelected ? "Deselecteer alles" : "Selecteer alles",
+                          systemImage: allSelected ? "circle" : "checkmark.circle")
+                }
+                Spacer()
+                if selected.isEmpty {
+                    Text("Tik = bekijken · rondje = selecteren")
+                        .font(.caption2).foregroundStyle(.secondary)
+                } else {
+                    Text("\(selected.count) geselecteerd")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .font(.subheadline)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(.bar)
+    }
+
+    private func toggleSelectAll() {
+        Haptics.tap()
+        withAnimation {
+            if allSelected { selected.removeAll() }
+            else { selected = Set(queue.map(\.id)) }
         }
     }
 
