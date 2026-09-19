@@ -73,8 +73,8 @@ struct GridReviewView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.28))
-                    RoundedRectangle(cornerRadius: 8).strokeBorder(.red, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.25))
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor, lineWidth: 3)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
@@ -88,34 +88,39 @@ struct GridReviewView: View {
             .contentShape(Rectangle())
             .onTapGesture { inspect(asset) }
             .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
-            .accessibilityHint("Tik om te vergroten; gebruik het rondje om weg te gooien")
+            .accessibilityHint("Tik om te vergroten; gebruik het rondje om te selecteren")
     }
 
-    /// Rondje linksboven: aan = geselecteerd om weg te gooien.
+    /// Rondje linksboven: aan = geselecteerd (kies daarna behouden of weggooien).
     private func selectToggle(_ asset: PhotoAsset, isSelected: Bool) -> some View {
         Button { toggle(asset) } label: {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.headline)
                 .symbolRenderingMode(.palette)
-                .foregroundStyle(.white, isSelected ? Color.red : Color.black.opacity(0.35))
+                .foregroundStyle(.white, isSelected ? Color.accentColor : Color.black.opacity(0.35))
                 .background(Circle().fill(.black.opacity(0.25)))
                 .padding(4)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isSelected ? "Geselecteerd om weg te gooien, tik om te annuleren" : "Selecteer om weg te gooien")
+        .accessibilityLabel(isSelected ? "Geselecteerd, tik om te annuleren" : "Selecteer")
     }
 
     @ViewBuilder
     private var actionBar: some View {
         if !selected.isEmpty {
-            HStack {
-                Button("Selectie wissen") { withAnimation { selected.removeAll() } }
-                    .buttonStyle(.bordered)
-                Spacer()
+            HStack(spacing: 12) {
+                Button { keepSelected() } label: {
+                    Label("Behoud \(selected.count)", systemImage: "checkmark")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.green)
+
                 Button(role: .destructive) {
                     deleteSelected()
                 } label: {
                     Label("Gooi \(selected.count) weg", systemImage: "trash")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -123,9 +128,11 @@ struct GridReviewView: View {
             .padding(.vertical, 10)
             .background(.bar)
         } else {
-            Text("Tik een foto om te bekijken · gebruik het rondje om weg te gooien")
+            Text("Tik een foto om te bekijken · selecteer met het rondje om te behouden of weg te gooien")
                 .font(.caption).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
+                .padding(.horizontal)
                 .padding(.vertical, 10)
                 .background(.bar)
         }
@@ -162,6 +169,15 @@ struct GridReviewView: View {
         let toDelete = queue.filter { selected.contains($0.id) }
         withAnimation {
             for asset in toDelete { trash.mark(asset, reason: reason) }
+            selected.removeAll()
+        }
+    }
+
+    private func keepSelected() {
+        Haptics.tap()
+        let toKeep = queue.filter { selected.contains($0.id) }
+        withAnimation {
+            for asset in toKeep { keep.keep(asset.id) }
             selected.removeAll()
         }
     }
