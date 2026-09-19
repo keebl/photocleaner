@@ -84,6 +84,16 @@ struct GridReviewView: View {
                         .padding(4)
                 }
             }
+            .overlay(alignment: .bottomLeading) {
+                if let dateText = asset.dateText {
+                    Text(dateText)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6).padding(.vertical, 3)
+                        .background(.black.opacity(0.45), in: Capsule())
+                        .padding(6)
+                }
+            }
             .overlay(alignment: .topLeading) { selectToggle(asset, isSelected: isSelected) }
             .contentShape(Rectangle())
             .onTapGesture { inspect(asset) }

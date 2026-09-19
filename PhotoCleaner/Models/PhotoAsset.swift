@@ -36,6 +36,19 @@ struct PhotoAsset: Identifiable, Hashable, Codable {
 
     var isVideo: Bool { kind == .video }
 
+    /// Korte, leesbare opnamedatum, bijv. "12 aug 2021" (nil als onbekend).
+    var dateText: String? {
+        guard let date = creationDate else { return nil }
+        return PhotoAsset.dateFormatter.string(from: date)
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "nl_NL")
+        f.dateFormat = "d MMM yyyy"
+        return f
+    }()
+
     /// Kopie met een ingevulde bestandsgrootte (lui berekend, alleen waar nodig).
     func withByteSize(_ size: Int64) -> PhotoAsset {
         PhotoAsset(

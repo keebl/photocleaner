@@ -421,6 +421,13 @@ struct VideoPlayerScreen: View {
             }
             VStack {
                 HStack(spacing: 18) {
+                    if let dateText = asset.dateText {
+                        Text(dateText)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .background(.black.opacity(0.4), in: Capsule())
+                    }
                     Spacer()
                     ShareButton(asset: asset, source: source)
                         .font(.title2)
