@@ -17,8 +17,8 @@ struct OnboardingView: View {
 
     private let pages: [Page] = [
         Page(icon: "sparkles", tint: .accentColor,
-             title: "Ruim je foto's op",
-             text: "Beoordeel foto's per dag ('op deze dag'), willekeurig, of vind dubbelen. Veeg naar rechts om te behouden, naar links om weg te gooien."),
+             title: "Ruim je foto's en video's op",
+             text: "Beoordeel foto's en filmpjes per dag ('op deze dag'), willekeurig, of vind dubbelen. Veeg naar rechts om te behouden, naar links om weg te gooien."),
         Page(icon: "clock.arrow.circlepath", tint: .green,
              title: "Veilig opruimen",
              text: "Weggegooide foto's blijven 30 dagen in de prullenbak — één tik om iets ongedaan te maken. Foto's die je behoudt, komen niet meer langs."),
