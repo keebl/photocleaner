@@ -8,13 +8,15 @@ import UniformTypeIdentifiers
 final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver {
     let displayName = "iPhone-bibliotheek"
 
-    private let imageManager = PHImageManager.default()
+    /// Caching-manager houdt de komende foto's alvast klaar → vrijwel instant bij
+    /// het doorswipen.
+    private let imageManager = PHCachingImageManager()
 
     /// In-memory cache van geladen thumbnails, zodat een volgende (voorgeladen)
     /// foto meteen verschijnt zonder "laden".
     private let thumbnailCache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
-        cache.countLimit = 12
+        cache.countLimit = 80
         return cache
     }()
 
@@ -121,18 +123,31 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     /// Laadt vast de thumbnails van de opgegeven foto's in de cache (bijv. de
     /// volgende foto's in de swipe-stapel), zodat ze meteen klaarstaan.
     func preload(_ assets: [PhotoAsset], targetSize: CGSize) {
+        // Zet de komende foto's actief klaar in de caching-manager (zwaar werk vooraf,
+        // zodat ze bij het doorswipen vrijwel meteen verschijnen)...
+        let phAssets = assets.compactMap { phAsset(for: $0.id) }
+        if !phAssets.isEmpty {
+            imageManager.startCachingImages(for: phAssets, targetSize: targetSize,
+                                            contentMode: .aspectFill, options: Self.displayOptions())
+        }
+        // ...en vul meteen onze eigen cache zodat weergave zonder flits kan.
         for asset in assets where cachedThumbnail(for: asset, targetSize: targetSize) == nil {
             Task { _ = await loadThumbnail(for: asset, targetSize: targetSize) }
         }
     }
 
-    func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
-        if let cached = cachedThumbnail(for: asset, targetSize: targetSize) { return cached }
-        guard let phAsset = phAsset(for: asset.id) else { return nil }
+    private static func displayOptions() -> PHImageRequestOptions {
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.resizeMode = .fast
         options.isNetworkAccessAllowed = true
+        return options
+    }
+
+    func loadThumbnail(for asset: PhotoAsset, targetSize: CGSize) async -> UIImage? {
+        if let cached = cachedThumbnail(for: asset, targetSize: targetSize) { return cached }
+        guard let phAsset = phAsset(for: asset.id) else { return nil }
+        let options = Self.displayOptions()
 
         let box = RequestBox(manager: imageManager)
         let image: UIImage? = await withTaskCancellationHandler {

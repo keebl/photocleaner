@@ -258,7 +258,7 @@ struct ReviewDeck: View {
     }
 
     private func preloadUpcoming() {
-        let upcoming = Array(queue.dropFirst().prefix(3))
+        let upcoming = Array(queue.dropFirst().prefix(5))
         source.preload(upcoming, targetSize: Self.deckImageSize)
     }
 }
