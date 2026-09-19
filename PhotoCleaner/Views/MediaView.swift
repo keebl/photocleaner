@@ -67,7 +67,9 @@ struct MediaView: View {
     @AppStorage("browse") private var browseRaw = Browse.day.rawValue
     @AppStorage("sortOldFirst") private var sortOldFirst = false
     @AppStorage("selectedTab") private var selectedTab = 0
-    @AppStorage("gridMode") private var gridMode = false
+    /// Bewust géén @AppStorage: elke start begint met de enkele-foto-weergave;
+    /// het raster is een keuze binnen de sessie.
+    @State private var gridMode = false
     @State private var selectedDate = Date()
     @State private var randomSeed = UUID()
     @State private var showSMBConnect = false

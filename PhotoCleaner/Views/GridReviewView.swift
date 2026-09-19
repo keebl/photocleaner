@@ -65,20 +65,32 @@ struct GridReviewView: View {
                 }
             }
             .overlay {
+                if isSelected { Color.red.opacity(0.28) }
+            }
+            .overlay(alignment: .topLeading) { selectToggle(asset, isSelected: isSelected) }
+            .overlay {
                 if isSelected {
-                    ZStack {
-                        Color.red.opacity(0.28)
-                        Image(systemName: "trash.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.white, .red)
-                    }
+                    Rectangle().strokeBorder(.red, lineWidth: 3)
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { toggle(asset) }
-            .onLongPressGesture { inspect(asset) }
-            .accessibilityLabel(isSelected ? "Geselecteerd om weg te gooien" : (asset.isVideo ? "Video" : "Foto"))
-            .accessibilityHint("Tik om te selecteren, houd ingedrukt om te vergroten")
+            .onTapGesture { inspect(asset) }
+            .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
+            .accessibilityHint("Tik om te vergroten; gebruik het rondje om weg te gooien")
+    }
+
+    /// Rondje linksboven: aan = geselecteerd om weg te gooien.
+    private func selectToggle(_ asset: PhotoAsset, isSelected: Bool) -> some View {
+        Button { toggle(asset) } label: {
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.9), isSelected ? .red : .clear)
+                .padding(4)
+                .background(.black.opacity(0.3), in: Circle())
+                .padding(5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSelected ? "Geselecteerd om weg te gooien, tik om te annuleren" : "Selecteer om weg te gooien")
     }
 
     @ViewBuilder
@@ -99,7 +111,7 @@ struct GridReviewView: View {
             .padding(.vertical, 10)
             .background(.bar)
         } else {
-            Text("Tik foto's aan om weg te gooien · houd ingedrukt om te vergroten")
+            Text("Tik een foto om te bekijken · gebruik het rondje om weg te gooien")
                 .font(.caption).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
