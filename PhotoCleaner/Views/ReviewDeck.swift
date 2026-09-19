@@ -48,7 +48,11 @@ struct ReviewDeck: View {
             VideoPlayerScreen(asset: asset, source: source)
         }
         .fullScreenCover(item: $inspecting) { asset in
-            PhotoZoomView(asset: asset, source: source)
+            PhotoZoomView(
+                asset: asset, source: source,
+                onKeep: { keepAsset(asset) },
+                onDiscard: { discard(asset) }
+            )
         }
     }
 

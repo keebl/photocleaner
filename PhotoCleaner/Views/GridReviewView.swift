@@ -36,7 +36,19 @@ struct GridReviewView: View {
                 grid
             }
         }
-        .fullScreenCover(item: $inspecting) { PhotoZoomView(asset: $0, source: source) }
+        .fullScreenCover(item: $inspecting) { asset in
+            PhotoZoomView(
+                asset: asset, source: source,
+                onKeep: {
+                    keep.keep(asset.id)
+                    selected.remove(asset.id)
+                },
+                onDiscard: {
+                    trash.mark(asset, reason: reason)
+                    selected.remove(asset.id)
+                }
+            )
+        }
         .fullScreenCover(item: $playing) { VideoPlayerScreen(asset: $0, source: source) }
     }
 
