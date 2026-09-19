@@ -50,9 +50,10 @@ private struct MainTabs: View {
                 .tag(2)
         }
         .onAppear {
-            if let tab = ProcessInfo.processInfo.environment["START_TAB"].flatMap(Int.init) {
-                selection = tab
-            }
+            // Begin altijd op Media (tenzij een test-tab is opgegeven); de tab-
+            // binding wordt tijdens gebruik gedeeld zodat de teller naar de
+            // Prullenbak kan springen.
+            selection = ProcessInfo.processInfo.environment["START_TAB"].flatMap(Int.init) ?? 0
         }
     }
 }

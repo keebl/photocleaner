@@ -20,7 +20,7 @@ struct GridReviewView: View {
     @State private var inspecting: PhotoAsset?
     @State private var playing: PhotoAsset?
 
-    private let columns = [GridItem(.adaptive(minimum: 108), spacing: 3)]
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 4)
     private static let thumbSize = CGSize(width: 400, height: 400)
 
     private var queue: [PhotoAsset] {
@@ -42,10 +42,10 @@ struct GridReviewView: View {
     private var grid: some View {
         VStack(spacing: 0) {
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 3) {
+                LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(queue) { cell($0) }
                 }
-                .padding(3)
+                .padding(2)
             }
             actionBar
         }
@@ -53,26 +53,28 @@ struct GridReviewView: View {
 
     private func cell(_ asset: PhotoAsset) -> some View {
         let isSelected = selected.contains(asset.id)
-        return PhotoThumbnail(asset: asset, source: source, targetSize: Self.thumbSize)
-            .aspectRatio(1, contentMode: .fill)
-            .frame(maxWidth: .infinity)
-            .clipped()
+        // Vaste vierkante tegel: de lege vierkant bepaalt de maat, de foto vult 'm
+        // (bijgesneden) — zo blijft het raster strak, ongeacht liggend/staand.
+        return Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                PhotoThumbnail(asset: asset, source: source, targetSize: Self.thumbSize, contentMode: .fill)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 6).fill(.red.opacity(0.28))
+                    RoundedRectangle(cornerRadius: 6).strokeBorder(.red, lineWidth: 3)
+                }
+            }
             .overlay(alignment: .bottomTrailing) {
                 if asset.isVideo {
                     Image(systemName: "play.circle.fill")
                         .foregroundStyle(.white, .black.opacity(0.4))
-                        .padding(5)
+                        .padding(4)
                 }
-            }
-            .overlay {
-                if isSelected { Color.red.opacity(0.28) }
             }
             .overlay(alignment: .topLeading) { selectToggle(asset, isSelected: isSelected) }
-            .overlay {
-                if isSelected {
-                    Rectangle().strokeBorder(.red, lineWidth: 3)
-                }
-            }
             .contentShape(Rectangle())
             .onTapGesture { inspect(asset) }
             .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
@@ -83,11 +85,11 @@ struct GridReviewView: View {
     private func selectToggle(_ asset: PhotoAsset, isSelected: Bool) -> some View {
         Button { toggle(asset) } label: {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(isSelected ? .white : .white.opacity(0.9), isSelected ? .red : .clear)
+                .font(.headline)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.white, isSelected ? Color.red : Color.black.opacity(0.35))
+                .background(Circle().fill(.black.opacity(0.25)))
                 .padding(4)
-                .background(.black.opacity(0.3), in: Circle())
-                .padding(5)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isSelected ? "Geselecteerd om weg te gooien, tik om te annuleren" : "Selecteer om weg te gooien")
