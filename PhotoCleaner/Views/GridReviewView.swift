@@ -122,22 +122,27 @@ struct GridReviewView: View {
                         .padding(6)
                 }
             }
-            .overlay(alignment: .topLeading) { selectToggle(asset, isSelected: isSelected) }
+            .overlay(alignment: .topTrailing) { selectToggle(asset, isSelected: isSelected) }
             .contentShape(Rectangle())
             .onTapGesture { inspect(asset) }
             .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
             .accessibilityHint("Tik om te vergroten; gebruik het rondje om te selecteren")
     }
 
-    /// Rondje linksboven: aan = geselecteerd (kies daarna behouden of weggooien).
+    /// Rondje rechtsboven: aan = geselecteerd (kies daarna behouden of weggooien).
+    /// Bewust rechtsboven i.p.v. linksboven: langs de linker schermrand houdt iOS
+    /// aanrakingen ~2s vast voor het terug-veeggebaar ("system gesture gate"),
+    /// waardoor het vinkje pas veel later verscheen. Een ruime trefzone maakt 'm
+    /// bovendien makkelijker te raken.
     private func selectToggle(_ asset: PhotoAsset, isSelected: Bool) -> some View {
         Button { toggle(asset) } label: {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.headline)
+                .font(.title3)
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(.white, isSelected ? Color.accentColor : Color.black.opacity(0.35))
                 .background(Circle().fill(.black.opacity(0.25)))
-                .padding(4)
+                .padding(10)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isSelected ? "Geselecteerd, tik om te annuleren" : "Selecteer")
