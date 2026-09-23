@@ -147,29 +147,30 @@ struct GridReviewView: View {
 
     private var actionBar: some View {
         VStack(spacing: 8) {
-            if !selected.isEmpty {
-                HStack(spacing: 12) {
-                    Button { keepSelected() } label: {
-                        Label("Behoud \(selected.count)", systemImage: "checkmark")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.green)
-
-                    Button(role: .destructive) {
-                        deleteSelected()
-                    } label: {
-                        Label("Gooi \(selected.count) weg", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
+            // Actierij met vaste opmaak: de knoppen staan er altijd (uitgeschakeld
+            // zonder selectie), zodat het raster niet verspringt en de thumbnails
+            // niet herladen zodra je de eerste foto aantikt. Volgorde in lijn met
+            // vegen: weggooien links, behouden rechts.
+            HStack(spacing: 12) {
+                Button(role: .destructive) {
+                    deleteSelected()
+                } label: {
+                    Label(selected.isEmpty ? "Weggooien" : "Gooi \(selected.count) weg",
+                          systemImage: "trash")
+                        .frame(maxWidth: .infinity)
                 }
-            } else if !lastAction.isEmpty {
-                Button { undoLast() } label: {
-                    Label("Ongedaan maken · \(undoLabel)", systemImage: "arrow.uturn.backward")
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(selected.isEmpty)
+
+                Button { keepSelected() } label: {
+                    Label(selected.isEmpty ? "Behouden" : "Behoud \(selected.count)",
+                          systemImage: "checkmark")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .tint(.green)
+                .disabled(selected.isEmpty)
             }
 
             HStack {
@@ -178,12 +179,17 @@ struct GridReviewView: View {
                           systemImage: allSelected ? "circle" : "checkmark.circle")
                 }
                 Spacer()
-                if selected.isEmpty {
-                    Text("\(queue.count) \(itemNoun)")
+                if !selected.isEmpty {
+                    Text("\(selected.count) van \(queue.count) geselecteerd")
                         .font(.caption).foregroundStyle(.secondary)
                         .monospacedDigit()
+                } else if !lastAction.isEmpty {
+                    Button { undoLast() } label: {
+                        Label("Ongedaan maken", systemImage: "arrow.uturn.backward")
+                            .font(.subheadline)
+                    }
                 } else {
-                    Text("\(selected.count) van \(queue.count) geselecteerd")
+                    Text("\(queue.count) \(itemNoun)")
                         .font(.caption).foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
