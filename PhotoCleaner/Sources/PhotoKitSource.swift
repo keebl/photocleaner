@@ -70,13 +70,28 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
             format: "mediaType == %d || mediaType == %d",
             PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue
         )
-        let (assets, index) = mapAndIndex(PHAsset.fetchAssets(with: options))
+        let selfieIDs = selfieIdentifiers()
+        let (assets, index) = mapAndIndex(PHAsset.fetchAssets(with: options), selfieIDs: selfieIDs)
 
         stateLock.withLock {
             for (key, value) in index { assetIndex[key] = value }
             cachedAll = assets
         }
         return assets
+    }
+
+    /// Local identifiers van foto's in het "Selfies"-slimme album. Selfies zijn
+    /// geen foto-subtype, dus die halen we uit dat album.
+    private func selfieIdentifiers() -> Set<String> {
+        let collections = PHAssetCollection.fetchAssetCollections(
+            with: .smartAlbum, subtype: .smartAlbumSelfPortraits, options: nil)
+        var ids = Set<String>()
+        collections.enumerateObjects { collection, _, _ in
+            PHAsset.fetchAssets(in: collection, options: nil).enumerateObjects { asset, _, _ in
+                ids.insert(asset.localIdentifier)
+            }
+        }
+        return ids
     }
 
     func assets(withIDs ids: [String]) async -> [PhotoAsset] {
@@ -285,21 +300,28 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
     // MARK: - Hulpfuncties
 
     /// Bouwt (buiten de lock) een lijst PhotoAssets + een lokale index op.
-    private func mapAndIndex(_ result: PHFetchResult<PHAsset>) -> (assets: [PhotoAsset], index: [String: PHAsset]) {
+    private func mapAndIndex(_ result: PHFetchResult<PHAsset>,
+                             selfieIDs: Set<String> = []) -> (assets: [PhotoAsset], index: [String: PHAsset]) {
         var assets: [PhotoAsset] = []
         var index: [String: PHAsset] = [:]
         assets.reserveCapacity(result.count)
         result.enumerateObjects { phAsset, _, _ in
             index[phAsset.localIdentifier] = phAsset
-            assets.append(self.map(phAsset))
+            assets.append(self.map(phAsset, selfieIDs: selfieIDs))
         }
         return (assets, index)
     }
 
     /// Snelle map: alleen goedkope eigenschappen. Bestandsgrootte/naam vragen een
     /// trage `PHAssetResource`-call en berekenen we daarom lui via `byteSizes(for:)`.
-    private func map(_ phAsset: PHAsset) -> PhotoAsset {
-        PhotoAsset(
+    private func map(_ phAsset: PHAsset, selfieIDs: Set<String> = []) -> PhotoAsset {
+        var categories: Set<PhotoCategory> = []
+        if phAsset.mediaSubtypes.contains(.photoScreenshot) { categories.insert(.screenshot) }
+        if phAsset.mediaSubtypes.contains(.photoPanorama) { categories.insert(.panorama) }
+        if phAsset.isFavorite { categories.insert(.favorite) }
+        if selfieIDs.contains(phAsset.localIdentifier) { categories.insert(.selfie) }
+
+        return PhotoAsset(
             id: phAsset.localIdentifier,
             kind: phAsset.mediaType == .video ? .video : .photo,
             creationDate: phAsset.creationDate,
@@ -307,7 +329,8 @@ final class PhotoKitSource: NSObject, PhotoSource, PHPhotoLibraryChangeObserver 
             pixelWidth: phAsset.pixelWidth,
             pixelHeight: phAsset.pixelHeight,
             byteSize: 0,
-            filename: nil
+            filename: nil,
+            categories: categories
         )
     }
 

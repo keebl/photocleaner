@@ -51,6 +51,41 @@ enum Browse: String, CaseIterable, Identifiable {
     }
 }
 
+/// Categorie-filter voor foto's (alleen iPhone-bron): alle foto's, of één
+/// iOS-categorie zoals screenshots of favorieten.
+enum CategoryFilter: String, CaseIterable, Identifiable {
+    case all, screenshots, selfies, favorites, panoramas
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .all:         return "Alle"
+        case .screenshots: return "Screenshots"
+        case .selfies:     return "Selfies"
+        case .favorites:   return "Favorieten"
+        case .panoramas:   return "Panorama's"
+        }
+    }
+    var systemImage: String {
+        switch self {
+        case .all:         return "square.grid.2x2"
+        case .screenshots: return "camera.viewfinder"
+        case .selfies:     return "person.crop.square"
+        case .favorites:   return "heart"
+        case .panoramas:   return "pano"
+        }
+    }
+    /// De onderliggende foto-eigenschap; `nil` = geen filter (alle).
+    var category: PhotoCategory? {
+        switch self {
+        case .all:         return nil
+        case .screenshots: return .screenshot
+        case .selfies:     return .selfie
+        case .favorites:   return .favorite
+        case .panoramas:   return .panorama
+        }
+    }
+}
+
 @MainActor
 final class MediaViewModel: ObservableObject {
     @Published private(set) var assets: [PhotoAsset] = []
@@ -80,6 +115,7 @@ struct MediaView: View {
 
     @AppStorage("mediaTab") private var tabRaw = MediaTab.photos.rawValue
     @AppStorage("browse") private var browseRaw = Browse.day.rawValue
+    @AppStorage("category") private var categoryRaw = CategoryFilter.all.rawValue
     @AppStorage("sortOldFirst") private var sortOldFirst = false
     @AppStorage("selectedTab") private var selectedTab = 0
     /// Bewust géén @AppStorage: elke start begint met de enkele-foto-weergave;
@@ -102,6 +138,15 @@ struct MediaView: View {
     private var browse: Browse {
         get { Browse(rawValue: browseRaw) ?? .day }
         nonmutating set { browseRaw = newValue.rawValue }
+    }
+    private var category: CategoryFilter {
+        get { CategoryFilter(rawValue: categoryRaw) ?? .all }
+        nonmutating set { categoryRaw = newValue.rawValue }
+    }
+    /// Categorie-filter alleen bij foto's uit de iPhone-bibliotheek (NAS en video's
+    /// hebben deze iOS-eigenschappen niet).
+    private var showCategoryMenu: Bool {
+        tab == .photos && sources.kind == .iphone
     }
 
     var body: some View {
@@ -176,10 +221,14 @@ struct MediaView: View {
 
     private var header: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                typeMenu
-                if tab != .duplicates { browseMenu }
-                Spacer(minLength: 0)
+            // Horizontaal scrollbaar zodat drie knoppen (type, bladeren, categorie)
+            // nooit over twee regels afbreken op smallere schermen.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    typeMenu
+                    if tab != .duplicates { browseMenu }
+                    if showCategoryMenu { categoryMenu }
+                }
             }
 
             if tab != .duplicates && !browse.isRandom { periodBar }
@@ -209,10 +258,20 @@ struct MediaView: View {
         }
     }
 
+    private var categoryMenu: some View {
+        Menu {
+            Picker("Categorie", selection: Binding(get: { category }, set: { category = $0 })) {
+                ForEach(CategoryFilter.allCases) { Label($0.label, systemImage: $0.systemImage).tag($0) }
+            }
+        } label: {
+            dropdownLabel(icon: category.systemImage, text: category.label)
+        }
+    }
+
     private func dropdownLabel(icon: String, text: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-            Text(text).fontWeight(.medium)
+            Text(text).fontWeight(.medium).lineLimit(1).fixedSize()
             Image(systemName: "chevron.down").font(.caption2).foregroundStyle(.secondary)
         }
         .font(.subheadline)
@@ -310,7 +369,7 @@ struct MediaView: View {
 
     @ViewBuilder
     private var reviewContent: some View {
-        let base = tab == .videos ? vm.videos : vm.photos
+        let base = applyCategory(tab == .videos ? vm.videos : vm.photos)
         let items = browse.isRandom ? shuffled(base, seed: randomSeed) : filtered(base)
         let reason = tab == .videos ? "Filmpje" : (browse.isRandom ? "Random" : "Op deze dag")
         // Alleen bij dag/maand/jaar: spring naar de volgende periode met nog te
@@ -335,7 +394,14 @@ struct MediaView: View {
                 )
             }
         }
-        .id("\(tab.rawValue)-\(browse.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)-\(gridMode)")
+        .id("\(tab.rawValue)-\(browse.rawValue)-\(categoryRaw)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)-\(gridMode)")
+    }
+
+    /// Past het categorie-filter toe (alleen zinvol voor foto's uit de iPhone-
+    /// bibliotheek; anders ongewijzigd).
+    private func applyCategory(_ base: [PhotoAsset]) -> [PhotoAsset] {
+        guard showCategoryMenu, let cat = category.category else { return base }
+        return base.filter { $0.categories.contains(cat) }
     }
 
     /// Zelfstandig naamwoord voor de huidige inhoud: "filmpjes" of "foto's".

@@ -10,6 +10,15 @@ enum MediaKind: String, Hashable, Codable {
     case video
 }
 
+/// Categorie-eigenschappen die iOS per foto kan aanleveren (alleen PhotoKit).
+/// Gebruikt voor het categorie-filter (Screenshots, Selfies, ...).
+enum PhotoCategory: String, Hashable, Codable {
+    case screenshot
+    case selfie
+    case favorite
+    case panorama
+}
+
 struct PhotoAsset: Identifiable, Hashable, Codable {
     /// Stabiele identifier binnen de bron (bij PhotoKit: `localIdentifier`).
     let id: String
@@ -25,6 +34,8 @@ struct PhotoAsset: Identifiable, Hashable, Codable {
     /// Map waarin het bestand staat (alleen bij mapgebaseerde bronnen zoals NAS);
     /// handig om te zien wélke kopie je weggooit. `nil` bij PhotoKit.
     var folder: String? = nil
+    /// Categorieën (screenshot, selfie, ...) — alleen gevuld voor PhotoKit-foto's.
+    var categories: Set<PhotoCategory> = []
 
     var megapixels: Double {
         Double(pixelWidth * pixelHeight) / 1_000_000
@@ -60,7 +71,8 @@ struct PhotoAsset: Identifiable, Hashable, Codable {
             pixelHeight: pixelHeight,
             byteSize: size,
             filename: filename,
-            folder: folder
+            folder: folder,
+            categories: categories
         )
     }
 }
