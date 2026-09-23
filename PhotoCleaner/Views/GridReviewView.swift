@@ -25,13 +25,8 @@ struct GridReviewView: View {
     @State private var lastAction: [(id: String, kept: Bool)] = []
 
     private static let spacing: CGFloat = 3
-    private static let gridSpace = "gridContent"
     private let columns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: 2)
     private static let thumbSize = CGSize(width: 800, height: 800)
-
-    /// Tegels die tijdens één sleep-selectie al zijn aangeraakt, zodat je vinger
-    /// dezelfde tegel niet steeds heen en weer toggelt.
-    @State private var dragToggled: Set<String> = []
 
     private var queue: [PhotoAsset] {
         assets.filter { !keep.contains($0.id) && !trash.contains($0.id) }
@@ -84,47 +79,10 @@ struct GridReviewView: View {
                         ForEach(q) { cell($0, height: tileHeight(in: geo.size)) }
                     }
                     .padding(Self.spacing)
-                    .coordinateSpace(name: Self.gridSpace)
-                    // Kort ingedrukt houden en dan slepen = meerdere foto's
-                    // "schilderen"-selecteren. Een korte tik blijft vergroten en
-                    // snel slepen blijft scrollen (de long-press mislukt dan).
-                    .gesture(dragSelectGesture(size: geo.size, q: q))
                 }
             }
             actionBar(q)
         }
-    }
-
-    /// Vertaalt een punt in de rasterinhoud naar de foto eronder (2 kolommen,
-    /// vaste tegelhoogte).
-    private func assetID(at point: CGPoint, in size: CGSize, q: [PhotoAsset]) -> String? {
-        let pad = Self.spacing
-        let colWidth = (size.width - pad * 2 - Self.spacing) / 2
-        let rowHeight = tileHeight(in: size)
-        let x = point.x - pad
-        let y = point.y - pad
-        guard x >= 0, y >= 0, colWidth > 0 else { return nil }
-        let col = Int(x / (colWidth + Self.spacing))
-        let row = Int(y / (rowHeight + Self.spacing))
-        guard col >= 0, col < 2 else { return nil }
-        let index = row * 2 + col
-        guard index >= 0, index < q.count else { return nil }
-        return q[index].id
-    }
-
-    private func dragSelectGesture(size: CGSize, q: [PhotoAsset]) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.2)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.gridSpace)))
-            .onChanged { value in
-                if case .second(true, let drag?) = value,
-                   let id = assetID(at: drag.location, in: size, q: q),
-                   !dragToggled.contains(id) {
-                    dragToggled.insert(id)
-                    Haptics.tap()
-                    if selected.contains(id) { selected.remove(id) } else { selected.insert(id) }
-                }
-            }
-            .onEnded { _ in dragToggled.removeAll() }
     }
 
     /// Hoogte per tegel zodat er precies 2 rijen (dus 2×2 = 4 foto's) op het scherm
