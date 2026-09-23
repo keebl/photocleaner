@@ -21,6 +21,8 @@ struct GridReviewView: View {
     @State private var selected: Set<String> = []
     @State private var inspecting: PhotoAsset?
     @State private var playing: PhotoAsset?
+    /// Laatste bulk-actie (behouden of weggooien), zodat je 'm ongedaan kunt maken.
+    @State private var lastAction: [(id: String, kept: Bool)] = []
 
     private static let spacing: CGFloat = 3
     private let columns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: 2)
@@ -162,6 +164,12 @@ struct GridReviewView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+            } else if !lastAction.isEmpty {
+                Button { undoLast() } label: {
+                    Label("Ongedaan maken · \(undoLabel)", systemImage: "arrow.uturn.backward")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
 
             HStack {
@@ -196,19 +204,12 @@ struct GridReviewView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            ContentUnavailableView(emptyTitle, systemImage: "sparkles", description: Text(emptyMessage))
-            if let onNext {
-                Button {
-                    Haptics.tap()
-                    onNext()
-                } label: {
-                    Label(nextLabel, systemImage: "arrow.forward.circle.fill")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        CenteredEmptyState(
+            title: emptyTitle, message: emptyMessage,
+            onNext: onNext, nextLabel: nextLabel,
+            onUndo: lastAction.isEmpty ? nil : { undoLast() },
+            undoLabel: undoLabel
+        )
     }
 
     private func toggle(_ asset: PhotoAsset) {
@@ -226,6 +227,7 @@ struct GridReviewView: View {
         let toDelete = queue.filter { selected.contains($0.id) }
         withAnimation {
             for asset in toDelete { trash.mark(asset, reason: reason) }
+            lastAction = toDelete.map { ($0.id, false) }
             selected.removeAll()
         }
     }
@@ -235,7 +237,73 @@ struct GridReviewView: View {
         let toKeep = queue.filter { selected.contains($0.id) }
         withAnimation {
             for asset in toKeep { keep.keep(asset.id) }
+            lastAction = toKeep.map { ($0.id, true) }
             selected.removeAll()
         }
+    }
+
+    /// Korte omschrijving van de laatste actie, bijv. "3 weggegooid".
+    private var undoLabel: String {
+        let n = lastAction.count
+        let kept = lastAction.first?.kept ?? false
+        return "\(n) \(kept ? "behouden" : "weggegooid")"
+    }
+
+    /// Draait de laatste bulk-actie terug: de items komen weer in de wachtrij.
+    private func undoLast() {
+        Haptics.tap()
+        withAnimation {
+            for item in lastAction {
+                if item.kept { keep.unkeep(item.id) } else { trash.restore(item.id) }
+            }
+            lastAction = []
+        }
+    }
+}
+
+/// Gecentreerde "niets te tonen"-weergave: icoon, titel, uitleg en (optioneel)
+/// de knop naar de volgende periode — als groep verticaal gecentreerd, zodat de
+/// knop midden op het scherm staat en niet strak onderaan.
+struct CenteredEmptyState: View {
+    let title: String
+    let message: String
+    var onNext: (() -> Void)? = nil
+    var nextLabel = "Volgende met foto's"
+    /// Optionele terugdraai-actie (bijv. na een bulk-actie in het raster die de
+    /// hele periode leegmaakte), zodat ongedaan maken ook hier bereikbaar blijft.
+    var onUndo: (() -> Void)? = nil
+    var undoLabel = ""
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 52))
+                .foregroundStyle(.secondary)
+            VStack(spacing: 6) {
+                Text(title).font(.title2).bold()
+                Text(message)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            if let onNext {
+                Button {
+                    Haptics.tap()
+                    onNext()
+                } label: {
+                    Label(nextLabel, systemImage: "arrow.forward.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 4)
+            }
+            if let onUndo {
+                Button { onUndo() } label: {
+                    Label(undoLabel.isEmpty ? "Ongedaan maken" : "Ongedaan maken · \(undoLabel)",
+                          systemImage: "arrow.uturn.backward")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

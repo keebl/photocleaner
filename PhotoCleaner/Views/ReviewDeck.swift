@@ -176,11 +176,10 @@ struct ReviewDeck: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            ContentUnavailableView(emptyTitle, systemImage: "sparkles", description: Text(emptyMessage))
-            nextButton
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        CenteredEmptyState(
+            title: emptyTitle, message: emptyMessage,
+            onNext: onNext, nextLabel: nextLabel
+        )
     }
 
     private var doneState: some View {
