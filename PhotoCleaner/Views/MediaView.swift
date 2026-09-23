@@ -270,6 +270,17 @@ struct MediaView: View {
             }
             .accessibilityLabel("Volgende")
 
+            if showTodayButton {
+                Button {
+                    Haptics.tap()
+                    withAnimation { selectedDate = Date() }
+                } label: {
+                    Text(todayLabel).font(.subheadline.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Terug naar nu")
+            }
+
             Menu {
                 Picker("Volgorde", selection: $sortOldFirst) {
                     Label("Nieuwste eerst", systemImage: "arrow.down").tag(false)
@@ -311,6 +322,7 @@ struct MediaView: View {
             if gridMode {
                 GridReviewView(
                     assets: items, source: source, reason: reason,
+                    itemNoun: itemNoun,
                     emptyTitle: emptyTitle, emptyMessage: emptyMessage,
                     onNext: onNext, nextLabel: nextLabel
                 )
@@ -326,11 +338,14 @@ struct MediaView: View {
         .id("\(tab.rawValue)-\(browse.rawValue)-\(deckKey)-\(sortOldFirst)-\(sources.kind.rawValue)-\(gridMode)")
     }
 
+    /// Zelfstandig naamwoord voor de huidige inhoud: "filmpjes" of "foto's".
+    private var itemNoun: String { tab == .videos ? "filmpjes" : "foto's" }
+
     private var nextLabel: String {
         switch browse {
-        case .day:   return "Volgende dag met foto's"
-        case .month: return "Volgende maand met foto's"
-        case .year:  return "Volgend jaar met foto's"
+        case .day:   return "Volgende dag met \(itemNoun)"
+        case .month: return "Volgende maand met \(itemNoun)"
+        case .year:  return "Volgend jaar met \(itemNoun)"
         case .random: return "Volgende"
         }
     }
@@ -432,6 +447,27 @@ struct MediaView: View {
         case .month:          return "m\(c.month ?? 0)"
         case .year:           return "y\(c.year ?? 0)"
         case .random:         return "random"
+        }
+    }
+
+    /// Toont de "terug naar nu"-knop alleen als de gekozen periode niet de huidige
+    /// is — zo weet je na het bladeren (of na wisselen foto's/filmpjes) altijd de
+    /// weg terug naar vandaag.
+    private var showTodayButton: Bool {
+        let cal = Calendar.current
+        switch browse {
+        case .day:    return !cal.isDate(selectedDate, inSameDayAs: Date())
+        case .month:  return cal.component(.month, from: selectedDate) != cal.component(.month, from: Date())
+        case .year:   return cal.component(.year, from: selectedDate) != cal.component(.year, from: Date())
+        case .random: return false
+        }
+    }
+
+    private var todayLabel: String {
+        switch browse {
+        case .month:  return "Deze maand"
+        case .year:   return "Dit jaar"
+        default:      return "Vandaag"
         }
     }
 

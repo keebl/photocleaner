@@ -45,7 +45,11 @@ struct ReviewDeck: View {
             }
         }
         .fullScreenCover(item: $playing) { asset in
-            VideoPlayerScreen(asset: asset, source: source)
+            VideoPlayerScreen(
+                asset: asset, source: source,
+                onKeep: { keepAsset(asset) },
+                onDiscard: { discard(asset) }
+            )
         }
         .fullScreenCover(item: $inspecting) { asset in
             PhotoZoomView(
@@ -407,43 +411,43 @@ private struct DeckCard: View {
     }
 }
 
-/// Volledig scherm om een video af te spelen.
+/// Volledig scherm om een video af te spelen. Als `onKeep`/`onDiscard` zijn
+/// meegegeven, kun je het filmpje ook meteen beoordelen: veeg horizontaal
+/// (rechts = behouden, links = weggooien) of gebruik de knoppen in de balk.
 struct VideoPlayerScreen: View {
     let asset: PhotoAsset
     let source: PhotoSource
+    var onKeep: (() -> Void)? = nil
+    var onDiscard: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var player: AVPlayer?
+    @State private var swipe: CGSize = .zero
+    @State private var committing = false
+
+    private let swipeThreshold: CGFloat = 90
+
+    /// Beslissen kan alleen als er acties zijn meegegeven en we niet al bezig zijn.
+    private var canDecide: Bool { (onKeep != nil || onDiscard != nil) && !committing }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let player {
-                VideoPlayer(player: player).ignoresSafeArea()
+                VideoPlayer(player: player)
+                    .ignoresSafeArea()
+                    .offset(x: swipe.width)
+                    .simultaneousGesture(canDecide ? decideDrag : nil)
             } else {
                 ProgressView().tint(.white)
             }
+
+            if canDecide { feedback }
+
             VStack {
-                HStack(spacing: 18) {
-                    if let dateText = asset.dateText {
-                        Text(dateText)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12).padding(.vertical, 6)
-                            .background(.black.opacity(0.4), in: Capsule())
-                    }
-                    Spacer()
-                    ShareButton(asset: asset, source: source)
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.white, .black.opacity(0.4))
-                    }
-                }
-                .padding()
+                topBar
                 Spacer()
+                if canDecide { legend }
             }
         }
         .task {
@@ -454,5 +458,105 @@ struct VideoPlayerScreen: View {
             }
         }
         .onDisappear { player?.pause() }
+    }
+
+    private var topBar: some View {
+        HStack(spacing: 14) {
+            if let dateText = asset.dateText {
+                Text(dateText)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(.black.opacity(0.4), in: Capsule())
+            }
+            Spacer()
+            if canDecide {
+                Button { commit(keep: false) } label: {
+                    Image(systemName: "trash.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(.white, .red)
+                }
+                .accessibilityLabel("Weggooien")
+                Button { commit(keep: true) } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(.white, .green)
+                }
+                .accessibilityLabel("Behouden")
+            }
+            ShareButton(asset: asset, source: source)
+                .font(.title2)
+                .foregroundStyle(.white)
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .foregroundStyle(.white, .black.opacity(0.4))
+            }
+        }
+        .padding()
+    }
+
+    private var legend: some View {
+        HStack {
+            HStack(spacing: 4) { Image(systemName: "arrow.left"); Text("Weggooien") }
+                .foregroundStyle(.red)
+            Spacer()
+            HStack(spacing: 4) { Text("Behouden"); Image(systemName: "arrow.right") }
+                .foregroundStyle(.green)
+        }
+        .font(.caption.weight(.medium))
+        .padding(.horizontal, 24)
+        .padding(.bottom, 24)
+    }
+
+    @ViewBuilder
+    private var feedback: some View {
+        if swipe.width > 0 {
+            stamp(system: "checkmark.circle.fill", color: .green,
+                  opacity: Double(min(swipe.width / swipeThreshold, 1)))
+        } else if swipe.width < 0 {
+            stamp(system: "trash.circle.fill", color: .red,
+                  opacity: Double(min(-swipe.width / swipeThreshold, 1)))
+        }
+    }
+
+    private func stamp(system: String, color: Color, opacity: Double) -> some View {
+        Image(systemName: system)
+            .font(.system(size: 96))
+            .foregroundStyle(.white, color)
+            .opacity(opacity)
+            .allowsHitTesting(false)
+    }
+
+    /// Reageert alleen op overwegend horizontale sleepbewegingen, zodat de
+    /// afspeelbediening (tikken, scrubben) gewoon blijft werken.
+    private var decideDrag: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onChanged { value in
+                guard canDecide, abs(value.translation.width) > abs(value.translation.height) else { return }
+                swipe = value.translation
+            }
+            .onEnded { value in
+                guard canDecide else { return }
+                if value.translation.width > swipeThreshold {
+                    commit(keep: true)
+                } else if value.translation.width < -swipeThreshold {
+                    commit(keep: false)
+                } else {
+                    withAnimation(.spring) { swipe = .zero }
+                }
+            }
+    }
+
+    private func commit(keep: Bool) {
+        guard canDecide else { return }
+        committing = true
+        player?.pause()
+        if keep { Haptics.tap() } else { Haptics.warning() }
+        withAnimation(.easeOut(duration: 0.22)) { swipe.width = keep ? 700 : -700 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if keep { onKeep?() } else { onDiscard?() }
+            dismiss()
+        }
     }
 }

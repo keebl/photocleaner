@@ -8,6 +8,8 @@ struct GridReviewView: View {
     let source: PhotoSource
     /// Reden waarmee weggegooide items in de prullenbak komen.
     let reason: String
+    /// Zelfstandig naamwoord voor de teller, bijv. "foto's" of "filmpjes".
+    var itemNoun = "items"
     var emptyTitle = "Niets te tonen"
     var emptyMessage = "Er zijn hier geen items."
     var onNext: (() -> Void)? = nil
@@ -49,7 +51,19 @@ struct GridReviewView: View {
                 }
             )
         }
-        .fullScreenCover(item: $playing) { VideoPlayerScreen(asset: $0, source: source) }
+        .fullScreenCover(item: $playing) { asset in
+            VideoPlayerScreen(
+                asset: asset, source: source,
+                onKeep: {
+                    keep.keep(asset.id)
+                    selected.remove(asset.id)
+                },
+                onDiscard: {
+                    trash.mark(asset, reason: reason)
+                    selected.remove(asset.id)
+                }
+            )
+        }
     }
 
     private var grid: some View {
@@ -157,11 +171,13 @@ struct GridReviewView: View {
                 }
                 Spacer()
                 if selected.isEmpty {
-                    Text("Tik = bekijken · rondje = selecteren")
-                        .font(.caption2).foregroundStyle(.secondary)
-                } else {
-                    Text("\(selected.count) geselecteerd")
+                    Text("\(queue.count) \(itemNoun)")
                         .font(.caption).foregroundStyle(.secondary)
+                        .monospacedDigit()
+                } else {
+                    Text("\(selected.count) van \(queue.count) geselecteerd")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
             }
             .font(.subheadline)
