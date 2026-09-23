@@ -89,63 +89,35 @@ struct GridReviewView: View {
     }
 
     private func cell(_ asset: PhotoAsset, height: CGFloat) -> some View {
-        let isSelected = selected.contains(asset.id)
-        // Vaste rechthoekige tegel (2 kolommen, 2 rijen op het scherm): de foto vult
-        // 'm bijgesneden — zo blijft het raster strak, ongeacht liggend/staand.
-        return Color.clear
-            .frame(maxWidth: .infinity)
-            .frame(height: height)
-            .overlay {
-                PhotoThumbnail(asset: asset, source: source, targetSize: Self.thumbSize, contentMode: .fill)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.25))
-                    RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor, lineWidth: 3)
-                }
-            }
-            .overlay(alignment: .bottomTrailing) {
-                if asset.isVideo {
-                    Image(systemName: "play.circle.fill")
-                        .foregroundStyle(.white, .black.opacity(0.4))
-                        .padding(4)
-                }
-            }
-            .overlay(alignment: .bottomLeading) {
-                if let dateText = asset.dateText {
-                    Text(dateText)
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6).padding(.vertical, 3)
-                        .background(.black.opacity(0.45), in: Capsule())
-                        .padding(6)
-                }
-            }
-            .overlay(alignment: .topTrailing) { selectToggle(asset, isSelected: isSelected) }
-            .contentShape(Rectangle())
-            .onTapGesture { inspect(asset) }
-            .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
-            .accessibilityHint("Tik om te vergroten; gebruik het rondje om te selecteren")
+        GridCell(
+            asset: asset,
+            source: source,
+            height: height,
+            thumbSize: Self.thumbSize,
+            isSelected: selected.contains(asset.id),
+            onTap: { inspect(asset) },
+            onToggleSelect: { toggle(asset) },
+            onKeep: { keepOne(asset) },
+            onDiscard: { discardOne(asset) }
+        )
     }
 
-    /// Rondje rechtsboven: aan = geselecteerd (kies daarna behouden of weggooien).
-    /// Bewust rechtsboven i.p.v. linksboven: langs de linker schermrand houdt iOS
-    /// aanrakingen ~2s vast voor het terug-veeggebaar ("system gesture gate"),
-    /// waardoor het vinkje pas veel later verscheen. Een ruime trefzone maakt 'm
-    /// bovendien makkelijker te raken.
-    private func selectToggle(_ asset: PhotoAsset, isSelected: Bool) -> some View {
-        Button { toggle(asset) } label: {
-            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .symbolRenderingMode(.palette)
-                .foregroundStyle(.white, isSelected ? Color.accentColor : Color.black.opacity(0.35))
-                .background(Circle().fill(.black.opacity(0.25)))
-                .padding(10)
-                .contentShape(Rectangle())
+    /// Eén foto behouden (bijv. door 'm in het raster naar rechts te vegen).
+    private func keepOne(_ asset: PhotoAsset) {
+        withAnimation {
+            keep.keep(asset.id)
+            selected.remove(asset.id)
+            lastAction = [(asset.id, true)]
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isSelected ? "Geselecteerd, tik om te annuleren" : "Selecteer")
+    }
+
+    /// Eén foto weggooien (bijv. door 'm in het raster naar links te vegen).
+    private func discardOne(_ asset: PhotoAsset) {
+        withAnimation {
+            trash.mark(asset, reason: reason)
+            selected.remove(asset.id)
+            lastAction = [(asset.id, false)]
+        }
     }
 
     private var allSelected: Bool { !queue.isEmpty && selected.count == queue.count }
@@ -268,6 +240,143 @@ struct GridReviewView: View {
                 if item.kept { keep.unkeep(item.id) } else { trash.restore(item.id) }
             }
             lastAction = []
+        }
+    }
+}
+
+/// Eén tegel in het raster. Tik = vergroten, rondje = selecteren, en horizontaal
+/// vegen = beslissen (rechts behouden, links weggooien) — net als in de stapel.
+/// De veeg loopt via een simultane gesture zodat verticaal scrollen blijft werken
+/// en reageert alleen op overwegend horizontale bewegingen.
+private struct GridCell: View {
+    let asset: PhotoAsset
+    let source: PhotoSource
+    let height: CGFloat
+    let thumbSize: CGSize
+    let isSelected: Bool
+    var onTap: () -> Void
+    var onToggleSelect: () -> Void
+    var onKeep: () -> Void
+    var onDiscard: () -> Void
+
+    @State private var offset: CGFloat = 0
+    @State private var committing = false
+
+    private let threshold: CGFloat = 60
+
+    private var keepProgress: Double { Double(min(max(offset / threshold, 0), 1)) }
+    private var discardProgress: Double { Double(min(max(-offset / threshold, 0), 1)) }
+
+    var body: some View {
+        Color.clear
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .overlay {
+                PhotoThumbnail(asset: asset, source: source, targetSize: thumbSize, contentMode: .fill)
+            }
+            .overlay { swipeFeedback }
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.25))
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor, lineWidth: 3)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(alignment: .bottomTrailing) {
+                if asset.isVideo {
+                    Image(systemName: "play.circle.fill")
+                        .foregroundStyle(.white, .black.opacity(0.4))
+                        .padding(4)
+                }
+            }
+            .overlay(alignment: .bottomLeading) {
+                if let dateText = asset.dateText {
+                    Text(dateText)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6).padding(.vertical, 3)
+                        .background(.black.opacity(0.45), in: Capsule())
+                        .padding(6)
+                }
+            }
+            .overlay(alignment: .topTrailing) { selectToggle }
+            .contentShape(Rectangle())
+            .offset(x: offset)
+            .rotationEffect(.degrees(Double(offset / 40)))
+            .onTapGesture { onTap() }
+            .simultaneousGesture(dragGesture)
+            .accessibilityLabel(asset.isVideo ? "Video" : "Foto")
+            .accessibilityHint("Tik om te vergroten, veeg om te kiezen, of gebruik het rondje om te selecteren")
+            .accessibilityAction(named: "Behouden") { onKeep() }
+            .accessibilityAction(named: "Weggooien") { onDiscard() }
+    }
+
+    /// Rondje rechtsboven: aan = geselecteerd. Bewust rechtsboven i.p.v. linksboven:
+    /// langs de linker schermrand houdt iOS aanrakingen ~2s vast voor het
+    /// terug-veeggebaar ("system gesture gate").
+    private var selectToggle: some View {
+        Button { onToggleSelect() } label: {
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.white, isSelected ? Color.accentColor : Color.black.opacity(0.35))
+                .background(Circle().fill(.black.opacity(0.25)))
+                .padding(10)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSelected ? "Geselecteerd, tik om te annuleren" : "Selecteer")
+    }
+
+    @ViewBuilder
+    private var swipeFeedback: some View {
+        if offset > 0 {
+            ZStack {
+                Color.green.opacity(keepProgress * 0.35)
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+                    .opacity(keepProgress)
+            }
+        } else if offset < 0 {
+            ZStack {
+                Color.red.opacity(discardProgress * 0.35)
+                Image(systemName: "trash.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+                    .opacity(discardProgress)
+            }
+        }
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { value in
+                guard !committing else { return }
+                // Alleen reageren op overwegend horizontale bewegingen, zodat een
+                // verticale veeg gewoon scrollt.
+                if abs(value.translation.width) > abs(value.translation.height) {
+                    offset = value.translation.width
+                }
+            }
+            .onEnded { value in
+                guard !committing else { return }
+                if value.translation.width > threshold {
+                    commit(keep: true)
+                } else if value.translation.width < -threshold {
+                    commit(keep: false)
+                } else {
+                    withAnimation(.spring) { offset = 0 }
+                }
+            }
+    }
+
+    private func commit(keep: Bool) {
+        committing = true
+        if keep { Haptics.tap() } else { Haptics.warning() }
+        withAnimation(.easeOut(duration: 0.2)) { offset = keep ? 500 : -500 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            if keep { onKeep() } else { onDiscard() }
         }
     }
 }
