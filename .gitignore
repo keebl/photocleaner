@@ -15,3 +15,17 @@ xcuserdata/
 
 # Simulator-screenshots (demo-artefacten)
 shots/
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.keystore
+*.mobileprovision
+tokens.json
+
+# Claude Code (machine-local)
+CLAUDE.local.md
+.claude/settings.local.json
