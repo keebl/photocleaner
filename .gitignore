@@ -15,6 +15,7 @@ xcuserdata/
 
 # Simulator-screenshots (demo-artefacten)
 shots/
+simphotos2/
 
 # Secrets (never commit)
 .env
