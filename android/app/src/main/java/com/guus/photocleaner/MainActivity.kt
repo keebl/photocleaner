@@ -67,11 +67,14 @@ class MainActivity : ComponentActivity() {
             },
             onRequestAccess = { launcher.launch(permissions.toTypedArray()) },
             onOpenSettings = ::openAppSettings,
-            mediaContent = {
+            mediaContent = { openTrash ->
                 MediaScreen(
                     source = container.source,
                     trash = container.trash,
                     keep = container.keep,
+                    onOpenTrash = openTrash,
+                    initialSettings = remember { prefs.mediaSettings },
+                    onSettingsChange = { prefs.mediaSettings = it },
                     swipeHintSeen = swipeHintSeen,
                     onSwipeHintSeen = {
                         if (!swipeHintSeen) {

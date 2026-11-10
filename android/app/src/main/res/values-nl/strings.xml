@@ -47,8 +47,55 @@
     <string name="deck_card_description_video">Video. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
 
     <!-- Media tab -->
+    <string name="media_tab_photos">Foto\'s</string>
+    <string name="media_tab_videos">Filmpjes</string>
+    <string name="media_tab_duplicates">Dubbelen</string>
+    <string name="media_browse_random">Random</string>
+    <string name="media_browse_day">Dag</string>
+    <string name="media_browse_month">Maand</string>
+    <string name="media_browse_year">Jaar</string>
+    <string name="media_category_all">Alle</string>
+    <string name="media_category_screenshots">Screenshots</string>
+    <string name="media_category_favorites">Favorieten</string>
+    <string name="media_category_panoramas">Panorama\'s</string>
+    <string name="media_noun_photos">foto\'s</string>
+    <string name="media_noun_videos">filmpjes</string>
     <string name="media_empty_title">Niets gevonden</string>
-    <string name="media_empty_message">Geen foto\'s voor %1$s.</string>
+    <string name="media_empty_title_photos">Geen foto\'s</string>
+    <string name="media_empty_title_videos">Geen filmpjes</string>
+    <string name="media_empty_message">Geen %1$s voor %2$s.</string>
+    <string name="media_empty_message_random">Er staan geen %1$s op dit toestel.</string>
+    <string name="media_next_day">Volgende dag met %1$s</string>
+    <string name="media_next_month">Volgende maand met %1$s</string>
+    <string name="media_next_year">Volgend jaar met %1$s</string>
+    <string name="media_today">Vandaag</string>
+    <string name="media_this_month">Deze maand</string>
+    <string name="media_this_year">Dit jaar</string>
+    <string name="media_previous">Vorige</string>
+    <string name="media_next">Volgende</string>
+    <string name="media_pick_date">Kies een datum</string>
+    <string name="media_sort">Volgorde</string>
+    <string name="media_sort_newest">Nieuwste eerst</string>
+    <string name="media_sort_oldest">Oudste eerst</string>
+    <string name="media_show_grid">Toon als raster</string>
+    <string name="media_show_deck">Toon als veegstapel</string>
+    <string name="media_open_trash">%1$d opgeschoond, open prullenbak</string>
+    <string name="media_ok">OK</string>
+    <string name="media_cancel">Annuleren</string>
+    <string name="media_duplicates_placeholder">Dubbelen zoeken komt binnenkort.</string>
+
+    <!-- Grid review -->
+    <string name="grid_discard">Weggooien</string>
+    <string name="grid_discard_n">Gooi %1$d weg</string>
+    <string name="grid_keep">Behouden</string>
+    <string name="grid_keep_n">Behoud %1$d</string>
+    <string name="grid_select_all">Selecteer alles</string>
+    <string name="grid_deselect_all">Deselecteer alles</string>
+    <string name="grid_selected_count">%1$d van %2$d geselecteerd</string>
+    <string name="grid_count">%1$d %2$s</string>
+    <string name="grid_undo">Ongedaan maken</string>
+    <string name="grid_select">Selecteer</string>
+    <string name="grid_deselect">Geselecteerd, tik om te annuleren</string>
 
     <!-- Placeholders until the tab screens are built -->
     <string name="placeholder_media">Hier verschijnen je foto\'s.</string>

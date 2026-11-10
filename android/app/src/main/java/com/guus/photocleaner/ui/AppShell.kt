@@ -57,7 +57,7 @@ fun AppShell(
     onRequestAccess: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    mediaContent: @Composable () -> Unit = { Placeholder(R.string.placeholder_media) },
+    mediaContent: @Composable (openTrash: () -> Unit) -> Unit = { Placeholder(R.string.placeholder_media) },
 ) {
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
@@ -77,7 +77,11 @@ fun AppShell(
 }
 
 @Composable
-private fun MainTabs(partialAccess: Boolean, onRequestAccess: () -> Unit, mediaContent: @Composable () -> Unit) {
+private fun MainTabs(
+    partialAccess: Boolean,
+    onRequestAccess: () -> Unit,
+    mediaContent: @Composable (openTrash: () -> Unit) -> Unit,
+) {
     var selected by rememberSaveable { mutableStateOf(Tab.MEDIA) }
     Scaffold(
         bottomBar = {
@@ -97,7 +101,7 @@ private fun MainTabs(partialAccess: Boolean, onRequestAccess: () -> Unit, mediaC
             if (partialAccess) PartialAccessBanner(onRequestAccess)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (selected) {
-                    Tab.MEDIA -> mediaContent()
+                    Tab.MEDIA -> mediaContent { selected = Tab.TRASH }
                     Tab.TRASH -> Placeholder(R.string.placeholder_trash)
                     Tab.SETTINGS -> Placeholder(R.string.placeholder_settings)
                 }
