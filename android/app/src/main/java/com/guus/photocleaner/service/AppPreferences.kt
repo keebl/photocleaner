@@ -16,7 +16,13 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_REQUESTED_ACCESS, false)
         set(value) = prefs.edit { putBoolean(KEY_REQUESTED_ACCESS, value) }
 
+    /** Whether the one-time swipe explanation over the first deck card was dismissed. */
+    var didSeeSwipeHint: Boolean
+        get() = prefs.getBoolean(KEY_DID_SEE_SWIPE_HINT, false)
+        set(value) = prefs.edit { putBoolean(KEY_DID_SEE_SWIPE_HINT, value) }
+
     private companion object {
+        const val KEY_DID_SEE_SWIPE_HINT = "didSeeSwipeHint"
         const val KEY_DID_ONBOARD = "didOnboard"
         const val KEY_REQUESTED_ACCESS = "requestedMediaAccess"
     }

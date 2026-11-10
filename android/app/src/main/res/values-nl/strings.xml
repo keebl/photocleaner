@@ -26,6 +26,30 @@
     <string name="partial_access_text">PhotoCleaner ziet alleen de foto\'s die je hebt geselecteerd.</string>
     <string name="partial_access_action">Alles toestaan</string>
 
+    <!-- Review deck -->
+    <string name="deck_progress">%1$d van %2$d</string>
+    <string name="deck_discard">Weggooien</string>
+    <string name="deck_keep">Behouden</string>
+    <string name="deck_undo_kept">Ongedaan maken (behouden)</string>
+    <string name="deck_undo_discarded">Ongedaan maken (weggegooid)</string>
+    <string name="deck_undo_last">Laatste ongedaan maken</string>
+    <string name="deck_hint_title">Veeg om te kiezen</string>
+    <string name="deck_hint_ok">Begrepen</string>
+    <string name="deck_done_title">Klaar</string>
+    <string name="deck_done_summary">%1$d behouden · %2$d weggegooid</string>
+    <string name="deck_freed">%1$s bespaard</string>
+    <string name="deck_this_year">Dit jaar</string>
+    <plurals name="deck_years_ago">
+        <item quantity="one">%1$d jaar geleden · %2$d</item>
+        <item quantity="other">%1$d jaar geleden · %2$d</item>
+    </plurals>
+    <string name="deck_card_description">Foto. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+    <string name="deck_card_description_video">Video. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+
+    <!-- Media tab -->
+    <string name="media_empty_title">Niets gevonden</string>
+    <string name="media_empty_message">Geen foto\'s voor %1$s.</string>
+
     <!-- Placeholders until the tab screens are built -->
     <string name="placeholder_media">Hier verschijnen je foto\'s.</string>
     <string name="placeholder_trash">Hier verschijnen weggegooide foto\'s.</string>

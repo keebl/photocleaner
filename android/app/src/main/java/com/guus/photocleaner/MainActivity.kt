@@ -23,17 +23,19 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.guus.photocleaner.service.AppPreferences
 import com.guus.photocleaner.service.MediaAccess
 import com.guus.photocleaner.ui.AppShell
+import com.guus.photocleaner.ui.MediaScreen
 import com.guus.photocleaner.ui.ShellState
 import com.guus.photocleaner.ui.theme.PhotoCleanerTheme
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var prefs: AppPreferences
+    private lateinit var container: AppContainer
+    private val prefs: AppPreferences get() = container.preferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        prefs = AppPreferences(this)
+        container = (application as PhotoCleanerApplication).container
         setContent {
             val dark = isSystemInDarkTheme()
             PhotoCleanerTheme(darkTheme = dark) { PhotoCleanerApp(dark) }
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun PhotoCleanerApp(darkTheme: Boolean) {
         var state by remember { mutableStateOf(currentState()) }
+        var swipeHintSeen by remember { mutableStateOf(prefs.didSeeSwipeHint) }
         val permissions = remember { MediaAccess.permissionsToRequest(Build.VERSION.SDK_INT) }
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
@@ -64,6 +67,20 @@ class MainActivity : ComponentActivity() {
             },
             onRequestAccess = { launcher.launch(permissions.toTypedArray()) },
             onOpenSettings = ::openAppSettings,
+            mediaContent = {
+                MediaScreen(
+                    source = container.source,
+                    trash = container.trash,
+                    keep = container.keep,
+                    swipeHintSeen = swipeHintSeen,
+                    onSwipeHintSeen = {
+                        if (!swipeHintSeen) {
+                            swipeHintSeen = true
+                            prefs.didSeeSwipeHint = true
+                        }
+                    },
+                )
+            },
         )
     }
 
