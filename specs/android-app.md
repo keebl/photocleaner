@@ -91,8 +91,10 @@ that can be published on Google Play.
     upload key, then a signed `.aab` is produced that targets the API level Google Play
     requires at submission time.
 21. Given the merged manifest of the release build, then it requests no `INTERNET`
-    permission and no permissions beyond media read (images/video/user-selected), and
-    post-notifications.
+    permission and no permissions beyond media read (images/video/user-selected),
+    post-notifications, and receive-boot-completed (re-arms the daily reminder after a
+    reboot; approved by Guus on 2026-11-10). AndroidX's internal
+    `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (signature-level, app-private) is allowed.
 
 ## Edge cases and error states
 - Empty library, or no photos on this day: friendly empty state with a way to another mode.
