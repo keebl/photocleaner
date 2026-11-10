@@ -27,6 +27,8 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Start emulator: `$ANDROID_HOME/emulator/emulator -avd pc_api36 -no-snapshot-save -no-audio &`
 - Run on emulator (after a build): `adb install -r app/build/outputs/apk/debug/app-debug.apk`
   then `adb shell am start -n com.guus.photocleaner/.MainActivity`
+- Seed test photos (emulator running, needs Pillow): `scripts/seed-emulator.sh`
+  (`--clean` removes them)
 - Screenshot (UI check): `adb exec-out screencap -p > /tmp/android-shot.png`
 - Where it runs: Android Emulator (AVD `pc_api36`, Pixel 8, API 36) or a physical phone
 
