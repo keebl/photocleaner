@@ -26,7 +26,30 @@
   notifications (daily reminder), optional local network access (NAS/SMB).
 - `PrivacyInfo.xcprivacy` is present and declares the app's data use for the App Store.
 - No analytics, no third-party SDKs, no network calls except to the user's own NAS.
-- Privacy policy: TODO(guus) — required before App Store submission (see `docs/APPSTORE.md`).
+- Privacy policy: `docs/privacy-policy.md` (written for the Android release; it also covers
+  the iOS app except the NAS source). TODO(guus): add an iOS/NAS paragraph before App Store
+  submission (see `docs/APPSTORE.md`).
+
+## Android app (`android/`)
+- **Data**: the user's photos and videos, read through MediaStore with the user's permission
+  (pixels for thumbnails and comparison hashes; date, size, dimensions, name, folder,
+  favourite flag) — purpose: review and duplicate detection. Stored on-device only, in
+  app-private storage: `trash.json`, `kept.json`, the hash cache and preferences. All app
+  data is excluded from cloud backup and device transfer (`data_extraction_rules.xml`,
+  `full_backup_content.xml`), because it holds device-specific media ids.
+- **No network**: the app declares no `INTERNET` permission; Media3's network permissions are
+  removed from the merged manifest. No analytics, crash reporting, ads or accounts.
+- **Permissions** (checked on the release bundle with bundletool, spec AC 21): media read
+  (images, video, user-selected; `READ_EXTERNAL_STORAGE` up to API 32), `POST_NOTIFICATIONS`
+  and `RECEIVE_BOOT_COMPLETED` for the optional daily reminder.
+- **Deletion**: never silent. Items go to the in-app trash for 30 days, then to Android's
+  system trash only after the user confirms Android's own dialog.
+- **Signing**: the Play upload keystore lives outside the repo; `android/keystore.properties`
+  (git-ignored, also `*.jks` / `*.keystore`) holds its path and passwords, with placeholders
+  in `android/keystore.properties.example`. Play App Signing holds the app signing key.
+- **Dependencies**: Gradle version catalog (`android/gradle/libs.versions.toml`), wrapper
+  pinned by SHA-256. All libraries are AndroidX/JetBrains/Coil (no networking SDKs).
+- **Privacy policy**: `docs/privacy-policy.md` (EN + NL), the public URL for Google Play.
 
 ## Reporting a problem
 Open a GitHub issue labelled `security` on `keebl/photocleaner`, or e-mail the maintainer.

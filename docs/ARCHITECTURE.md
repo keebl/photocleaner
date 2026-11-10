@@ -14,6 +14,7 @@ on-device; nothing is uploaded. Duplicate detection runs on-device with on-disk 
 | `PhotoSource` abstraction over storage | Reuse one UI/cleanup flow for iPhone library and NAS | `docs/decisions/0002-photosource-abstraction.md` |
 | Local-first + 30-day in-app trash | Make deletion reversible and never upload photos | `docs/decisions/0003-local-first-trash.md` |
 | Dropped Google Photos source | Its API cannot delete, which defeats a cleanup app | `docs/decisions/0004-drop-google-photos.md` |
+| Native Android app, no shared code | Native photo APIs and system dialogs on each platform; logic ported and unit-tested | `docs/decisions/0005-native-android-app.md` |
 
 ## Boundaries
 - `Models/` — source-independent types (`PhotoAsset`, `PhotoCategory`, `SourceKind`,
@@ -42,12 +43,39 @@ on-device; nothing is uploaded. Duplicate detection runs on-device with on-disk 
   connection errors in `SMBConnectView`; no retries against unknown hosts.
 - No other network services. No analytics, no third-party SDKs.
 
+## Android app (`android/`)
+A separate Gradle project (Kotlin, Jetpack Compose, Material 3; min API 30, target 36). It
+mirrors the iOS boundaries in `app/src/main/java/com/guus/photocleaner/`:
+- `model/` — `PhotoAsset`, `DuplicateGroup` (no Android types).
+- `source/` — `PhotoSource` interface, `MediaStoreSource` (MediaStore queries, thumbnails via
+  Coil, system trash request), `FakePhotoSource` for tests and previews, pure helpers
+  (`ImageHashing`, `OnThisDay`, `MediaCategories`).
+- `service/` — stores (`TrashStore`, `KeepStore`, `HashCache` as atomic JSON files),
+  `CachedHasher`, `DuplicateDetector`, `PerceptualDetector`, `DuplicateScanner`,
+  `StoreReconciler`, `MediaAccess`, preferences and the reminder (`ReminderScheduler`).
+- `ui/` — Compose screens: shell and onboarding, `deck/`, `media/` (selection logic, header,
+  grid), `zoom/`, `duplicates/`, `trash/`, `settings/`. Screens are stateless where it helps
+  testing; `MainActivity` wires stores, permissions and system dialogs.
+
+Differences from iOS by design: the source provides an image model for Coil instead of
+loading thumbnails itself; file sizes come with every query; deleting goes through
+MediaStore's trash request (Android's confirmation dialog) instead of a direct delete; the
+reminder is an inexact `AlarmManager` alarm re-armed after reboot (no WorkManager, to keep
+permissions minimal).
+
 ## Testing strategy
-No automated tests yet (TODO). Verification is manual in the iOS Simulator and on-device;
-the perceptual/duplicate logic is the first candidate for unit tests.
+- iOS: no automated tests yet (TODO). Verification is manual in the iOS Simulator and
+  on-device.
+- Android: JVM unit tests for all pure logic (detectors, dHash, stores, date and category
+  rules, media selection, reminder timing) and instrumented tests on the emulator for
+  MediaStore, the reminder notification and the Compose screens (against `FakePhotoSource`
+  with real stores). Commands in `CLAUDE.md`; manual checks with
+  `android/scripts/seed-emulator.sh` (synthetic photos only).
 
 ## Known debt
 - `swiftformat` not yet applied to existing code (30/33 files) — accepted until a dedicated
   format commit.
 - `PhotoCleaner` scheme not shared, blocking CI — accepted until CI is added.
-- No unit tests — accepted for a proof-of-concept; revisit before an App Store release.
+- No unit tests (iOS) — accepted for a proof-of-concept; revisit before an App Store release.
+- Android logic is a hand port of the Swift code; a rule change must be made in both apps
+  (ADR-0005).

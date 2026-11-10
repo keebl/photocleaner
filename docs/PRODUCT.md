@@ -31,7 +31,11 @@ cleanup fast and low-risk, one decision at a time.
 - Duplicate detection surfaces real duplicates without iCloud downloads, fast on re-scan.
 
 ## Platforms
-iOS 17+ (iPhone), SwiftUI — see `docs/ARCHITECTURE.md` for the stack.
+- iOS 17+ (iPhone), SwiftUI — see `docs/ARCHITECTURE.md` for the stack.
+- Android 11+ (phone, portrait), Kotlin + Jetpack Compose in `android/`, for Google Play
+  (`specs/android-app.md`, ADR-0005). Same features as iOS except the NAS source (deferred)
+  and the Selfies category (Android has no selfie flag). After 30 days in the in-app trash,
+  items move to Android's own trash after the user confirms.
 
 ## Data, privacy and money
 - Personal data: the user's own photos/videos and NAS credentials — purpose per item in
@@ -41,5 +45,7 @@ iOS 17+ (iPhone), SwiftUI — see `docs/ARCHITECTURE.md` for the stack.
   require public contact details on the store page.
 
 ## Open product questions
+- Android: DSA trader declaration on Google Play — the organisation account is declared as a
+  trader, so its name and address are public on the listing (see `docs/PLAYSTORE.md`).
 - TODO(guus): Is an App Store release the goal, or personal/sideload use only?
   (`docs/APPSTORE.md` exists but no privacy policy URL yet.)
