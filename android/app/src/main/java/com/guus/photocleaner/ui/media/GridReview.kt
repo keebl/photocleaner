@@ -2,6 +2,7 @@ package com.guus.photocleaner.ui.media
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,12 +42,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.ui.deck.Decision
 import com.guus.photocleaner.ui.deck.EmptyState
+import com.guus.photocleaner.ui.deck.Inspector
 import com.guus.photocleaner.ui.deck.NextButton
 import com.guus.photocleaner.ui.theme.DecisionColors
 
@@ -72,10 +76,29 @@ fun GridReview(
     modifier: Modifier = Modifier,
     nextLabel: String? = null,
     onNext: (() -> Unit)? = null,
+    inspector: Inspector? = null,
 ) {
     val queue = assets.filter { it.id !in decidedIds }
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var lastAction by remember { mutableStateOf(emptyList<Decision>()) }
+    var inspecting by remember { mutableStateOf<PhotoAsset?>(null) }
+
+    inspecting?.let { asset ->
+        inspector?.invoke(
+            asset,
+            {
+                inspecting = null
+                selected = selected - asset.id
+                onKeep(listOf(asset))
+            },
+            {
+                inspecting = null
+                selected = selected - asset.id
+                onDiscard(listOf(asset))
+            },
+            { inspecting = null },
+        )
+    }
 
     val undo = {
         onUndo(lastAction)
@@ -113,6 +136,7 @@ fun GridReview(
                         selected = isSelected,
                         height = tileHeight,
                         onToggle = { selected = if (isSelected) selected - asset.id else selected + asset.id },
+                        onOpen = { if (inspector != null) inspecting = asset },
                     )
                 }
             }
@@ -150,14 +174,18 @@ private fun Tile(
     selected: Boolean,
     height: androidx.compose.ui.unit.Dp,
     onToggle: () -> Unit,
+    onOpen: () -> Unit,
 ) {
     val accent = MaterialTheme.colorScheme.primary
+    val openLabel = stringResource(R.string.grid_open)
     Box(
         Modifier
             .fillMaxWidth()
             .height(height)
             .clip(TileShape)
-            .background(MaterialTheme.colorScheme.surfaceContainer),
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .semantics { contentDescription = openLabel }
+            .clickable(onClick = onOpen),
     ) {
         AsyncImage(model = model, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         if (selected) {

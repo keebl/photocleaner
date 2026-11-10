@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,7 +56,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import android.net.Uri
+import androidx.compose.foundation.shape.CircleShape
 import coil3.compose.AsyncImage
+import com.guus.photocleaner.ui.zoom.ShareButton
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.ui.theme.DecisionColors
@@ -64,6 +68,14 @@ import kotlinx.coroutines.launch
 
 /** Test tag of the top card in the deck. */
 const val DECK_CARD_TAG = "deckCard"
+
+/** Full-screen view of one item with keep/discard; provided by the caller (zoom or video). */
+typealias Inspector = @Composable (
+    asset: PhotoAsset,
+    onKeep: () -> Unit,
+    onDiscard: () -> Unit,
+    onClose: () -> Unit,
+) -> Unit
 
 /** One keep/discard decision, so it can be undone. */
 data class Decision(val asset: PhotoAsset, val kept: Boolean)
@@ -92,6 +104,8 @@ fun ReviewDeck(
     modifier: Modifier = Modifier,
     nextLabel: String? = null,
     onNext: (() -> Unit)? = null,
+    shareUri: (PhotoAsset) -> Uri? = { null },
+    inspector: Inspector? = null,
 ) {
     // Keyed on ids, so a reload with the same items keeps the undo history.
     val assetIds = remember(assets) { assets.map { it.id } }
@@ -99,6 +113,7 @@ fun ReviewDeck(
     val queue = assets.filter { it.id !in decidedIds }
     val sessionStart = remember(assetIds) { queue.size }
     val current = queue.firstOrNull()
+    var inspecting by remember { mutableStateOf<PhotoAsset?>(null) }
 
     val decide: (PhotoAsset, Boolean) -> Unit = { asset, kept ->
         onSwipeHintSeen()
@@ -139,6 +154,8 @@ fun ReviewDeck(
                                 asset = current,
                                 imageModel = imageModel(current),
                                 badge = badge(current),
+                                shareUri = shareUri(current),
+                                onTap = { if (inspector != null) inspecting = current },
                                 onDecide = { kept -> decide(current, kept) },
                             )
                         }
@@ -154,6 +171,20 @@ fun ReviewDeck(
                     }
                 }
             }
+        }
+        inspecting?.let { asset ->
+            inspector?.invoke(
+                asset,
+                {
+                    inspecting = null
+                    decide(asset, true)
+                },
+                {
+                    inspecting = null
+                    decide(asset, false)
+                },
+                { inspecting = null },
+            )
         }
     }
 }
@@ -193,7 +224,14 @@ private fun Legend() {
 
 /** The top card: drag horizontally past the threshold to decide, otherwise it springs back. */
 @Composable
-private fun DeckCard(asset: PhotoAsset, imageModel: Any, badge: String?, onDecide: (kept: Boolean) -> Unit) {
+private fun DeckCard(
+    asset: PhotoAsset,
+    imageModel: Any,
+    badge: String?,
+    shareUri: Uri?,
+    onTap: () -> Unit,
+    onDecide: (kept: Boolean) -> Unit,
+) {
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val offset = remember { Animatable(0f) }
@@ -232,6 +270,7 @@ private fun DeckCard(asset: PhotoAsset, imageModel: Any, badge: String?, onDecid
                     translationX = offset.value
                     rotationZ = offset.value / density.density / 22f
                 }
+                .clickable(onClick = onTap)
                 .pointerInput(asset.id) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
@@ -272,6 +311,32 @@ private fun DeckCard(asset: PhotoAsset, imageModel: Any, badge: String?, onDecid
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
+                }
+            }
+            if (offset.value == 0f) {
+                if (asset.isVideo) {
+                    Icon(
+                        painterResource(R.drawable.ic_play_circle),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.align(Alignment.Center).size(64.dp),
+                    )
+                } else {
+                    // Subtle hint that the photo can be enlarged.
+                    Icon(
+                        painterResource(R.drawable.ic_open_in_full),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(12.dp)
+                            .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                            .padding(6.dp)
+                            .size(20.dp),
+                    )
+                }
+                if (shareUri != null) {
+                    ShareButton(shareUri, asset.isVideo, Modifier.align(Alignment.TopEnd).padding(4.dp))
                 }
             }
             DecisionStamp(offsetPx = offset.value, thresholdPx = thresholdPx)
@@ -316,6 +381,12 @@ private fun SwipeHint(onDismiss: () -> Unit) {
             HintArrow(R.drawable.ic_arrow_forward, R.string.deck_keep, keepColor())
         }
         Spacer(Modifier.height(20.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(R.drawable.ic_open_in_full), null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.deck_hint_tap), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        }
+        Spacer(Modifier.height(12.dp))
         Text(
             stringResource(R.string.deck_hint_title),
             style = MaterialTheme.typography.titleLarge,

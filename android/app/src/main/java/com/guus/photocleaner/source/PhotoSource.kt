@@ -1,6 +1,7 @@
 package com.guus.photocleaner.source
 
 import android.app.PendingIntent
+import android.net.Uri
 import com.guus.photocleaner.model.PhotoAsset
 import kotlinx.coroutines.flow.Flow
 
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
  * Differences from iOS: thumbnails are loaded by the image loader from [imageModel] instead
  * of by the source; file sizes come with every query, so there is no separate byte-size
  * call; deleting needs a system confirmation dialog, so the source returns the request
- * for the UI to launch. Video and share support are added with the zoom screen.
+ * for the UI to launch; sharing and video playback use [contentUri].
  */
 interface PhotoSource {
 
@@ -35,6 +36,12 @@ interface PhotoSource {
 
     /** Data the image loader can render for this item (a content URI for MediaStore). */
     fun imageModel(asset: PhotoAsset): Any
+
+    /**
+     * Content URI to share or play this item, readable by other apps once granted; null when
+     * the source cannot provide one (test fake), in which case share and video play are hidden.
+     */
+    fun contentUri(asset: PhotoAsset): Uri?
 
     /** Perceptual hash (dHash) for finding similar photos; null for videos or unreadable images. */
     suspend fun perceptualHash(asset: PhotoAsset): Long?

@@ -31,6 +31,7 @@ import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.source.PhotoSource
 import com.guus.photocleaner.ui.deck.EmptyState
+import com.guus.photocleaner.ui.deck.Inspector
 import com.guus.photocleaner.ui.deck.ReviewDeck
 import com.guus.photocleaner.ui.deck.YearLabel
 import com.guus.photocleaner.ui.media.Browse
@@ -41,6 +42,7 @@ import com.guus.photocleaner.ui.media.MediaSelection
 import com.guus.photocleaner.ui.media.MediaTab
 import com.guus.photocleaner.ui.media.MediaTopBar
 import com.guus.photocleaner.ui.media.PeriodBar
+import com.guus.photocleaner.ui.zoom.MediaInspector
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -227,6 +229,17 @@ private fun ReviewContent(
     val dateText: (PhotoAsset) -> String? = { asset ->
         asset.browseDateMillis?.let { Instant.ofEpochMilli(it).atZone(zone).format(dateFormat) }
     }
+    val inspector: Inspector = { asset, onKeep, onDiscard, onClose ->
+        MediaInspector(
+            asset = asset,
+            imageModel = source.imageModel(asset),
+            contentUri = source.contentUri(asset),
+            dateText = dateText(asset),
+            onKeep = onKeep,
+            onDiscard = onDiscard,
+            onClose = onClose,
+        )
+    }
 
     // A fresh deck or grid for every kind/mode/category/period/order (iOS `.id(...)`).
     key(tab, browse, category, if (browse == Browse.RANDOM) randomSeed else date, oldestFirst, gridMode) {
@@ -246,6 +259,7 @@ private fun ReviewContent(
                 },
                 nextLabel = nextLabel,
                 onNext = onNext,
+                inspector = inspector,
             )
         } else {
             ReviewDeck(
@@ -268,6 +282,8 @@ private fun ReviewContent(
                 onUndo = { if (it.kept) keep.unkeep(it.asset.id) else trash.restore(it.asset.id) },
                 nextLabel = nextLabel,
                 onNext = onNext,
+                shareUri = source::contentUri,
+                inspector = inspector,
             )
         }
     }

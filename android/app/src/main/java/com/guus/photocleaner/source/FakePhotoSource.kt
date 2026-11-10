@@ -1,6 +1,7 @@
 package com.guus.photocleaner.source
 
 import android.app.PendingIntent
+import android.net.Uri
 import com.guus.photocleaner.model.PhotoAsset
 import java.time.ZoneId
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +50,8 @@ class FakePhotoSource(
     override fun flushCaches() = Unit
 
     override fun imageModel(asset: PhotoAsset): Any = asset.id
+
+    override fun contentUri(asset: PhotoAsset): Uri? = null
 
     override suspend fun perceptualHash(asset: PhotoAsset): Long? =
         if (asset.isVideo) null else hashes[asset.id]

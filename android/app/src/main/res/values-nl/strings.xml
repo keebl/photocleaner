@@ -96,6 +96,12 @@
     <string name="grid_undo">Ongedaan maken</string>
     <string name="grid_select">Selecteer</string>
     <string name="grid_deselect">Geselecteerd, tik om te annuleren</string>
+    <string name="grid_open">Openen</string>
+
+    <!-- Zoom, video and share -->
+    <string name="deck_hint_tap">Tik op de foto om te vergroten</string>
+    <string name="zoom_close">Sluiten</string>
+    <string name="zoom_share">Delen</string>
 
     <!-- Placeholders until the tab screens are built -->
     <string name="placeholder_media">Hier verschijnen je foto\'s.</string>

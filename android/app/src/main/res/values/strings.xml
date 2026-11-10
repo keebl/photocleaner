@@ -98,6 +98,12 @@
     <string name="grid_undo">Undo</string>
     <string name="grid_select">Select</string>
     <string name="grid_deselect">Selected, tap to deselect</string>
+    <string name="grid_open">Open</string>
+
+    <!-- Zoom, video and share -->
+    <string name="deck_hint_tap">Tap the photo to enlarge</string>
+    <string name="zoom_close">Close</string>
+    <string name="zoom_share">Share</string>
 
     <!-- Placeholders until the tab screens are built -->
     <string name="placeholder_media">Your photos appear here.</string>

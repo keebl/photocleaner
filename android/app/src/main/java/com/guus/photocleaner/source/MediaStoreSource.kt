@@ -158,7 +158,7 @@ class MediaStoreSource(
         return result
     }
 
-    private fun contentUri(asset: PhotoAsset): Uri {
+    override fun contentUri(asset: PhotoAsset): Uri {
         val collection = if (asset.isVideo) {
             MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         } else {

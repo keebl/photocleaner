@@ -2,6 +2,10 @@ package com.guus.photocleaner
 
 import android.app.Application
 import android.content.Context
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.video.VideoFrameDecoder
 import com.guus.photocleaner.service.AppPreferences
 import com.guus.photocleaner.service.HashCache
 import com.guus.photocleaner.service.KeepStore
@@ -21,6 +25,12 @@ class AppContainer(context: Context) {
     val source: PhotoSource = MediaStoreSource(context, hashCache)
 }
 
-class PhotoCleanerApplication : Application() {
+class PhotoCleanerApplication : Application(), SingletonImageLoader.Factory {
     val container: AppContainer by lazy { AppContainer(this) }
+
+    /** Coil with video frame decoding, so videos get thumbnails in the deck and grid. */
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        ImageLoader.Builder(context)
+            .components { add(VideoFrameDecoder.Factory()) }
+            .build()
 }

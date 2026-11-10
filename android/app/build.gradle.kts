@@ -54,6 +54,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.coil.video)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 
     testImplementation(libs.junit)
 
