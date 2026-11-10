@@ -16,6 +16,7 @@ import android.provider.MediaStore.Files.FileColumns
 import android.util.Size
 import com.guus.photocleaner.model.MediaKind
 import com.guus.photocleaner.model.PhotoAsset
+import com.guus.photocleaner.service.CachedHasher
 import com.guus.photocleaner.service.HashCache
 import java.io.IOException
 import java.time.ZoneId
@@ -82,20 +83,19 @@ class MediaStoreSource(
 
     override fun imageModel(asset: PhotoAsset): Any = contentUri(asset)
 
-    override suspend fun perceptualHash(asset: PhotoAsset): Long? {
-        if (asset.isVideo) return null
-        hashCache.hash(asset.id, asset.modifiedAtMillis)?.let { return it }
-        val hash = withContext(Dispatchers.IO) {
+    private val hasher = CachedHasher(hashCache) { asset ->
+        withContext(Dispatchers.IO) {
             val thumb = try {
                 resolver.loadThumbnail(contentUri(asset), Size(HASH_SOURCE_PX, HASH_SOURCE_PX), null)
             } catch (_: IOException) {
                 return@withContext null // corrupt or unreadable: skipped by the similar scan
             }
             ImageHashing.dHash(greyGrid(thumb))
-        } ?: return null
-        hashCache.set(asset.id, hash, asset.modifiedAtMillis)
-        return hash
+        }
     }
+
+    override suspend fun perceptualHash(asset: PhotoAsset): Long? =
+        if (asset.isVideo) null else hasher.hash(asset)
 
     override suspend fun createTrashRequest(assets: List<PhotoAsset>): PendingIntent? {
         val existing = assets(assets.map { it.id })

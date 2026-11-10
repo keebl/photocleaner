@@ -30,8 +30,8 @@ import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.source.PhotoSource
-import com.guus.photocleaner.ui.deck.EmptyState
 import com.guus.photocleaner.ui.deck.Inspector
+import com.guus.photocleaner.ui.duplicates.DuplicatesScreen
 import com.guus.photocleaner.ui.deck.ReviewDeck
 import com.guus.photocleaner.ui.deck.YearLabel
 import com.guus.photocleaner.ui.media.Browse
@@ -151,8 +151,16 @@ fun MediaScreen(
             val all = library
             when {
                 all == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                settings.tab == MediaTab.DUPLICATES ->
-                    EmptyState(stringResource(R.string.media_tab_duplicates), stringResource(R.string.media_duplicates_placeholder))
+                settings.tab == MediaTab.DUPLICATES -> {
+                    val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
+                    DuplicatesScreen(
+                        source = source,
+                        trash = trash,
+                        dateText = { asset ->
+                            asset.browseDateMillis?.let { Instant.ofEpochMilli(it).atZone(zone).format(dateFormat) }
+                        },
+                    )
+                }
                 else -> ReviewContent(
                     all = all,
                     settings = settings,

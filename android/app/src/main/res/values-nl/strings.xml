@@ -82,7 +82,25 @@
     <string name="media_open_trash">%1$d opgeschoond, open prullenbak</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Annuleren</string>
-    <string name="media_duplicates_placeholder">Dubbelen zoeken komt binnenkort.</string>
+
+    <!-- Duplicates -->
+    <string name="dup_exact">Exacte dubbelen</string>
+    <string name="dup_similar">Lijkende foto\'s</string>
+    <string name="dup_rescan">Opnieuw scannen</string>
+    <string name="dup_scanning">Bibliotheek scannen…</string>
+    <string name="dup_rescanning">Opnieuw scannen…</string>
+    <string name="dup_similar_scanning">Lijkende foto\'s zoeken…</string>
+    <string name="dup_stop">Stoppen</string>
+    <string name="dup_empty_exact_title">Geen dubbelen gevonden</string>
+    <string name="dup_empty_exact_message">Er zijn geen foto\'s met dezelfde metadata gevonden.</string>
+    <string name="dup_empty_similar_title">Geen lijkende foto\'s</string>
+    <string name="dup_empty_similar_message">Er zijn geen op elkaar lijkende foto\'s gevonden.</string>
+    <string name="dup_info">Vink aan wat je wilt houden; de rest gaat naar de prullenbak. Tik een foto aan om te vergroten.</string>
+    <string name="dup_header">%1$d exemplaren · %2$d houden · %3$s te winnen</string>
+    <string name="dup_discard_n">Gooi %1$d weg</string>
+    <string name="dup_show_more">Toon meer (%1$d resterend)</string>
+    <string name="dup_kept_toggle">Behouden, tik om weg te gooien</string>
+    <string name="dup_discard_toggle">Weggooien, tik om te behouden</string>
 
     <!-- Grid review -->
     <string name="grid_discard">Weggooien</string>

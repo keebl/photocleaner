@@ -84,7 +84,25 @@
     <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d cleaned, open trash</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Cancel</string>
-    <string name="media_duplicates_placeholder">Duplicate search is coming soon.</string>
+
+    <!-- Duplicates -->
+    <string name="dup_exact">Exact duplicates</string>
+    <string name="dup_similar">Similar photos</string>
+    <string name="dup_rescan">Scan again</string>
+    <string name="dup_scanning">Scanning library…</string>
+    <string name="dup_rescanning">Scanning again…</string>
+    <string name="dup_similar_scanning">Finding similar photos…</string>
+    <string name="dup_stop">Stop</string>
+    <string name="dup_empty_exact_title">No duplicates found</string>
+    <string name="dup_empty_exact_message">There are no photos with the same metadata.</string>
+    <string name="dup_empty_similar_title">No similar photos</string>
+    <string name="dup_empty_similar_message">There are no photos that look alike.</string>
+    <string name="dup_info">Tick what you want to keep; the rest goes to the trash. Tap a photo to enlarge it.</string>
+    <string name="dup_header" tools:ignore="PluralsCandidate">%1$d copies · %2$d kept · %3$s to gain</string>
+    <string name="dup_discard_n">Discard %1$d</string>
+    <string name="dup_show_more" tools:ignore="PluralsCandidate">Show more (%1$d left)</string>
+    <string name="dup_kept_toggle">Kept, tap to discard</string>
+    <string name="dup_discard_toggle">Discarded, tap to keep</string>
 
     <!-- Grid review -->
     <string name="grid_discard">Discard</string>

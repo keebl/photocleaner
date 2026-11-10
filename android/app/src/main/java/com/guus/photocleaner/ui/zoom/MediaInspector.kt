@@ -82,8 +82,8 @@ fun MediaInspector(
     imageModel: Any,
     contentUri: Uri?,
     dateText: String?,
-    onKeep: () -> Unit,
-    onDiscard: () -> Unit,
+    onKeep: (() -> Unit)?,
+    onDiscard: (() -> Unit)?,
     onClose: () -> Unit,
 ) {
     Dialog(
@@ -105,10 +105,11 @@ private fun PhotoZoomScreen(
     imageModel: Any,
     contentUri: Uri?,
     dateText: String?,
-    onKeep: () -> Unit,
-    onDiscard: () -> Unit,
+    onKeep: (() -> Unit)?,
+    onDiscard: (() -> Unit)?,
     onClose: () -> Unit,
 ) {
+    val canDecide = onKeep != null && onDiscard != null
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     var scale by remember { mutableFloatStateOf(1f) }
@@ -133,7 +134,7 @@ private fun PhotoZoomScreen(
                 } else {
                     committing = true
                     animate(swipeX, if (kept) flyOut else -flyOut, animationSpec = tween(220)) { value, _ -> swipeX = value }
-                    if (kept) onKeep() else onDiscard()
+                    if (kept) onKeep?.invoke() else onDiscard?.invoke()
                 }
             }
         }
@@ -163,7 +164,7 @@ private fun PhotoZoomScreen(
                                 scale = (scale * zoom).coerceIn(1f, MAX_SCALE)
                                 offset = if (scale > 1f) offset + pan else Offset.Zero
                                 event.changes.forEach { if (it.positionChanged()) it.consume() }
-                            } else if (!committing && pan != Offset.Zero) {
+                            } else if (canDecide && !committing && pan != Offset.Zero) {
                                 swipeX += pan.x
                                 swiped = true
                                 event.changes.forEach { it.consume() }
@@ -198,7 +199,7 @@ private fun PhotoZoomScreen(
             onClose = onClose,
             modifier = Modifier.align(Alignment.TopCenter),
         )
-        if (scale == 1f) Legend(Modifier.align(Alignment.BottomCenter))
+        if (scale == 1f && canDecide) Legend(Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -208,8 +209,8 @@ private fun VideoPlayerScreen(
     asset: PhotoAsset,
     uri: Uri,
     dateText: String?,
-    onKeep: () -> Unit,
-    onDiscard: () -> Unit,
+    onKeep: (() -> Unit)?,
+    onDiscard: (() -> Unit)?,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -232,13 +233,17 @@ private fun VideoPlayerScreen(
             shareUri = uri,
             isVideo = asset.isVideo,
             onClose = onClose,
-            onKeep = {
-                player.pause()
-                onKeep()
+            onKeep = onKeep?.let { keep ->
+                {
+                    player.pause()
+                    keep()
+                }
             },
-            onDiscard = {
-                player.pause()
-                onDiscard()
+            onDiscard = onDiscard?.let { discard ->
+                {
+                    player.pause()
+                    discard()
+                }
             },
             modifier = Modifier.align(Alignment.TopCenter),
         )
