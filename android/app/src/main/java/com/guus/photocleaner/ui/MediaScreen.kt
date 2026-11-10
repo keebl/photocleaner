@@ -33,7 +33,6 @@ import com.guus.photocleaner.source.PhotoSource
 import com.guus.photocleaner.ui.deck.Decision
 import com.guus.photocleaner.ui.deck.ReviewDeck
 import com.guus.photocleaner.ui.deck.YearLabel
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -45,7 +44,7 @@ const val REASON_ON_THIS_DAY = "on_this_day"
 
 /**
  * Media tab: the "Op deze dag" deck for [today]. Modes, filters and the grid follow in spec
- * step 7. Shows items taken on today's month/day in earlier years (spec AC 4).
+ * step 7. Shows items taken on today's month/day in any year, this year included (spec AC 4).
  */
 @OptIn(FlowPreview::class)
 @Composable
@@ -66,10 +65,7 @@ fun MediaScreen(
     val decidedIds = remember(keptIds, trashItems) { keptIds + trashItems.map { it.id } }
 
     LaunchedEffect(source, today, reloads) {
-        items = source.fetchOnThisDay(today.monthValue, today.dayOfMonth).filter { asset ->
-            val millis = asset.browseDateMillis ?: return@filter false
-            Instant.ofEpochMilli(millis).atZone(zone).year < today.year
-        }
+        items = source.fetchOnThisDay(today.monthValue, today.dayOfMonth)
     }
     // Large libraries send bursts of change notifications; reload once they settle.
     LaunchedEffect(source) {

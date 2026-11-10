@@ -36,7 +36,8 @@ import org.junit.runner.RunWith
 
 /**
  * Deck behaviour against [FakePhotoSource] with real stores (spec step 6, AC 4–7).
- * Today is fixed at 10 November 2026; the library has one item per earlier year.
+ * Today is fixed at 10 November 2026; the library has one item from today and one per
+ * earlier year (this year is included, as on iOS).
  */
 @RunWith(AndroidJUnit4::class)
 class MediaScreenDeckTest {
@@ -66,8 +67,10 @@ class MediaScreenDeckTest {
         filename = "$id.jpg",
     )
 
-    // Newest first: 2025 (1 year ago), 2023 (3), 2019 (7); one item on another day.
+    // Newest first: 2026 (this year), 2025 (1 year ago), 2023 (3), 2019 (7); one item on
+    // another day.
     private val library = listOf(
+        item("y2026", 2026),
         item("y2025", 2025),
         item("y2023", 2023),
         item("y2019", 2019),
@@ -108,8 +111,8 @@ class MediaScreenDeckTest {
     fun deck_showsOnlyItemsFromThisDayInEarlierYears() {
         show()
 
-        compose.onNodeWithText(yearsAgo(1)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.deck_progress, 1, 3)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_this_year)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_progress, 1, 4)).assertIsDisplayed()
     }
 
     @Test
@@ -119,10 +122,10 @@ class MediaScreenDeckTest {
         compose.onNodeWithTag(DECK_CARD_TAG).performTouchInput { swipeRight() }
         compose.waitForIdle()
 
-        assertTrue(keep.contains("y2025"))
-        assertFalse(trash.contains("y2025"))
-        compose.onNodeWithText(yearsAgo(3)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.deck_progress, 2, 3)).assertIsDisplayed()
+        assertTrue(keep.contains("y2026"))
+        assertFalse(trash.contains("y2026"))
+        compose.onNodeWithText(yearsAgo(1)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_progress, 2, 4)).assertIsDisplayed()
     }
 
     @Test
@@ -132,10 +135,10 @@ class MediaScreenDeckTest {
         compose.onNodeWithTag(DECK_CARD_TAG).performTouchInput { swipeLeft() }
         compose.waitForIdle()
 
-        assertTrue(trash.contains("y2025"))
+        assertTrue(trash.contains("y2026"))
         assertEquals(1, trash.totalCleaned.value)
-        assertFalse(keep.contains("y2025"))
-        compose.onNodeWithText(yearsAgo(3)).assertIsDisplayed()
+        assertFalse(keep.contains("y2026"))
+        compose.onNodeWithText(yearsAgo(1)).assertIsDisplayed()
     }
 
     @Test
@@ -147,15 +150,16 @@ class MediaScreenDeckTest {
         compose.onNodeWithText(text(R.string.deck_undo_discarded)).performClick()
         compose.waitForIdle()
 
-        assertFalse(trash.contains("y2025"))
+        assertFalse(trash.contains("y2026"))
         assertEquals(0, trash.totalCleaned.value)
-        compose.onNodeWithText(yearsAgo(1)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_this_year)).assertIsDisplayed()
     }
 
     @Test
     fun decidedItems_doNotReappear() {
+        keep.keep("y2026")
         keep.keep("y2025")
-        trash.mark(library[1], "deck")
+        trash.mark(library[2], "deck")
 
         show()
 
@@ -166,13 +170,13 @@ class MediaScreenDeckTest {
     @Test
     fun allDecided_showsDoneSummary() {
         show()
-        repeat(3) {
+        repeat(4) {
             compose.onNodeWithTag(DECK_CARD_TAG).performTouchInput { swipeLeft() }
             compose.waitForIdle()
         }
 
         compose.onNodeWithText(text(R.string.deck_done_title)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.deck_done_summary, 0, 3)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_done_summary, 0, 4)).assertIsDisplayed()
     }
 
     @Test

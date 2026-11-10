@@ -50,8 +50,9 @@ that can be published on Google Play.
    access is needed and offers a button to the system settings; no photos are shown.
 3. Given Android 14+ and "selected photos only" access, when the app is opened, then it
    works on the selected items and shows a banner offering to grant full access.
-4. Given photos exist that were taken on today's month/day in earlier years, when "Op
-   deze dag" opens, then exactly those items (minus kept and trashed ones) are in the deck.
+4. Given photos exist that were taken on today's month/day in any year (including this
+   year, as on iOS), when "Op deze dag" opens, then exactly those items (minus kept and
+   trashed ones) are in the deck.
 5. Given a card in the deck, when it is swiped right, then its id is stored as kept and it
    does not reappear in any review view after an app restart.
 6. Given a card in the deck, when it is swiped left, then it is added to the in-app trash
