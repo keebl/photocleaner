@@ -40,6 +40,12 @@ class ReminderNotificationTest {
     fun postedNotification_isTheOnThisDayReminder() {
         ReminderScheduler.postNotification(context)
 
+        // notify() is processed asynchronously by the system; wait briefly for it to show up.
+        var waited = 0
+        while (notifications.activeNotifications.isEmpty() && waited < 2_000) {
+            Thread.sleep(50)
+            waited += 50
+        }
         val active = notifications.activeNotifications.single()
         assertEquals(context.getString(R.string.reminder_title), active.notification.extras.getString("android.title"))
         assertTrue(active.notification.contentIntent != null)
