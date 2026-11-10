@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Upload key for Play, from the git-ignored android/keystore.properties (see the .example
+// file). Without it, bundleRelease produces an unsigned bundle.
+val uploadKey = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -12,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.guus.photocleaner"
         minSdk = 30
-        // Play's required target API level is checked at release time (spec step 12).
+        // Google Play requires API 36 for new apps and updates since 2026-08-31.
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -20,13 +29,33 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (uploadKey.isNotEmpty()) {
+            create("upload") {
+                storeFile = rootProject.file(uploadKey.getProperty("storeFile"))
+                storePassword = uploadKey.getProperty("storePassword")
+                keyAlias = uploadKey.getProperty("keyAlias")
+                keyPassword = uploadKey.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.findByName("upload")
+        }
+        // The minified release code, signed with the local debug key, to test R8 output on a
+        // device or emulator. Never uploaded.
+        create("minifiedCheck") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
     }
 

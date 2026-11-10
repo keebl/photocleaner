@@ -30,6 +30,12 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Seed test photos (emulator running, needs Pillow): `scripts/seed-emulator.sh`
   (`--clean` removes them)
 - Screenshot (UI check): `adb exec-out screencap -p > /tmp/android-shot.png`
+- Release bundle: `./gradlew :app:lintRelease :app:bundleRelease` → `app/build/outputs/bundle/release/app-release.aab`
+  (signed only when the git-ignored `android/keystore.properties` exists; see `keystore.properties.example`)
+- Test the R8-minified code on a device: `./gradlew :app:assembleMinifiedCheck` and install
+  `app/build/outputs/apk/minifiedCheck/app-minifiedCheck.apk` (debug-signed, never uploaded)
+- Inspect a bundle: `java -jar bundletool.jar dump manifest --bundle app/build/outputs/bundle/release/app-release.aab`
+  (bundletool from github.com/google/bundletool releases; not in the repo)
 - Where it runs: Android Emulator (AVD `pc_api36`, Pixel 8, API 36) or a physical phone
 
 ## Gotchas
