@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Themed (monochrome) launcher icon for Android 13+: the same tile, sun, mountains and
+  sparkles as one silhouette; the system tints it. Master in design/icon/android-launcher.svg.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- tile outline -->
+    <path
+        android:pathData="M37.7,33.9h32.6a4.5,4.5 0,0 1,4.5 4.5v30.9a4.5,4.5 0,0 1,-4.5 4.5h-32.6a4.5,4.5 0,0 1,-4.5 -4.5v-30.9a4.5,4.5 0,0 1,4.5 -4.5z"
+        android:strokeWidth="2.4"
+        android:strokeColor="#FFFFFF" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,46m-4.7,0a4.7,4.7 0,1 1,9.4 0a4.7,4.7 0,1 1,-9.4 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34.6,71.6L46.1,53.8L54.6,63.6L59.2,57.6L72.5,71.6Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75,29.5L76,34L80.5,35L76,36L75,40.5L74,36L69.5,35L74,34Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34.6,69.4L35.4,73.1L39.1,73.9L35.4,74.7L34.6,78.4L33.8,74.7L30.1,73.9L33.8,73.1Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70.8,67.8L71.3,70.3L73.8,70.8L71.3,71.3L70.8,73.8L70.3,71.3L67.8,70.8L70.3,70.3Z" />
+</vector>
