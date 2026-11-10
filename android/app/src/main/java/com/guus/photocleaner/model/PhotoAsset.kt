@@ -19,6 +19,8 @@ data class PhotoAsset(
     val kind: MediaKind = MediaKind.PHOTO,
     /** Capture time in epoch milliseconds; null when unknown. */
     val capturedAtMillis: Long?,
+    /** When the item was added to the library; the browsing fallback without a capture time. */
+    val addedAtMillis: Long? = null,
     /** Last modification in epoch milliseconds; invalidates cached hashes after edits. */
     val modifiedAtMillis: Long?,
     val pixelWidth: Int,
@@ -33,4 +35,10 @@ data class PhotoAsset(
     val pixelCount: Long get() = pixelWidth.toLong() * pixelHeight
     val megapixels: Double get() = pixelCount / 1_000_000.0
     val isVideo: Boolean get() = kind == MediaKind.VIDEO
+
+    /**
+     * Date used for browsing (on this day, day/month/year): capture time, else the date the
+     * item was added. Exact-duplicate detection uses [capturedAtMillis] only.
+     */
+    val browseDateMillis: Long? get() = capturedAtMillis ?: addedAtMillis
 }
