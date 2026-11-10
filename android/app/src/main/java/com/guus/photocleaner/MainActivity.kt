@@ -1,52 +1,85 @@
 package com.guus.photocleaner
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import com.guus.photocleaner.service.AppPreferences
+import com.guus.photocleaner.service.MediaAccess
+import com.guus.photocleaner.ui.AppShell
+import com.guus.photocleaner.ui.ShellState
 import com.guus.photocleaner.ui.theme.PhotoCleanerTheme
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var prefs: AppPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        prefs = AppPreferences(this)
         setContent {
-            PhotoCleanerTheme {
-                PlaceholderScreen()
-            }
+            val dark = isSystemInDarkTheme()
+            PhotoCleanerTheme(darkTheme = dark) { PhotoCleanerApp(dark) }
         }
     }
-}
 
-/** Empty start screen; replaced by the app shell in spec step 5. */
-@Composable
-fun PlaceholderScreen() {
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentAlignment = Alignment.Center,
+    @Composable
+    private fun PhotoCleanerApp(darkTheme: Boolean) {
+        var state by remember { mutableStateOf(currentState()) }
+        val permissions = remember { MediaAccess.permissionsToRequest(Build.VERSION.SDK_INT) }
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
         ) {
-            Text(
-                text = stringResource(R.string.placeholder_title),
-                style = MaterialTheme.typography.titleLarge,
-            )
+            prefs.requestedMediaAccess = true
+            state = currentState()
         }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun PlaceholderScreenPreview() {
-    PhotoCleanerTheme { PlaceholderScreen() }
+        // Re-check on every resume: access can be changed or revoked in system settings.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { state = currentState() }
+
+        AppShell(
+            state = state,
+            darkTheme = darkTheme,
+            onFinishOnboarding = {
+                prefs.didOnboard = true
+                state = currentState()
+                if (!state.access.canReadPhotos) launcher.launch(permissions.toTypedArray())
+            },
+            onRequestAccess = { launcher.launch(permissions.toTypedArray()) },
+            onOpenSettings = ::openAppSettings,
+        )
+    }
+
+    private fun currentState(): ShellState {
+        val sdk = Build.VERSION.SDK_INT
+        val access = MediaAccess.resolve(sdk) {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+        val primary = MediaAccess.permissionsToRequest(sdk).first()
+        val canAskAgain = !prefs.requestedMediaAccess || shouldShowRequestPermissionRationale(primary)
+        return ShellState(didOnboard = prefs.didOnboard, access = access, canAskAgain = canAskAgain)
+    }
+
+    private fun openAppSettings() {
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
+        )
+    }
 }

@@ -1,4 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="placeholder_title">Ruim je foto\'s op</string>
+    <!-- Tabs -->
+    <string name="tab_media">Media</string>
+    <string name="tab_trash">Prullenbak</string>
+    <string name="tab_settings">Instellingen</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Overslaan</string>
+    <string name="onboarding_next">Volgende</string>
+    <string name="onboarding_start">Aan de slag</string>
+    <string name="onboarding_1_title">Ruim je foto\'s en video\'s op</string>
+    <string name="onboarding_1_text">Beoordeel foto\'s en filmpjes per dag (\'op deze dag\'), willekeurig, of vind dubbelen. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+    <string name="onboarding_2_title">Veilig opruimen</string>
+    <string name="onboarding_2_text">Weggegooide foto\'s blijven 30 dagen in de prullenbak — één tik om iets ongedaan te maken. Foto\'s die je behoudt, komen niet meer langs.</string>
+    <string name="onboarding_3_title">Alles blijft op je telefoon</string>
+    <string name="onboarding_3_text">PhotoCleaner heeft geen internettoegang, dus je foto\'s verlaten je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
+
+    <!-- Permission gate -->
+    <string name="gate_title">Toegang tot je foto\'s</string>
+    <string name="gate_text">PhotoCleaner heeft toegang nodig om dubbelen te vinden en je \'op deze dag\'-herinneringen te tonen. Je foto\'s blijven op je toestel.</string>
+    <string name="gate_grant">Geef toegang</string>
+    <string name="gate_open_settings">Open instellingen</string>
+
+    <!-- Partial access (Android 14+) -->
+    <string name="partial_access_text">PhotoCleaner ziet alleen de foto\'s die je hebt geselecteerd.</string>
+    <string name="partial_access_action">Alles toestaan</string>
+
+    <!-- Placeholders until the tab screens are built -->
+    <string name="placeholder_media">Hier verschijnen je foto\'s.</string>
+    <string name="placeholder_trash">Hier verschijnen weggegooide foto\'s.</string>
+    <string name="placeholder_settings">Hier verschijnen de instellingen.</string>
 </resources>

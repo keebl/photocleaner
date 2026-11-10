@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">PhotoCleaner</string>
-    <string name="placeholder_title">Clean up your photos</string>
+
+    <!-- Tabs -->
+    <string name="tab_media">Media</string>
+    <string name="tab_trash">Trash</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_1_title">Clean up your photos and videos</string>
+    <string name="onboarding_1_text">Review photos and videos by day (\'on this day\'), at random, or find duplicates. Swipe right to keep, left to discard.</string>
+    <string name="onboarding_2_title">Clean up safely</string>
+    <string name="onboarding_2_text">Discarded photos stay in the trash for 30 days — one tap to undo. Photos you keep won\'t come back.</string>
+    <string name="onboarding_3_title">Everything stays on your phone</string>
+    <string name="onboarding_3_text">PhotoCleaner has no internet access, so your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
+
+    <!-- Permission gate -->
+    <string name="gate_title">Access to your photos</string>
+    <string name="gate_text">PhotoCleaner needs access to find duplicates and show your \'on this day\' memories. Your photos stay on your device.</string>
+    <string name="gate_grant">Allow access</string>
+    <string name="gate_open_settings">Open settings</string>
+
+    <!-- Partial access (Android 14+) -->
+    <string name="partial_access_text">PhotoCleaner can only see the photos you selected.</string>
+    <string name="partial_access_action">Allow all</string>
+
+    <!-- Placeholders until the tab screens are built -->
+    <string name="placeholder_media">Your photos appear here.</string>
+    <string name="placeholder_trash">Discarded photos appear here.</string>
+    <string name="placeholder_settings">Settings appear here.</string>
 </resources>
