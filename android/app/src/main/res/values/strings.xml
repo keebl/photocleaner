@@ -137,6 +137,35 @@
     <string name="reason_similar">Similar</string>
     <string name="reason_other">Discarded</string>
 
+    <!-- Settings and reminder -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_on_this_day">On this day</string>
+    <string name="settings_reminder">Daily reminder</string>
+    <string name="settings_reminder_time">Time</string>
+    <string name="settings_reminder_footer">Get a nudge every day to look at today\'s photos through the years.</string>
+    <string name="settings_reminder_denied">Notifications are off for PhotoCleaner. Allow them in the system settings to get the reminder.</string>
+    <string name="settings_open_system">Open settings</string>
+    <string name="settings_cleanup">Clean-up</string>
+    <string name="settings_kept_count">Kept photos</string>
+    <string name="settings_reset_kept">Clear keep choices</string>
+    <string name="settings_reset_footer">Photos you kept no longer come back in the clean-up views. Clearing lets them appear again.</string>
+    <plurals name="settings_reset_title">
+        <item quantity="one">Clear %1$d keep choice?</item>
+        <item quantity="other">Clear all %1$d keep choices?</item>
+    </plurals>
+    <string name="settings_reset_message">The photos themselves are not touched; they appear again in the clean-up views.</string>
+    <string name="settings_reset_confirm">Clear</string>
+    <string name="settings_about">About</string>
+    <string name="settings_retention">Trash retention</string>
+    <string name="settings_retention_value" tools:ignore="PluralsCandidate">%1$d days</string>
+    <string name="settings_version">Version</string>
+    <string name="reminder_channel">Daily reminder</string>
+    <string name="reminder_title">On this day</string>
+    <string name="reminder_text">See today\'s photos through the years.</string>
+
     <!-- Grid review -->
     <string name="grid_discard">Discard</string>
     <string name="grid_discard_n">Discard %1$d</string>

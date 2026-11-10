@@ -135,6 +135,35 @@
     <string name="reason_similar">Lijkend</string>
     <string name="reason_other">Weggegooid</string>
 
+    <!-- Settings and reminder -->
+    <string name="settings_appearance">Weergave</string>
+    <string name="settings_theme_system">Systeem</string>
+    <string name="settings_theme_light">Licht</string>
+    <string name="settings_theme_dark">Donker</string>
+    <string name="settings_on_this_day">Op deze dag</string>
+    <string name="settings_reminder">Dagelijkse herinnering</string>
+    <string name="settings_reminder_time">Tijdstip</string>
+    <string name="settings_reminder_footer">Krijg elke dag een seintje om je foto\'s van vandaag door de jaren heen te bekijken.</string>
+    <string name="settings_reminder_denied">Meldingen staan uit voor PhotoCleaner. Zet ze aan in de systeeminstellingen om de herinnering te krijgen.</string>
+    <string name="settings_open_system">Open instellingen</string>
+    <string name="settings_cleanup">Opschonen</string>
+    <string name="settings_kept_count">Behouden foto\'s</string>
+    <string name="settings_reset_kept">Behoud-keuzes wissen</string>
+    <string name="settings_reset_footer">Foto\'s die je hebt behouden komen niet meer terug in de opschoon-weergaven. Wissen laat ze weer verschijnen.</string>
+    <plurals name="settings_reset_title">
+        <item quantity="one">%1$d behoud-keuze wissen?</item>
+        <item quantity="other">Alle %1$d behoud-keuzes wissen?</item>
+    </plurals>
+    <string name="settings_reset_message">De foto\'s zelf blijven ongemoeid; ze verschijnen weer in de opschoon-weergaven.</string>
+    <string name="settings_reset_confirm">Wissen</string>
+    <string name="settings_about">Over</string>
+    <string name="settings_retention">Prullenbak-retentie</string>
+    <string name="settings_retention_value">%1$d dagen</string>
+    <string name="settings_version">Versie</string>
+    <string name="reminder_channel">Dagelijkse herinnering</string>
+    <string name="reminder_title">Op deze dag</string>
+    <string name="reminder_text">Bekijk je foto\'s van vandaag door de jaren heen.</string>
+
     <!-- Grid review -->
     <string name="grid_discard">Weggooien</string>
     <string name="grid_discard_n">Gooi %1$d weg</string>

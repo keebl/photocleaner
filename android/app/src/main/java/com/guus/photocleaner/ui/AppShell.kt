@@ -59,6 +59,7 @@ fun AppShell(
     modifier: Modifier = Modifier,
     mediaContent: @Composable (openTrash: () -> Unit) -> Unit = { Placeholder(R.string.placeholder_media) },
     trashContent: @Composable () -> Unit = { Placeholder(R.string.placeholder_trash) },
+    settingsContent: @Composable () -> Unit = { Placeholder(R.string.placeholder_settings) },
     /** Shown once access is granted, on top of the tabs (e.g. the expired-trash prompt). */
     startupContent: @Composable () -> Unit = {},
 ) {
@@ -76,6 +77,7 @@ fun AppShell(
                     onRequestAccess = onRequestAccess,
                     mediaContent = mediaContent,
                     trashContent = trashContent,
+                    settingsContent = settingsContent,
                 )
                 startupContent()
             }
@@ -89,6 +91,7 @@ private fun MainTabs(
     onRequestAccess: () -> Unit,
     mediaContent: @Composable (openTrash: () -> Unit) -> Unit,
     trashContent: @Composable () -> Unit,
+    settingsContent: @Composable () -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(Tab.MEDIA) }
     Scaffold(
@@ -111,7 +114,7 @@ private fun MainTabs(
                 when (selected) {
                     Tab.MEDIA -> mediaContent { selected = Tab.TRASH }
                     Tab.TRASH -> trashContent()
-                    Tab.SETTINGS -> Placeholder(R.string.placeholder_settings)
+                    Tab.SETTINGS -> settingsContent()
                 }
             }
         }

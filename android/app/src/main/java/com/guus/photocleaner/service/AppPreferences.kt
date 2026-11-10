@@ -6,7 +6,7 @@ import com.guus.photocleaner.ui.MediaSettings
 
 /** Small app preferences in SharedPreferences (spec: preferences in SharedPreferences). */
 class AppPreferences(context: Context) {
-    private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
 
     var didOnboard: Boolean
         get() = prefs.getBoolean(KEY_DID_ONBOARD, false)
@@ -40,16 +40,40 @@ class AppPreferences(context: Context) {
             putBoolean(KEY_OLDEST_FIRST, value.oldestFirst)
         }
 
+    var theme: AppTheme
+        get() = enumOrDefault(prefs.getString(KEY_THEME, null), AppTheme.DARK)
+        set(value) = prefs.edit { putString(KEY_THEME, value.name) }
+
+    var reminder: ReminderSettings
+        get() {
+            val defaults = ReminderSettings()
+            return ReminderSettings(
+                enabled = prefs.getBoolean(KEY_REMINDER_ENABLED, defaults.enabled),
+                hour = prefs.getInt(KEY_REMINDER_HOUR, defaults.hour),
+                minute = prefs.getInt(KEY_REMINDER_MINUTE, defaults.minute),
+            )
+        }
+        set(value) = prefs.edit {
+            putBoolean(KEY_REMINDER_ENABLED, value.enabled)
+            putInt(KEY_REMINDER_HOUR, value.hour)
+            putInt(KEY_REMINDER_MINUTE, value.minute)
+        }
+
     private inline fun <reified T : Enum<T>> enumOrDefault(name: String?, default: T): T =
         enumValues<T>().firstOrNull { it.name == name } ?: default
 
-    private companion object {
-        const val KEY_MEDIA_TAB = "mediaTab"
-        const val KEY_BROWSE = "browse"
-        const val KEY_CATEGORY = "category"
-        const val KEY_OLDEST_FIRST = "sortOldFirst"
-        const val KEY_DID_SEE_SWIPE_HINT = "didSeeSwipeHint"
-        const val KEY_DID_ONBOARD = "didOnboard"
-        const val KEY_REQUESTED_ACCESS = "requestedMediaAccess"
+    companion object {
+        const val FILE_NAME = "settings"
+        private const val KEY_THEME = "appTheme"
+        private const val KEY_REMINDER_ENABLED = "reminderEnabled"
+        private const val KEY_REMINDER_HOUR = "reminderHour"
+        private const val KEY_REMINDER_MINUTE = "reminderMinute"
+        private const val KEY_MEDIA_TAB = "mediaTab"
+        private const val KEY_BROWSE = "browse"
+        private const val KEY_CATEGORY = "category"
+        private const val KEY_OLDEST_FIRST = "sortOldFirst"
+        private const val KEY_DID_SEE_SWIPE_HINT = "didSeeSwipeHint"
+        private const val KEY_DID_ONBOARD = "didOnboard"
+        private const val KEY_REQUESTED_ACCESS = "requestedMediaAccess"
     }
 }
