@@ -104,6 +104,39 @@
     <string name="dup_kept_toggle">Kept, tap to discard</string>
     <string name="dup_discard_toggle">Discarded, tap to keep</string>
 
+    <!-- Trash -->
+    <string name="trash_more">More actions</string>
+    <string name="trash_empty_expired" tools:ignore="PluralsCandidate">Empty expired (%1$d)</string>
+    <string name="trash_delete_all">Delete everything now</string>
+    <string name="trash_delete_confirm">Move to Android trash</string>
+    <plurals name="trash_delete_all_title">
+        <item quantity="one">Remove %1$d item from this device?</item>
+        <item quantity="other">Remove all %1$d items from this device?</item>
+    </plurals>
+    <string name="trash_delete_all_message">They move to Android\'s trash, where they stay recoverable for 30 days in your gallery app.</string>
+    <string name="trash_empty_title">Trash is empty</string>
+    <string name="trash_empty_message" tools:ignore="PluralsCandidate">Photos you discard appear here and stay recoverable for %1$d days.</string>
+    <string name="trash_footer" tools:ignore="PluralsCandidate">After %1$d days, items move to Android\'s trash, where they stay recoverable for another 30 days.</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_expires_today">Expires today</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">%1$d day left to restore</item>
+        <item quantity="other">%1$d days left to restore</item>
+    </plurals>
+    <plurals name="trash_expired_title">
+        <item quantity="one">%1$d item is older than 30 days</item>
+        <item quantity="other">%1$d items are older than 30 days</item>
+    </plurals>
+    <string name="trash_expired_message" tools:ignore="PluralsCandidate">Move them to Android\'s trash now? They stay recoverable there for another 30 days; space is freed once Android empties it. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
+    <string name="trash_expired_confirm">Move</string>
+    <string name="trash_expired_later">Later</string>
+    <string name="reason_on_this_day">On this day</string>
+    <string name="reason_random">Random</string>
+    <string name="reason_video">Video</string>
+    <string name="reason_duplicate">Duplicate</string>
+    <string name="reason_similar">Similar</string>
+    <string name="reason_other">Discarded</string>
+
     <!-- Grid review -->
     <string name="grid_discard">Discard</string>
     <string name="grid_discard_n">Discard %1$d</string>

@@ -24,6 +24,11 @@ import com.guus.photocleaner.service.AppPreferences
 import com.guus.photocleaner.service.MediaAccess
 import com.guus.photocleaner.ui.AppShell
 import com.guus.photocleaner.ui.MediaScreen
+import com.guus.photocleaner.ui.trash.ExpiredTrashPrompt
+import com.guus.photocleaner.ui.trash.TrashScreen
+import com.guus.photocleaner.ui.trash.rememberSystemTrash
+import com.guus.photocleaner.service.StoreReconciler
+import androidx.compose.runtime.LaunchedEffect
 import com.guus.photocleaner.ui.ShellState
 import com.guus.photocleaner.ui.theme.PhotoCleanerTheme
 
@@ -46,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private fun PhotoCleanerApp(darkTheme: Boolean) {
         var state by remember { mutableStateOf(currentState()) }
         var swipeHintSeen by remember { mutableStateOf(prefs.didSeeSwipeHint) }
+        val systemTrash = rememberSystemTrash(container.source)
         val permissions = remember { MediaAccess.permissionsToRequest(Build.VERSION.SDK_INT) }
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
@@ -83,6 +89,19 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                 )
+            },
+            trashContent = {
+                TrashScreen(source = container.source, trash = container.trash, systemTrash = systemTrash)
+            },
+            startupContent = {
+                // Drop items deleted outside the app (AC 16), only with full access: with
+                // "selected photos only" every unselected item would look deleted.
+                LaunchedEffect(state.access) {
+                    if (state.access == MediaAccess.FULL) {
+                        StoreReconciler(container.source, container.trash, container.keep).dropMissing()
+                    }
+                }
+                ExpiredTrashPrompt(source = container.source, trash = container.trash, systemTrash = systemTrash)
             },
         )
     }

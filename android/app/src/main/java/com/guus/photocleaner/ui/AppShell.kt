@@ -58,6 +58,9 @@ fun AppShell(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     mediaContent: @Composable (openTrash: () -> Unit) -> Unit = { Placeholder(R.string.placeholder_media) },
+    trashContent: @Composable () -> Unit = { Placeholder(R.string.placeholder_trash) },
+    /** Shown once access is granted, on top of the tabs (e.g. the expired-trash prompt). */
+    startupContent: @Composable () -> Unit = {},
 ) {
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
@@ -67,11 +70,15 @@ fun AppShell(
                 onRequestAccess = onRequestAccess,
                 onOpenSettings = onOpenSettings,
             )
-            else -> MainTabs(
-                partialAccess = state.access == MediaAccess.PARTIAL,
-                onRequestAccess = onRequestAccess,
-                mediaContent = mediaContent,
-            )
+            else -> {
+                MainTabs(
+                    partialAccess = state.access == MediaAccess.PARTIAL,
+                    onRequestAccess = onRequestAccess,
+                    mediaContent = mediaContent,
+                    trashContent = trashContent,
+                )
+                startupContent()
+            }
         }
     }
 }
@@ -81,6 +88,7 @@ private fun MainTabs(
     partialAccess: Boolean,
     onRequestAccess: () -> Unit,
     mediaContent: @Composable (openTrash: () -> Unit) -> Unit,
+    trashContent: @Composable () -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(Tab.MEDIA) }
     Scaffold(
@@ -102,7 +110,7 @@ private fun MainTabs(
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (selected) {
                     Tab.MEDIA -> mediaContent { selected = Tab.TRASH }
-                    Tab.TRASH -> Placeholder(R.string.placeholder_trash)
+                    Tab.TRASH -> trashContent()
                     Tab.SETTINGS -> Placeholder(R.string.placeholder_settings)
                 }
             }

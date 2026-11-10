@@ -102,6 +102,39 @@
     <string name="dup_kept_toggle">Behouden, tik om weg te gooien</string>
     <string name="dup_discard_toggle">Weggooien, tik om te behouden</string>
 
+    <!-- Trash -->
+    <string name="trash_more">Meer acties</string>
+    <string name="trash_empty_expired">Verlopen legen (%1$d)</string>
+    <string name="trash_delete_all">Alles nu verwijderen</string>
+    <string name="trash_delete_confirm">Naar prullenbak van Android</string>
+    <plurals name="trash_delete_all_title">
+        <item quantity="one">%1$d item van dit toestel verwijderen?</item>
+        <item quantity="other">Alle %1$d items van dit toestel verwijderen?</item>
+    </plurals>
+    <string name="trash_delete_all_message">Ze gaan naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn in je galerij-app.</string>
+    <string name="trash_empty_title">Prullenbak is leeg</string>
+    <string name="trash_empty_message">Foto\'s die je weggooit verschijnen hier en blijven %1$d dagen herstelbaar.</string>
+    <string name="trash_footer">Na %1$d dagen gaan items naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn.</string>
+    <string name="trash_restore">Terugzetten</string>
+    <string name="trash_expires_today">Verloopt vandaag</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">Nog %1$d dag herstelbaar</item>
+        <item quantity="other">Nog %1$d dagen herstelbaar</item>
+    </plurals>
+    <plurals name="trash_expired_title">
+        <item quantity="one">%1$d item is ouder dan 30 dagen</item>
+        <item quantity="other">%1$d items zijn ouder dan 30 dagen</item>
+    </plurals>
+    <string name="trash_expired_message">Nu naar de prullenbak van Android verplaatsen? Daar blijven ze nog 30 dagen herstelbaar; de ruimte komt vrij zodra Android die leegt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
+    <string name="trash_expired_confirm">Verplaatsen</string>
+    <string name="trash_expired_later">Later</string>
+    <string name="reason_on_this_day">Op deze dag</string>
+    <string name="reason_random">Random</string>
+    <string name="reason_video">Filmpje</string>
+    <string name="reason_duplicate">Dubbel</string>
+    <string name="reason_similar">Lijkend</string>
+    <string name="reason_other">Weggegooid</string>
+
     <!-- Grid review -->
     <string name="grid_discard">Weggooien</string>
     <string name="grid_discard_n">Gooi %1$d weg</string>
