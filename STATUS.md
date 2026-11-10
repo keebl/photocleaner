@@ -3,7 +3,9 @@
 Last updated: 2026-11-08
 
 ## Now
-- Project standard adopted (this branch `chore/adopt-standard`).
+- Project standard adopted (branch `chore/adopt-standard`).
+- Android app: spec approved (`specs/android-app.md`, branch `feat/android-app`); build
+  starts at plan step 1. Play organisation account verification pending (Guus).
 
 ## Next
 1. Run `swiftformat PhotoCleaner` once as its own commit so the format hook has a clean base.
