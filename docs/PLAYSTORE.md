@@ -24,13 +24,13 @@ everything else is prepared in the repo. Spec: `specs/android-app.md`.
 Create the upload key **outside the repo** and never commit it:
 
 ```bash
-keytool -genkeypair -v -keystore ~/keys/photocleaner-upload.jks -alias upload \
+mkdir -p ~/keys && keytool -genkeypair -v -keystore ~/keys/photocleaner-upload.jks -alias upload \
   -keyalg RSA -keysize 4096 -validity 9125
 ```
 
 Then copy `android/keystore.properties.example` to `android/keystore.properties`
-(git-ignored), point `storeFile` at the `.jks` (path relative to `android/`) and fill in the
-passwords. Back up the keystore and passwords in a password manager: with Play App Signing a
+(git-ignored), set `storeFile` to the absolute path of the `.jks` (Gradle does not expand
+`~`; a relative path is resolved against `android/`) and fill in the passwords. Back up the keystore and passwords in a password manager: with Play App Signing a
 lost upload key can be reset, but only through Play support.
 
 ## 3. Build the bundle
