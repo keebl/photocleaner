@@ -19,7 +19,11 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Environment: `export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`
   and `export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools` (Homebrew
   `openjdk@17` + `android-commandlinetools`; `android/local.properties` holds `sdk.dir`)
-- Install deps: none — Gradle resolves on build (wrapper pinned with a SHA-256 checksum)
+- Install deps: none — Gradle resolves on build (wrapper pinned with a SHA-256 checksum;
+  every dependency checked against `gradle/verification-metadata.xml`). After adding or
+  bumping a dependency, regenerate it: `./gradlew --write-verification-metadata sha256
+  :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug
+  :app:lintRelease :app:bundleRelease :app:assembleMinifiedCheck`
 - Build: `./gradlew :app:assembleDebug`
 - Test (unit): `./gradlew :app:testDebugUnitTest`
 - Test (instrumented, emulator running): `./gradlew :app:connectedDebugAndroidTest`
