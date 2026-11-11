@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">PhotoCleaner</string>
+
+    <!-- Tabs -->
+    <string name="tab_media">Media</string>
+    <string name="tab_trash">Trash</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_1_title">Clean up your photos and videos</string>
+    <string name="onboarding_1_text">Review photos and videos by day (\'on this day\'), at random, or find duplicates. Swipe right to keep, left to discard.</string>
+    <string name="onboarding_2_title">Clean up safely</string>
+    <string name="onboarding_2_text">Discarded photos stay in the trash for 30 days — one tap to undo. Photos you keep won\'t come back.</string>
+    <string name="onboarding_3_title">Everything stays on your phone</string>
+    <string name="onboarding_3_text">PhotoCleaner has no internet access, so your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
+
+    <!-- Permission gate -->
+    <string name="gate_title">Access to your photos</string>
+    <string name="gate_text">PhotoCleaner needs access to find duplicates and show your \'on this day\' memories. Your photos stay on your device.</string>
+    <string name="gate_grant">Allow access</string>
+    <string name="gate_open_settings">Open settings</string>
+
+    <!-- Partial access (Android 14+) -->
+    <string name="partial_access_text">PhotoCleaner can only see the photos you selected.</string>
+    <string name="partial_access_action">Allow all</string>
+
+    <!-- Review deck -->
+    <string name="deck_progress">%1$d of %2$d</string>
+    <string name="deck_discard">Discard</string>
+    <string name="deck_keep">Keep</string>
+    <string name="deck_undo_kept">Undo (kept)</string>
+    <string name="deck_undo_discarded">Undo (discarded)</string>
+    <string name="deck_undo_last">Undo last</string>
+    <string name="deck_hint_title">Swipe to choose</string>
+    <string name="deck_hint_ok">Got it</string>
+    <string name="deck_done_title">Done</string>
+    <string name="deck_done_summary" tools:ignore="PluralsCandidate">%1$d kept · %2$d discarded</string>
+    <string name="deck_freed">%1$s saved</string>
+    <string name="deck_this_year">This year</string>
+    <plurals name="deck_years_ago">
+        <item quantity="one">%1$d year ago · %2$d</item>
+        <item quantity="other">%1$d years ago · %2$d</item>
+    </plurals>
+    <string name="deck_card_description">Photo. Swipe right to keep, left to discard.</string>
+    <string name="deck_card_description_video">Video. Swipe right to keep, left to discard.</string>
+
+    <!-- Media tab -->
+    <string name="media_tab_photos">Photos</string>
+    <string name="media_tab_videos">Videos</string>
+    <string name="media_tab_duplicates">Duplicates</string>
+    <string name="media_browse_random">Random</string>
+    <string name="media_browse_day">Day</string>
+    <string name="media_browse_month">Month</string>
+    <string name="media_browse_year">Year</string>
+    <string name="media_category_all">All</string>
+    <string name="media_category_screenshots">Screenshots</string>
+    <string name="media_category_favorites">Favourites</string>
+    <string name="media_category_panoramas">Panoramas</string>
+    <string name="media_noun_photos">photos</string>
+    <string name="media_noun_videos">videos</string>
+    <string name="media_empty_title">Nothing found</string>
+    <string name="media_empty_title_photos">No photos</string>
+    <string name="media_empty_title_videos">No videos</string>
+    <string name="media_empty_message">No %1$s for %2$s.</string>
+    <string name="media_empty_message_random">There are no %1$s on this device.</string>
+    <string name="media_next_day">Next day with %1$s</string>
+    <string name="media_next_month">Next month with %1$s</string>
+    <string name="media_next_year">Next year with %1$s</string>
+    <string name="media_today">Today</string>
+    <string name="media_this_month">This month</string>
+    <string name="media_this_year">This year</string>
+    <string name="media_previous">Previous</string>
+    <string name="media_next">Next</string>
+    <string name="media_pick_date">Choose a date</string>
+    <string name="media_sort">Sort order</string>
+    <string name="media_sort_newest">Newest first</string>
+    <string name="media_sort_oldest">Oldest first</string>
+    <string name="media_show_grid">Show as grid</string>
+    <string name="media_show_deck">Show as swipe deck</string>
+    <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d cleaned, open trash</string>
+    <string name="media_ok">OK</string>
+    <string name="media_cancel">Cancel</string>
+
+    <!-- Duplicates -->
+    <string name="dup_exact">Exact duplicates</string>
+    <string name="dup_similar">Similar photos</string>
+    <string name="dup_rescan">Scan again</string>
+    <string name="dup_scanning">Scanning library…</string>
+    <string name="dup_rescanning">Scanning again…</string>
+    <string name="dup_similar_scanning">Finding similar photos…</string>
+    <string name="dup_stop">Stop</string>
+    <string name="dup_empty_exact_title">No duplicates found</string>
+    <string name="dup_empty_exact_message">There are no photos with the same metadata.</string>
+    <string name="dup_empty_similar_title">No similar photos</string>
+    <string name="dup_empty_similar_message">There are no photos that look alike.</string>
+    <string name="dup_info">Tick what you want to keep; the rest goes to the trash. Tap a photo to enlarge it.</string>
+    <string name="dup_header" tools:ignore="PluralsCandidate">%1$d copies · %2$d kept · %3$s to gain</string>
+    <string name="dup_discard_n">Discard %1$d</string>
+    <string name="dup_show_more" tools:ignore="PluralsCandidate">Show more (%1$d left)</string>
+    <string name="dup_kept_toggle">Kept, tap to discard</string>
+    <string name="dup_discard_toggle">Discarded, tap to keep</string>
+
+    <!-- Trash -->
+    <string name="trash_more">More actions</string>
+    <string name="trash_empty_expired" tools:ignore="PluralsCandidate">Empty expired (%1$d)</string>
+    <string name="trash_delete_all">Delete everything now</string>
+    <string name="trash_delete_confirm">Move to Android trash</string>
+    <plurals name="trash_delete_all_title">
+        <item quantity="one">Remove %1$d item from this device?</item>
+        <item quantity="other">Remove all %1$d items from this device?</item>
+    </plurals>
+    <string name="trash_delete_all_message">They move to Android\'s trash, where they stay recoverable for 30 days in your gallery app.</string>
+    <string name="trash_empty_title">Trash is empty</string>
+    <string name="trash_empty_message" tools:ignore="PluralsCandidate">Photos you discard appear here and stay recoverable for %1$d days.</string>
+    <string name="trash_footer" tools:ignore="PluralsCandidate">After %1$d days, items move to Android\'s trash, where they stay recoverable for another 30 days.</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_expires_today">Expires today</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">%1$d day left to restore</item>
+        <item quantity="other">%1$d days left to restore</item>
+    </plurals>
+    <plurals name="trash_expired_title">
+        <item quantity="one">%1$d item is older than 30 days</item>
+        <item quantity="other">%1$d items are older than 30 days</item>
+    </plurals>
+    <string name="trash_expired_message" tools:ignore="PluralsCandidate">Move them to Android\'s trash now? They stay recoverable there for another 30 days; space is freed once Android empties it. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
+    <string name="trash_expired_confirm">Move</string>
+    <string name="trash_expired_later">Later</string>
+    <string name="reason_on_this_day">On this day</string>
+    <string name="reason_random">Random</string>
+    <string name="reason_video">Video</string>
+    <string name="reason_duplicate">Duplicate</string>
+    <string name="reason_similar">Similar</string>
+    <string name="reason_other">Discarded</string>
+
+    <!-- Settings and reminder -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_on_this_day">On this day</string>
+    <string name="settings_reminder">Daily reminder</string>
+    <string name="settings_reminder_time">Time</string>
+    <string name="settings_reminder_footer">Get a nudge every day to look at today\'s photos through the years.</string>
+    <string name="settings_reminder_denied">Notifications are off for PhotoCleaner. Allow them in the system settings to get the reminder.</string>
+    <string name="settings_open_system">Open settings</string>
+    <string name="settings_cleanup">Clean-up</string>
+    <string name="settings_kept_count">Kept photos</string>
+    <string name="settings_reset_kept">Clear keep choices</string>
+    <string name="settings_reset_footer">Photos you kept no longer come back in the clean-up views. Clearing lets them appear again.</string>
+    <plurals name="settings_reset_title">
+        <item quantity="one">Clear %1$d keep choice?</item>
+        <item quantity="other">Clear all %1$d keep choices?</item>
+    </plurals>
+    <string name="settings_reset_message">The photos themselves are not touched; they appear again in the clean-up views.</string>
+    <string name="settings_reset_confirm">Clear</string>
+    <string name="settings_about">About</string>
+    <string name="settings_retention">Trash retention</string>
+    <string name="settings_retention_value" tools:ignore="PluralsCandidate">%1$d days</string>
+    <string name="settings_version">Version</string>
+    <string name="reminder_channel">Daily reminder</string>
+    <string name="reminder_title">On this day</string>
+    <string name="reminder_text">See today\'s photos through the years.</string>
+
+    <!-- Grid review -->
+    <string name="grid_discard">Discard</string>
+    <string name="grid_discard_n">Discard %1$d</string>
+    <string name="grid_keep">Keep</string>
+    <string name="grid_keep_n">Keep %1$d</string>
+    <string name="grid_select_all">Select all</string>
+    <string name="grid_deselect_all">Deselect all</string>
+    <string name="grid_selected_count" tools:ignore="PluralsCandidate">%1$d of %2$d selected</string>
+    <string name="grid_count">%1$d %2$s</string>
+    <string name="grid_undo">Undo</string>
+    <string name="grid_select">Select</string>
+    <string name="grid_deselect">Selected, tap to deselect</string>
+    <string name="grid_open">Open</string>
+
+    <!-- Zoom, video and share -->
+    <string name="deck_hint_tap">Tap the photo to enlarge</string>
+    <string name="zoom_close">Close</string>
+    <string name="zoom_share">Share</string>
+
+    <!-- Placeholders until the tab screens are built -->
+    <string name="placeholder_media">Your photos appear here.</string>
+    <string name="placeholder_trash">Discarded photos appear here.</string>
+    <string name="placeholder_settings">Settings appear here.</string>
+</resources>

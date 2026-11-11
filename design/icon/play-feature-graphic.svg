@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <!--
+    Google Play feature graphic (1024x500). Same motif as the launcher icon
+    (design/icon/android-launcher.svg): a stack of photo tiles with sparkles on the dark
+    background. No text: Play shows the app name next to it.
+  -->
+  <defs>
+    <radialGradient id="bg" cx="512" cy="250" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2A2545"/>
+      <stop offset="1" stop-color="#0B0B12"/>
+    </radialGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#9346C9"/>
+    </linearGradient>
+    <g id="photo">
+      <rect x="-90" y="-86" width="180" height="172" rx="20" fill="url(#tile)" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="2.5"/>
+      <circle cx="-40" cy="-34" r="20" fill="#FFDD95"/>
+      <path d="M-84,76 L-34,0 L33,76 Z" fill="#C4B0EE"/>
+      <path d="M-20,76 L23,16 L80,76 Z" fill="#E2CFF8"/>
+    </g>
+    <path id="spark" d="M0,-1 L0.13,-0.13 L1,0 L0.13,0.13 L0,1 L-0.13,0.13 L-1,0 L-0.13,-0.13 Z" fill="#FFFFFF"/>
+  </defs>
+
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <!-- tiles fanned out like a swipe deck: discarded left, kept right -->
+  <g transform="translate(330 262) rotate(-14) scale(0.78)" opacity="0.55"><use href="#photo"/></g>
+  <g transform="translate(694 262) rotate(14) scale(0.78)" opacity="0.55"><use href="#photo"/></g>
+  <rect x="408" y="150" width="216" height="208" rx="26" fill="#8B7CF6" fill-opacity="0.22"/>
+  <g transform="translate(516 254)"><use href="#photo"/></g>
+
+  <g transform="translate(626 152) scale(30)"><use href="#spark"/></g>
+  <g transform="translate(416 352) scale(22)"><use href="#spark"/></g>
+  <g transform="translate(592 336) scale(13)"><use href="#spark"/></g>
+  <g transform="translate(232 120) scale(10)" opacity="0.7"><use href="#spark"/></g>
+  <g transform="translate(812 382) scale(12)" opacity="0.7"><use href="#spark"/></g>
+</svg>

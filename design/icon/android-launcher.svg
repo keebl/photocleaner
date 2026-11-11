@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!--
+    PhotoCleaner Android launcher icon, master artwork (108x108 dp adaptive-icon canvas).
+    Recreates the iOS app icon (PhotoCleaner/Assets.xcassets/AppIcon.appiconset) inside the
+    66 dp safe zone. Translated by hand into res/drawable/ic_launcher_*.xml.
+  -->
+  <defs>
+    <radialGradient id="bg" cx="54" cy="54" r="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2A2545"/>
+      <stop offset="1" stop-color="#0B0B12"/>
+    </radialGradient>
+    <linearGradient id="tile" x1="0" y1="33.9" x2="0" y2="73.8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#9346C9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background layer -->
+  <rect width="108" height="108" fill="url(#bg)"/>
+
+  <!-- foreground layer -->
+  <rect x="31.2" y="31.9" width="45.6" height="43.9" rx="6" fill="#8B7CF6" fill-opacity="0.22"/>
+  <rect x="33.2" y="33.9" width="41.6" height="39.9" rx="4.5" fill="url(#tile)" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="0.6"/>
+  <circle cx="45" cy="46" r="4.7" fill="#FFDD95"/>
+  <path d="M34.6,71.6 L46.1,53.8 L61.6,71.6 Z" fill="#C4B0EE"/>
+  <path d="M49.3,71.6 L59.2,57.6 L72.5,71.6 Z" fill="#E2CFF8"/>
+  <!-- sparkles: 4-point stars with slim waists -->
+  <path d="M75,29.5 L76,34 L80.5,35 L76,36 L75,40.5 L74,36 L69.5,35 L74,34 Z" fill="#FFFFFF"/>
+  <path d="M34.6,69.4 L35.4,73.1 L39.1,73.9 L35.4,74.7 L34.6,78.4 L33.8,74.7 L30.1,73.9 L33.8,73.1 Z" fill="#FFFFFF"/>
+  <path d="M70.8,67.8 L71.3,70.3 L73.8,70.8 L71.3,71.3 L70.8,73.8 L70.3,71.3 L67.8,70.8 L70.3,70.3 Z" fill="#FFFFFF"/>
+</svg>

@@ -13,5 +13,32 @@ xcuserdata/
 .swiftpm/
 .build/
 
+# Android / Gradle (build/ is covered above)
+.gradle/
+.kotlin/
+local.properties
+*.iml
+android/.idea/
+android/captures/
+*.apk
+*.aab
+
 # Simulator-screenshots (demo-artefacten)
 shots/
+simphotos2/
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.keystore
+*.jks
+android/keystore.properties
+*.mobileprovision
+tokens.json
+
+# Claude Code (machine-local)
+CLAUDE.local.md
+.claude/settings.local.json

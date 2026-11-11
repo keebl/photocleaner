@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tabs -->
+    <string name="tab_media">Media</string>
+    <string name="tab_trash">Prullenbak</string>
+    <string name="tab_settings">Instellingen</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Overslaan</string>
+    <string name="onboarding_next">Volgende</string>
+    <string name="onboarding_start">Aan de slag</string>
+    <string name="onboarding_1_title">Ruim je foto\'s en video\'s op</string>
+    <string name="onboarding_1_text">Beoordeel foto\'s en filmpjes per dag (\'op deze dag\'), willekeurig, of vind dubbelen. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+    <string name="onboarding_2_title">Veilig opruimen</string>
+    <string name="onboarding_2_text">Weggegooide foto\'s blijven 30 dagen in de prullenbak — één tik om iets ongedaan te maken. Foto\'s die je behoudt, komen niet meer langs.</string>
+    <string name="onboarding_3_title">Alles blijft op je telefoon</string>
+    <string name="onboarding_3_text">PhotoCleaner heeft geen internettoegang, dus je foto\'s verlaten je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
+
+    <!-- Permission gate -->
+    <string name="gate_title">Toegang tot je foto\'s</string>
+    <string name="gate_text">PhotoCleaner heeft toegang nodig om dubbelen te vinden en je \'op deze dag\'-herinneringen te tonen. Je foto\'s blijven op je toestel.</string>
+    <string name="gate_grant">Geef toegang</string>
+    <string name="gate_open_settings">Open instellingen</string>
+
+    <!-- Partial access (Android 14+) -->
+    <string name="partial_access_text">PhotoCleaner ziet alleen de foto\'s die je hebt geselecteerd.</string>
+    <string name="partial_access_action">Alles toestaan</string>
+
+    <!-- Review deck -->
+    <string name="deck_progress">%1$d van %2$d</string>
+    <string name="deck_discard">Weggooien</string>
+    <string name="deck_keep">Behouden</string>
+    <string name="deck_undo_kept">Ongedaan maken (behouden)</string>
+    <string name="deck_undo_discarded">Ongedaan maken (weggegooid)</string>
+    <string name="deck_undo_last">Laatste ongedaan maken</string>
+    <string name="deck_hint_title">Veeg om te kiezen</string>
+    <string name="deck_hint_ok">Begrepen</string>
+    <string name="deck_done_title">Klaar</string>
+    <string name="deck_done_summary">%1$d behouden · %2$d weggegooid</string>
+    <string name="deck_freed">%1$s bespaard</string>
+    <string name="deck_this_year">Dit jaar</string>
+    <plurals name="deck_years_ago">
+        <item quantity="one">%1$d jaar geleden · %2$d</item>
+        <item quantity="other">%1$d jaar geleden · %2$d</item>
+    </plurals>
+    <string name="deck_card_description">Foto. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+    <string name="deck_card_description_video">Video. Veeg naar rechts om te behouden, naar links om weg te gooien.</string>
+
+    <!-- Media tab -->
+    <string name="media_tab_photos">Foto\'s</string>
+    <string name="media_tab_videos">Filmpjes</string>
+    <string name="media_tab_duplicates">Dubbelen</string>
+    <string name="media_browse_random">Random</string>
+    <string name="media_browse_day">Dag</string>
+    <string name="media_browse_month">Maand</string>
+    <string name="media_browse_year">Jaar</string>
+    <string name="media_category_all">Alle</string>
+    <string name="media_category_screenshots">Screenshots</string>
+    <string name="media_category_favorites">Favorieten</string>
+    <string name="media_category_panoramas">Panorama\'s</string>
+    <string name="media_noun_photos">foto\'s</string>
+    <string name="media_noun_videos">filmpjes</string>
+    <string name="media_empty_title">Niets gevonden</string>
+    <string name="media_empty_title_photos">Geen foto\'s</string>
+    <string name="media_empty_title_videos">Geen filmpjes</string>
+    <string name="media_empty_message">Geen %1$s voor %2$s.</string>
+    <string name="media_empty_message_random">Er staan geen %1$s op dit toestel.</string>
+    <string name="media_next_day">Volgende dag met %1$s</string>
+    <string name="media_next_month">Volgende maand met %1$s</string>
+    <string name="media_next_year">Volgend jaar met %1$s</string>
+    <string name="media_today">Vandaag</string>
+    <string name="media_this_month">Deze maand</string>
+    <string name="media_this_year">Dit jaar</string>
+    <string name="media_previous">Vorige</string>
+    <string name="media_next">Volgende</string>
+    <string name="media_pick_date">Kies een datum</string>
+    <string name="media_sort">Volgorde</string>
+    <string name="media_sort_newest">Nieuwste eerst</string>
+    <string name="media_sort_oldest">Oudste eerst</string>
+    <string name="media_show_grid">Toon als raster</string>
+    <string name="media_show_deck">Toon als veegstapel</string>
+    <string name="media_open_trash">%1$d opgeschoond, open prullenbak</string>
+    <string name="media_ok">OK</string>
+    <string name="media_cancel">Annuleren</string>
+
+    <!-- Duplicates -->
+    <string name="dup_exact">Exacte dubbelen</string>
+    <string name="dup_similar">Lijkende foto\'s</string>
+    <string name="dup_rescan">Opnieuw scannen</string>
+    <string name="dup_scanning">Bibliotheek scannen…</string>
+    <string name="dup_rescanning">Opnieuw scannen…</string>
+    <string name="dup_similar_scanning">Lijkende foto\'s zoeken…</string>
+    <string name="dup_stop">Stoppen</string>
+    <string name="dup_empty_exact_title">Geen dubbelen gevonden</string>
+    <string name="dup_empty_exact_message">Er zijn geen foto\'s met dezelfde metadata gevonden.</string>
+    <string name="dup_empty_similar_title">Geen lijkende foto\'s</string>
+    <string name="dup_empty_similar_message">Er zijn geen op elkaar lijkende foto\'s gevonden.</string>
+    <string name="dup_info">Vink aan wat je wilt houden; de rest gaat naar de prullenbak. Tik een foto aan om te vergroten.</string>
+    <string name="dup_header">%1$d exemplaren · %2$d houden · %3$s te winnen</string>
+    <string name="dup_discard_n">Gooi %1$d weg</string>
+    <string name="dup_show_more">Toon meer (%1$d resterend)</string>
+    <string name="dup_kept_toggle">Behouden, tik om weg te gooien</string>
+    <string name="dup_discard_toggle">Weggooien, tik om te behouden</string>
+
+    <!-- Trash -->
+    <string name="trash_more">Meer acties</string>
+    <string name="trash_empty_expired">Verlopen legen (%1$d)</string>
+    <string name="trash_delete_all">Alles nu verwijderen</string>
+    <string name="trash_delete_confirm">Naar prullenbak van Android</string>
+    <plurals name="trash_delete_all_title">
+        <item quantity="one">%1$d item van dit toestel verwijderen?</item>
+        <item quantity="other">Alle %1$d items van dit toestel verwijderen?</item>
+    </plurals>
+    <string name="trash_delete_all_message">Ze gaan naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn in je galerij-app.</string>
+    <string name="trash_empty_title">Prullenbak is leeg</string>
+    <string name="trash_empty_message">Foto\'s die je weggooit verschijnen hier en blijven %1$d dagen herstelbaar.</string>
+    <string name="trash_footer">Na %1$d dagen gaan items naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn.</string>
+    <string name="trash_restore">Terugzetten</string>
+    <string name="trash_expires_today">Verloopt vandaag</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">Nog %1$d dag herstelbaar</item>
+        <item quantity="other">Nog %1$d dagen herstelbaar</item>
+    </plurals>
+    <plurals name="trash_expired_title">
+        <item quantity="one">%1$d item is ouder dan 30 dagen</item>
+        <item quantity="other">%1$d items zijn ouder dan 30 dagen</item>
+    </plurals>
+    <string name="trash_expired_message">Nu naar de prullenbak van Android verplaatsen? Daar blijven ze nog 30 dagen herstelbaar; de ruimte komt vrij zodra Android die leegt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
+    <string name="trash_expired_confirm">Verplaatsen</string>
+    <string name="trash_expired_later">Later</string>
+    <string name="reason_on_this_day">Op deze dag</string>
+    <string name="reason_random">Random</string>
+    <string name="reason_video">Filmpje</string>
+    <string name="reason_duplicate">Dubbel</string>
+    <string name="reason_similar">Lijkend</string>
+    <string name="reason_other">Weggegooid</string>
+
+    <!-- Settings and reminder -->
+    <string name="settings_appearance">Weergave</string>
+    <string name="settings_theme_system">Systeem</string>
+    <string name="settings_theme_light">Licht</string>
+    <string name="settings_theme_dark">Donker</string>
+    <string name="settings_on_this_day">Op deze dag</string>
+    <string name="settings_reminder">Dagelijkse herinnering</string>
+    <string name="settings_reminder_time">Tijdstip</string>
+    <string name="settings_reminder_footer">Krijg elke dag een seintje om je foto\'s van vandaag door de jaren heen te bekijken.</string>
+    <string name="settings_reminder_denied">Meldingen staan uit voor PhotoCleaner. Zet ze aan in de systeeminstellingen om de herinnering te krijgen.</string>
+    <string name="settings_open_system">Open instellingen</string>
+    <string name="settings_cleanup">Opschonen</string>
+    <string name="settings_kept_count">Behouden foto\'s</string>
+    <string name="settings_reset_kept">Behoud-keuzes wissen</string>
+    <string name="settings_reset_footer">Foto\'s die je hebt behouden komen niet meer terug in de opschoon-weergaven. Wissen laat ze weer verschijnen.</string>
+    <plurals name="settings_reset_title">
+        <item quantity="one">%1$d behoud-keuze wissen?</item>
+        <item quantity="other">Alle %1$d behoud-keuzes wissen?</item>
+    </plurals>
+    <string name="settings_reset_message">De foto\'s zelf blijven ongemoeid; ze verschijnen weer in de opschoon-weergaven.</string>
+    <string name="settings_reset_confirm">Wissen</string>
+    <string name="settings_about">Over</string>
+    <string name="settings_retention">Prullenbak-retentie</string>
+    <string name="settings_retention_value">%1$d dagen</string>
+    <string name="settings_version">Versie</string>
+    <string name="reminder_channel">Dagelijkse herinnering</string>
+    <string name="reminder_title">Op deze dag</string>
+    <string name="reminder_text">Bekijk je foto\'s van vandaag door de jaren heen.</string>
+
+    <!-- Grid review -->
+    <string name="grid_discard">Weggooien</string>
+    <string name="grid_discard_n">Gooi %1$d weg</string>
+    <string name="grid_keep">Behouden</string>
+    <string name="grid_keep_n">Behoud %1$d</string>
+    <string name="grid_select_all">Selecteer alles</string>
+    <string name="grid_deselect_all">Deselecteer alles</string>
+    <string name="grid_selected_count">%1$d van %2$d geselecteerd</string>
+    <string name="grid_count">%1$d %2$s</string>
+    <string name="grid_undo">Ongedaan maken</string>
+    <string name="grid_select">Selecteer</string>
+    <string name="grid_deselect">Geselecteerd, tik om te annuleren</string>
+    <string name="grid_open">Openen</string>
+
+    <!-- Zoom, video and share -->
+    <string name="deck_hint_tap">Tik op de foto om te vergroten</string>
+    <string name="zoom_close">Sluiten</string>
+    <string name="zoom_share">Delen</string>
+
+    <!-- Placeholders until the tab screens are built -->
+    <string name="placeholder_media">Hier verschijnen je foto\'s.</string>
+    <string name="placeholder_trash">Hier verschijnen weggegooide foto\'s.</string>
+    <string name="placeholder_settings">Hier verschijnen de instellingen.</string>
+</resources>
