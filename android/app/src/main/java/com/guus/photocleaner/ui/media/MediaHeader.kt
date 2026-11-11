@@ -6,6 +6,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.guus.photocleaner.R
 import java.time.Instant
 import java.time.LocalDate
@@ -187,16 +190,30 @@ fun PeriodBar(
         IconButton(onClick = { onShift(-1) }) {
             Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.media_previous), tint = MaterialTheme.colorScheme.primary)
         }
-        TextButton(onClick = { picking = true }, modifier = Modifier.weight(1f)) {
+        TextButton(
+            onClick = { picking = true },
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+        ) {
             Icon(painterResource(R.drawable.ic_calendar_today), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            // Long titles ("12 november") next to the back-to-now button shrink instead of wrapping.
+            Text(
+                title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 22.sp, stepSize = 1.sp),
+            )
         }
         IconButton(onClick = { onShift(1) }) {
             Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.media_next), tint = MaterialTheme.colorScheme.primary)
         }
         if (showBackToNow) {
-            OutlinedButton(onClick = onBackToNow) { Text(stringResource(backToNowLabel)) }
+            OutlinedButton(onClick = onBackToNow, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Text(stringResource(backToNowLabel), maxLines = 1)
+            }
         }
         Box {
             FilledTonalIconButton(onClick = { sortMenu = true }) {
