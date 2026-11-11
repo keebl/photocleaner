@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generates synthetic test photos for the Android emulator (no personal photos).
 
-Usage: generate_seed_images.py OUT_DIR
+Usage: generate_seed_images.py OUT_DIR   (OUT_DIR must be inside the system temp directory)
 
 Writes OUT_DIR/camera/*.jpg and OUT_DIR/screenshots/*.png covering the review cases:
 on this day in earlier years, exact duplicates, similar photos, a panorama, a leap-day
@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 try:
@@ -66,7 +67,12 @@ def save_jpeg(
 def main() -> None:
     if len(sys.argv) != 2:
         sys.exit(__doc__)
-    out = Path(sys.argv[1])
+    # Only write inside the system temp directory (seed-emulator.sh passes `mktemp -d`),
+    # so a mistyped argument cannot scatter files elsewhere.
+    temp_root = Path(tempfile.gettempdir()).resolve()
+    out = Path(sys.argv[1]).resolve()
+    if not out.is_relative_to(temp_root) or out == temp_root:
+        sys.exit(f"OUT_DIR must be a directory inside {temp_root}")
     camera = out / "camera"
     shots = out / "screenshots"
     camera.mkdir(parents=True, exist_ok=True)
