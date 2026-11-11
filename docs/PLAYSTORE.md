@@ -23,8 +23,11 @@ everything else is prepared in the repo. Spec: `specs/android-app.md`.
 ## 2. Upload key (Guus)
 Create the upload key **outside the repo** and never commit it:
 
+macOS's own `keytool` finds no Java runtime (Homebrew's `openjdk@17` is keg-only), so call
+the Homebrew one by its full path:
+
 ```bash
-mkdir -p ~/keys && keytool -genkeypair -v -keystore ~/keys/photocleaner-upload.jks -alias upload \
+mkdir -p ~/keys && /opt/homebrew/opt/openjdk@17/bin/keytool -genkeypair -v -keystore ~/keys/photocleaner-upload.jks -alias upload \
   -keyalg RSA -keysize 4096 -validity 9125
 ```
 
