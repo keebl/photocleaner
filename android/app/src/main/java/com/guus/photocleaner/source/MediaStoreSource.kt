@@ -44,6 +44,17 @@ class MediaStoreSource(
     @Volatile
     private var cachedAll: List<PhotoAsset>? = null
 
+    // Invalidates the cache on every library change, also while nobody collects [changes]
+    // (the media screen is not shown when items are emptied from the Trash tab). The source
+    // lives as long as the process, so the observer is never unregistered.
+    private val cacheObserver = object : ContentObserver(null) {
+        override fun onChange(selfChange: Boolean) = invalidateCache()
+    }
+
+    init {
+        for (uri in WATCHED_URIS) resolver.registerContentObserver(uri, true, cacheObserver)
+    }
+
     override fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {

@@ -56,6 +56,7 @@ suspend fun moveToSystemTrash(
     val existing = assets.mapTo(HashSet()) { it.id }
     trash.forget(ids.filter { it !in existing })
     if (assets.isNotEmpty() && systemTrash.moveToSystemTrash(assets)) {
+        source.invalidateCache()
         trash.forget(existing)
     }
 }
