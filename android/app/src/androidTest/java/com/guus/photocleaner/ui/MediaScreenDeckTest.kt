@@ -179,6 +179,19 @@ class MediaScreenDeckTest {
         compose.onNodeWithText(text(R.string.deck_done_summary, 0, 4)).assertIsDisplayed()
     }
 
+    /** Coming back to a day decided earlier counts the stored decisions, not this session's. */
+    @Test
+    fun dayDecidedEarlier_showsStoredDecisionsInSummary() {
+        keep.keep("y2026")
+        keep.keep("y2025")
+        trash.markAll(library.subList(2, 4), "deck")
+
+        show()
+
+        compose.onNodeWithText(text(R.string.deck_done_title)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.deck_done_summary, 2, 2)).assertIsDisplayed()
+    }
+
     @Test
     fun swipeHint_isShownOnceUntilDismissed() {
         show(hintSeen = false)

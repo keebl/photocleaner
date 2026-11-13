@@ -169,6 +169,7 @@ fun MediaScreen(
                     gridMode = gridMode,
                     randomSeed = randomSeed,
                     decidedIds = decidedIds,
+                    keptIds = keptIds,
                     source = source,
                     trash = trash,
                     keep = keep,
@@ -192,6 +193,7 @@ private fun ReviewContent(
     gridMode: Boolean,
     randomSeed: Long,
     decidedIds: Set<String>,
+    keptIds: Set<String>,
     source: PhotoSource,
     trash: TrashStore,
     keep: KeepStore,
@@ -273,6 +275,7 @@ private fun ReviewContent(
             ReviewDeck(
                 assets = items,
                 decidedIds = decidedIds,
+                keptIds = keptIds,
                 imageModel = source::imageModel,
                 badge = { asset ->
                     if (browse == Browse.RANDOM || browse == Browse.YEAR) {
