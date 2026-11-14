@@ -54,6 +54,14 @@ Last updated: 2026-11-14
 - 2026-11-10 — Native Android app in `android/`, no shared code — see `docs/decisions/0005-native-android-app.md`
 - 2026-11-08 — Adopted the project standard — see `docs/decisions/0001-record-architecture-decisions.md`
 
+## Workbench feedback
+- 2026-11-14 — `tests` counts only the inferred stack (swift); the 121 Android unit tests in `android/` did not satisfy it. Multi-app repos need per-app detection.
+- 2026-11-14 — `toolbox.json` `apple` and `google-play` limits say "through Expo/EAS", but this project is native Xcode + Gradle: no Expo path applies.
+- 2026-11-14 — `templates/github/workflows/ci-swift.yml` runs `-destination 'platform=macOS' test`, which fails for an iOS-only app; it needs an iOS Simulator destination and a shared scheme (here added by hand).
+- 2026-11-14 — "Repairs only add" made outdated lines unfixable in place (CLAUDE.md "Test: none yet", STATUS Health "Tests: none yet"): two `.proposed.md` files for one-line corrections.
+- 2026-11-14 — The `tests` repair needed a new Xcode target, which `~/.claude/rules/swift.md` forbids by hand-editing `project.pbxproj`; the standard has no sanctioned path (XcodeGen?).
+- 2026-11-14 — Play Console lookup for `## Tools` failed: the built-in browser has no Google sign-in; the toolbox gives no other access path.
+
 ## Health
 - iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: none yet ·
   Store: not submitted · Dependencies: SPM, `Package.resolved` committed
