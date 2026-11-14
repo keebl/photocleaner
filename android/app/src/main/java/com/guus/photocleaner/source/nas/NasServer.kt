@@ -54,8 +54,9 @@ class NasServer(
 
     private val client = SMBClient(
         SmbConfig.builder()
+            // Per-request timeout. No socket (SO) timeout: smbj's receive thread would hit it on
+            // an idle connection and leave the session's shares closed.
             .withTimeout(TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
-            .withSoTimeout(TIMEOUT_SECONDS * 1000)
             .withSigningEnabled(true)
             .build(),
     )
@@ -154,7 +155,7 @@ class NasServer(
     /**
      * Runs [block] on the IO dispatcher with a live session (and [share], if given); every
      * failure surfaces as a [NasException]. A transport failure (dropped connection, closed
-     * share, expired session) is retried once on a rebuilt connection or share; an answer
+     * share, expired session) is retried once on a rebuilt connection; an answer
      * from the server (not found, access denied) is not retried.
      */
     private suspend fun <T> smb(share: String?, block: (Session, DiskShare?) -> T): T = permits.withPermit {
@@ -166,7 +167,7 @@ class NasServer(
                 throw e
             } catch (first: Exception) {
                 if (first is SMBApiException && first.status.name !in STALE_STATUSES) throw NasErrors.wrap(first)
-                recover(generation, share)
+                recover(generation)
                 try {
                     attempt(share, block)
                 } catch (second: Exception) {
@@ -189,16 +190,13 @@ class NasServer(
     }
 
     /**
-     * After a transport failure: rebuild the connection when it is gone, else reopen the
-     * share. Skipped when another call already rebuilt since [failedGeneration], so parallel
-     * calls never tear down each other's fresh connection.
+     * After a transport failure: rebuild the connection (smbj hands back a cached share even
+     * when it was closed, so reopening only the share is not enough). Skipped when another
+     * call already rebuilt since [failedGeneration], so parallel calls never tear down each
+     * other's fresh connection.
      */
-    private suspend fun recover(failedGeneration: Int, share: String?) = lock.withLock {
+    private suspend fun recover(failedGeneration: Int) = lock.withLock {
         if (generation != failedGeneration) return@withLock
-        if (connection?.isConnected == true) {
-            share?.let { synchronized(shares) { shares.remove(it) } }
-            return@withLock
-        }
         synchronized(shares) { shares.clear() }
         try {
             connection?.close(true)

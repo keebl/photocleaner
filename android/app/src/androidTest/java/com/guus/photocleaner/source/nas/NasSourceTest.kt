@@ -103,6 +103,24 @@ class NasSourceTest {
         assertNotNull(source.perceptualHash(photo))
     }
 
+    /**
+     * Regression: after ~15 s without traffic a socket timeout closed the share, and the next
+     * call failed or hung. Guards the behaviour (fast and working after idling); the cause, the
+     * removed `withSoTimeout`, is also covered by NasServer's reconnect.
+     */
+    @Test
+    fun idleConnection_staysUsable() = runBlocking {
+        source.link(config, password)
+        val photos = source.fetchAll().filter { !it.isVideo }
+        assertNotNull(source.thumbnails.preview(photos[0], 256))
+
+        Thread.sleep(20_000)
+
+        val started = System.currentTimeMillis()
+        assertNotNull(source.thumbnails.preview(photos[1], 256))
+        assertTrue("took ${System.currentTimeMillis() - started} ms", System.currentTimeMillis() - started < 5_000)
+    }
+
     @Test
     fun localUri_downloadsACopy() = runBlocking {
         source.link(config, password)
