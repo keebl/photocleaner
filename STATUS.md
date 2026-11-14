@@ -66,6 +66,7 @@ Last updated: 2026-11-14
 - 2026-11-14 — Play Console lookup for `## Tools` failed: the built-in browser has no Google sign-in; the toolbox gives no other access path.
 
 - 2026-11-14 — Setting `UI: yes` (product-complete) opened three new design items mid-round; and `design-refs` counts only top-level files, so `design/refs/ios/` (14 screenshots) scored 0.
+- 2026-11-14 — `tools` did not infer SonarCloud: the project uses automatic analysis (no `sonar-project.properties`), so it only showed up as a PR comment.
 
 ## Health
 - iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: none yet ·
