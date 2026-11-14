@@ -42,3 +42,6 @@ tokens.json
 # Claude Code (machine-local)
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Local NAS test server state (scripts/nas-test-server.sh)
+android/scripts/.nas-test/
