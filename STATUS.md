@@ -11,10 +11,8 @@ Last updated: 2026-11-14
   permanent NAS delete after the in-app trash. Tested on the emulator against a local Samba
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
 - Play organisation account verification pending (Guus).
-- Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned);
-  "Android photo-cleaner app for Play Store" — `feat/android-app`, PRs 1 and 3 merged, idle,
-  finished; "Photo-cleaner project setup" — `chore/adopt-standard`, merged into `main`, idle,
-  finished. Open PRs 5 and 6 (Dependabot: actions/checkout 7, actions/setup-java 5) — CI
+- Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned) only;
+  the two finished sessions were archived. Open PRs 5 and 6 (Dependabot: actions/checkout 7, actions/setup-java 5) — CI
   green, unreviewed, not merged: waiting on Guus.
 
 ## Next
