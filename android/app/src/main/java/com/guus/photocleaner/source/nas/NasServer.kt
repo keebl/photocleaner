@@ -5,6 +5,7 @@ import com.hierynomus.msfscc.FileAttributes
 import com.hierynomus.msfscc.fileinformation.FileAllInformation
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
+import com.hierynomus.mssmb2.SMBApiException
 import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.SmbConfig
 import com.hierynomus.smbj.auth.AuthenticationContext
@@ -61,6 +62,10 @@ class NasServer(
     private val lock = Mutex()
     private val permits = Semaphore(MAX_PARALLEL)
     private var connection: Connection? = null
+
+    /** Bumped on every rebuilt connection; see [recover]. */
+    @Volatile
+    private var generation = 0
     private var session: Session? = null
     private val shares = HashMap<String, DiskShare>()
 
@@ -147,18 +152,21 @@ class NasServer(
     )
 
     /**
-     * Runs [block] on the IO dispatcher with a live session (and [share], if given). A dropped
-     * connection is rebuilt once; every failure surfaces as a [NasException].
+     * Runs [block] on the IO dispatcher with a live session (and [share], if given); every
+     * failure surfaces as a [NasException]. A transport failure (dropped connection, closed
+     * share, expired session) is retried once on a rebuilt connection or share; an answer
+     * from the server (not found, access denied) is not retried.
      */
     private suspend fun <T> smb(share: String?, block: (Session, DiskShare?) -> T): T = permits.withPermit {
         withContext(Dispatchers.IO) {
+            val generation = this@NasServer.generation
             try {
                 attempt(share, block)
             } catch (e: NasException) {
                 throw e
             } catch (first: Exception) {
-                if (connection?.isConnected == true) throw NasErrors.wrap(first)
-                reset()
+                if (first is SMBApiException && first.status.name !in STALE_STATUSES) throw NasErrors.wrap(first)
+                recover(generation, share)
                 try {
                     attempt(share, block)
                 } catch (second: Exception) {
@@ -171,13 +179,35 @@ class NasServer(
     private suspend fun <T> attempt(share: String?, block: (Session, DiskShare?) -> T): T {
         val session = session()
         val disk = share?.let { name ->
-            synchronized(shares) { shares[name] } ?: lock.withLock {
-                synchronized(shares) { shares[name] } ?: (session.connectShare(name) as? DiskShare
-                    ?: throw NasException(NasError.SHARE_NOT_FOUND))
-                    .also { synchronized(shares) { shares[name] = it } }
+            synchronized(shares) { shares[name]?.takeIf { it.isConnected } } ?: lock.withLock {
+                synchronized(shares) { shares[name]?.takeIf { it.isConnected } }
+                    ?: (session.connectShare(name) as? DiskShare ?: throw NasException(NasError.SHARE_NOT_FOUND))
+                        .also { synchronized(shares) { shares[name] = it } }
             }
         }
         return block(session, disk)
+    }
+
+    /**
+     * After a transport failure: rebuild the connection when it is gone, else reopen the
+     * share. Skipped when another call already rebuilt since [failedGeneration], so parallel
+     * calls never tear down each other's fresh connection.
+     */
+    private suspend fun recover(failedGeneration: Int, share: String?) = lock.withLock {
+        if (generation != failedGeneration) return@withLock
+        if (connection?.isConnected == true) {
+            share?.let { synchronized(shares) { shares.remove(it) } }
+            return@withLock
+        }
+        synchronized(shares) { shares.clear() }
+        try {
+            connection?.close(true)
+        } catch (_: Exception) {
+            // already gone
+        }
+        connection = null
+        session = null
+        generation++
     }
 
     private suspend fun session(): Session = lock.withLock {
@@ -201,17 +231,6 @@ class NasServer(
         s
     }
 
-    private suspend fun reset() = lock.withLock {
-        synchronized(shares) { shares.clear() }
-        try {
-            connection?.close(true)
-        } catch (_: Exception) {
-            // already gone
-        }
-        connection = null
-        session = null
-    }
-
     private fun splitDomain(name: String): Pair<String?, String> =
         if ('\\' in name) name.substringBefore('\\') to name.substringAfter('\\') else null to name
 
@@ -220,5 +239,12 @@ class NasServer(
         const val TIMEOUT_SECONDS = 15
         const val STYPE_DISKTREE = 0
         const val STYPE_MASK = 0x0FFFFFFF
+
+        /** Server answers that mean "your session or tree is gone": reconnect and retry. */
+        val STALE_STATUSES = setOf(
+            "STATUS_NETWORK_NAME_DELETED",
+            "STATUS_USER_SESSION_DELETED",
+            "STATUS_NETWORK_SESSION_EXPIRED",
+        )
     }
 }
