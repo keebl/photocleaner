@@ -34,6 +34,18 @@ Last updated: 2026-11-14
 - Android emulator for API 30 not yet installed; the spec's manual check asks for API 30 and
   the latest API.
 
+## Risks
+1. Technical — data loss: the app deletes the user's own photos (NAS items permanently).
+   iOS has no automated tests yet; a bug in the trash or duplicate logic deletes the wrong
+   files. Android has unit and instrumented tests, but the NAS path is tested against a
+   local Samba server only, not a real NAS.
+2. Product — release blocked on accounts: Apple Developer is not enrolled (no TestFlight
+   or App Store), and the Play organisation account verification is still pending.
+3. Legal — store declarations: the Play DSA trader status makes the organisation's name
+   and address public, and the Play data-safety answer for NAS traffic is still open
+   (`docs/PLAYSTORE.md`); the privacy policy must stay true to "nothing leaves the device
+   except to the user's NAS".
+
 ## Recent decisions
 - 2026-11-14 — Android NAS: local network only, `INTERNET` added — see `docs/decisions/0006-android-local-network-access.md`
 - 2026-11-14 — Android NAS: smbj + rapid7 dcerpc (share list as on iOS); NAS items deleted permanently after confirmation (`specs/android-nas.md`)
