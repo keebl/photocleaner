@@ -1,6 +1,6 @@
 # Spec: NAS (SMB) photo source on Android
 
-Status: approved
+Status: built
 Date: 2026-11-14
 
 ## Goal
@@ -78,8 +78,11 @@ or VPN as their Android phone (Android 11+). Same users as iOS NAS (`docs/PRODUC
 11. Given a completed scan, when the NAS source is reopened (also after an app restart),
     then the cached listing is shown without scanning again; "Opnieuw scannen" (pull to
     refresh) and any deletion scan again.
-12. Given a NAS photo with an embedded EXIF thumbnail, when its preview is shown for the
-    first time, then at most the first 512 KB of the file is read from the NAS.
+12. Given a NAS photo with an embedded EXIF thumbnail of at least half the requested size,
+    when a small preview (up to 512 px: grid, hashing) is shown for the first time, then at
+    most the first 512 KB of the file is read from the NAS. Larger previews (deck card,
+    zoom) decode the whole file once and are cached. (Refined while building, 2026-11-14:
+    EXIF thumbnails are usually 160 px, too small for a deck card.)
 13. Given a NAS item whose preview was generated before, when it is shown again (also after
     a restart), then no data is read from the NAS for that preview.
 14. Given a NAS video, when its card or grid cell is shown, then a poster frame is shown
