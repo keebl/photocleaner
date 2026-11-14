@@ -17,8 +17,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   (iPhone library only).
 
 ### Changed
+- The counter next to the trash icon now shows how many items are in the trash; the lifetime
+  "cleaned" total moved to Settings (iOS and Android).
 - Grid review: fixed-layout action bar (buttons always present), weggooien left / behouden
   right, larger top-right select circle, grid count shown.
+
+### Fixed
+- iOS: the "Klaar" summary of a day finished earlier no longer reads "0 behouden · 0 weggegooid".
 
 <!-- No git tags exist yet, so no released versions are listed. The first tagged release
      will become the first version section below. -->
