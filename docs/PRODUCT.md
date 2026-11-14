@@ -1,5 +1,8 @@
 # Product — PhotoCleaner
 
+## Name
+Name: PhotoCleaner — final (2026-11-14)
+
 ## Problem
 Phone photo libraries grow without bound: duplicates, near-duplicates, screenshots and
 forgettable shots pile up and are tedious to prune in Apple Photos. PhotoCleaner makes
@@ -8,6 +11,13 @@ cleanup fast and low-risk, one decision at a time.
 ## Users
 - The owner of a large iPhone photo library who wants to reclaim space and tidy up.
 - Users who keep (some of) their photos on a home NAS and want the same cleanup flow there.
+
+## Why now
+- Guus's own iPhone library and NAS archive have grown past the point where pruning in
+  Apple Photos is practical.
+- The iOS proof of concept (2026-09-08) showed the swipe flow and the 30-day trash work;
+  the native Android port (2026-11) brings the same tool to Google Play, where Guus already
+  has an organisation account.
 
 ## Scope (what it does)
 - **Op deze dag** — a swipe stack of photos/videos taken on this date across past years;
@@ -37,6 +47,8 @@ cleanup fast and low-risk, one decision at a time.
   (`specs/android-nas.md`, local network only — ADR-0006), except the Selfies category
   (Android has no selfie flag). After 30 days in the in-app trash, phone items move to
   Android's own trash and NAS items are deleted on the NAS, each after the user confirms.
+
+UI: yes
 
 ## Data, privacy and money
 - Personal data: the user's own photos/videos and NAS credentials — purpose per item in
