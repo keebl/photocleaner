@@ -12,8 +12,3 @@
 -dontwarn org.ietf.jgss.**
 -dontwarn javax.el.**
 -dontwarn java.rmi.**
-# BouncyCastle does the NTLM, signing and encryption crypto for smbj. With R8's default
-# optimisation the minified build failed NTLM logins and signed reads intermittently
-# (about 2 in 3 logins, 2026-11-14), the debug build never. Keeping the used crypto
-# classes unoptimised fixed it (5/5); unused ones are still removed (+40 KB).
--keep,allowshrinking class org.bouncycastle.crypto.** { *; }
