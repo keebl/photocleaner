@@ -76,6 +76,8 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Android: regenerate `verification-metadata.xml` with an empty Gradle home
   (`GRADLE_USER_HOME=$(mktemp -d) ./gradlew --write-verification-metadata sha256 …`). With the
   warm local cache, BOM `.module` files a clean CI runner downloads are missed and CI fails.
+  `aapt2` is per OS: the Mac run records only `-osx.jar`; after an AGP bump add the `-linux.jar`
+  sha256 (from `dl.google.com/dl/android/maven2/…/aapt2-<ver>-linux.jar.sha256`) by hand for CI.
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 
