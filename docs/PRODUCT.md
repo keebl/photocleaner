@@ -54,7 +54,8 @@ UI: yes
 - Personal data: the user's own photos/videos and NAS credentials — purpose per item in
   `SECURITY.md`. Nothing is sent off-device except to the user's NAS.
 - Accounts: none.
-- Monetization: none decided yet. TODO(guus): if sold in the EU, the DSA "trader" rules
+- Monetization: one-time €4.99 "PhotoCleaner Pro" unlock, no ads or subscription
+  (`specs/pro-unlock.md`, not built yet). TODO(guus): if sold in the EU, the DSA "trader" rules
   require public contact details on the store page.
 
 ## Open product questions

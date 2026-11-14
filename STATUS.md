@@ -1,6 +1,6 @@
 # Status — PhotoCleaner
 
-Last updated: 2026-11-14
+Last updated: 2026-11-15
 
 ## Now
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
@@ -15,14 +15,16 @@ Last updated: 2026-11-14
   the two finished sessions were archived. No open PRs (Dependabot PRs 5 and 6 merged).
 
 ## Next
-1. Guus: create the upload key and `android/keystore.properties`, then follow
+1. Build the Pro unlock (`specs/pro-unlock.md`, approved, Android first) before the public
+   Play release; its step 1 needs Guus in the Play Console (`pro_lifetime` product).
+2. Guus: create the upload key and `android/keystore.properties`, then follow
    `docs/PLAYSTORE.md` (Console forms, internal testing, production).
-2. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
+3. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
    `.local` name, a large folder and HEIC/RAW files; decide the Play data-safety answer for
    NAS traffic (`docs/PLAYSTORE.md`).
-3. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
+4. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
    system trash dialog, reminder timing, video playback.
-4. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
+5. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
 
 ## Blocked / open questions
 - README's architecture section names `NASFolderSource`, but the code implements `SMBSource`.
@@ -47,6 +49,7 @@ Last updated: 2026-11-14
    except to the user's NAS".
 
 ## Recent decisions
+- 2026-11-11 — Monetization: one-time €4.99 "PhotoCleaner Pro", today's "Op deze dag" stays free (`specs/pro-unlock.md`; on `main` since 2026-11-15)
 - 2026-11-14 — Android NAS: local network only, `INTERNET` added — see `docs/decisions/0006-android-local-network-access.md`
 - 2026-11-14 — Android NAS: smbj + rapid7 dcerpc (share list as on iOS); NAS items deleted permanently after confirmation (`specs/android-nas.md`)
 - 2026-11-10 — Android: "Op deze dag" includes this year's photos (iOS parity); spec AC 4 updated.
