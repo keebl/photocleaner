@@ -79,7 +79,7 @@
     <string name="media_sort_oldest">Oudste eerst</string>
     <string name="media_show_grid">Toon als raster</string>
     <string name="media_show_deck">Toon als veegstapel</string>
-    <string name="media_open_trash">%1$d opgeschoond, open prullenbak</string>
+    <string name="media_open_trash">%1$d in prullenbak, open prullenbak</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Annuleren</string>
 
@@ -147,6 +147,7 @@
     <string name="settings_reminder_denied">Meldingen staan uit voor PhotoCleaner. Zet ze aan in de systeeminstellingen om de herinnering te krijgen.</string>
     <string name="settings_open_system">Open instellingen</string>
     <string name="settings_cleanup">Opschonen</string>
+    <string name="settings_cleaned_count">Totaal opgeschoond</string>
     <string name="settings_kept_count">Behouden foto\'s</string>
     <string name="settings_reset_kept">Behoud-keuzes wissen</string>
     <string name="settings_reset_footer">Foto\'s die je hebt behouden komen niet meer terug in de opschoon-weergaven. Wissen laat ze weer verschijnen.</string>

@@ -94,7 +94,6 @@ fun MediaScreen(
     val date = LocalDate.ofEpochDay(dateEpochDay)
     val keptIds by keep.ids.collectAsState()
     val trashItems by trash.items.collectAsState()
-    val cleaned by trash.totalCleaned.collectAsState()
     val decidedIds = remember(keptIds, trashItems) { keptIds + trashItems.map { it.id } }
 
     fun update(change: MediaSettings) {
@@ -115,7 +114,7 @@ fun MediaScreen(
             showGridToggle = settings.tab != MediaTab.DUPLICATES,
             gridMode = gridMode,
             onToggleGrid = { gridMode = !gridMode },
-            cleanedCount = cleaned,
+            trashCount = trashItems.size,
             onOpenTrash = onOpenTrash,
         )
         MediaChips(

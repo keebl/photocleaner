@@ -72,13 +72,13 @@ val CategoryOptions = listOf(
     MenuOption(CategoryFilter.PANORAMAS, R.string.media_category_panoramas, R.drawable.ic_panorama),
 )
 
-/** Top row: grid/deck toggle and the cleaned counter that opens the trash. */
+/** Top row: grid/deck toggle and the number of items in the trash, which opens it. */
 @Composable
 fun MediaTopBar(
     showGridToggle: Boolean,
     gridMode: Boolean,
     onToggleGrid: () -> Unit,
-    cleanedCount: Int,
+    trashCount: Int,
     onOpenTrash: () -> Unit,
 ) {
     Row(
@@ -94,8 +94,8 @@ fun MediaTopBar(
                 )
             }
         }
-        if (cleanedCount > 0) {
-            val description = stringResource(R.string.media_open_trash, cleanedCount)
+        if (trashCount > 0) {
+            val description = stringResource(R.string.media_open_trash, trashCount)
             TextButton(onClick = onOpenTrash, modifier = Modifier.semantics { contentDescription = description }) {
                 Icon(
                     painterResource(R.drawable.ic_delete),
@@ -104,7 +104,7 @@ fun MediaTopBar(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(4.dp))
-                Text(cleanedCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(trashCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

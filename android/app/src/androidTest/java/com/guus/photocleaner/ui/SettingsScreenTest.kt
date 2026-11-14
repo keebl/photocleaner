@@ -16,9 +16,11 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.guus.photocleaner.R
+import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.AppTheme
 import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.ReminderSettings
+import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.ui.settings.REMINDER_SWITCH_TAG
 import com.guus.photocleaner.ui.settings.SettingsScreen
 import com.guus.photocleaner.ui.theme.PhotoCleanerTheme
@@ -41,6 +43,7 @@ class SettingsScreenTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private lateinit var dir: File
     private lateinit var keep: KeepStore
+    private lateinit var trash: TrashStore
 
     private var theme = AppTheme.DARK
     private var reminder = ReminderSettings()
@@ -51,6 +54,7 @@ class SettingsScreenTest {
     fun setUp() {
         dir = File(context.cacheDir, "settings-test-${System.nanoTime()}").apply { mkdirs() }
         keep = KeepStore(File(dir, "kept.json"))
+        trash = TrashStore(File(dir, "trash.json"))
     }
 
     @After
@@ -76,11 +80,24 @@ class SettingsScreenTest {
                     },
                     requestNotifications = { notificationsAllowed },
                     keep = keep,
+                    trash = trash,
                     versionText = "1.0 (1)",
                 )
             }
         }
         compose.waitForIdle()
+    }
+
+    /** The lifetime counter lives here; it survives emptying the trash. */
+    @Test
+    fun cleanupSection_showsTotalCleanedAfterTrashIsEmptied() {
+        val photo = PhotoAsset(id = "a", capturedAtMillis = 0, modifiedAtMillis = null, pixelWidth = 1, pixelHeight = 1, byteSize = 1, filename = null)
+        trash.mark(photo, "deck")
+        trash.forget(listOf("a"))
+        show(notificationsAllowed = true)
+
+        compose.onNodeWithText(text(R.string.settings_cleaned_count)).assertIsDisplayed()
+        compose.onNodeWithText("1").assertIsDisplayed()
     }
 
     @Test

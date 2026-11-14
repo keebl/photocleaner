@@ -81,7 +81,7 @@
     <string name="media_sort_oldest">Oldest first</string>
     <string name="media_show_grid">Show as grid</string>
     <string name="media_show_deck">Show as swipe deck</string>
-    <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d cleaned, open trash</string>
+    <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d in trash, open trash</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Cancel</string>
 
@@ -149,6 +149,7 @@
     <string name="settings_reminder_denied">Notifications are off for PhotoCleaner. Allow them in the system settings to get the reminder.</string>
     <string name="settings_open_system">Open settings</string>
     <string name="settings_cleanup">Clean-up</string>
+    <string name="settings_cleaned_count">Cleaned up in total</string>
     <string name="settings_kept_count">Kept photos</string>
     <string name="settings_reset_kept">Clear keep choices</string>
     <string name="settings_reset_footer">Photos you kept no longer come back in the clean-up views. Clearing lets them appear again.</string>

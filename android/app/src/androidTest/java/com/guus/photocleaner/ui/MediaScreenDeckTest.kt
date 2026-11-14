@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -190,6 +191,17 @@ class MediaScreenDeckTest {
 
         compose.onNodeWithText(text(R.string.deck_done_title)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.deck_done_summary, 2, 2)).assertIsDisplayed()
+    }
+
+    /** The badge counts what is waiting in the trash, not the lifetime total. */
+    @Test
+    fun trashBadge_countsItemsStillInTrash() {
+        trash.markAll(library.subList(0, 2), "deck")
+        trash.forget(listOf("y2026"))
+
+        show()
+
+        compose.onNodeWithContentDescription(text(R.string.media_open_trash, 1)).assertIsDisplayed()
     }
 
     @Test

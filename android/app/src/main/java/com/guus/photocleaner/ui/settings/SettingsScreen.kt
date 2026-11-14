@@ -64,12 +64,14 @@ fun SettingsScreen(
     /** Asks for notification permission if needed; true when notifications may be posted. */
     requestNotifications: suspend () -> Boolean,
     keep: KeepStore,
+    trash: TrashStore,
     versionText: String,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val keptIds by keep.ids.collectAsState()
+    val cleaned by trash.totalCleaned.collectAsState()
     var denied by remember { mutableStateOf(false) }
     var pickingTime by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
@@ -147,6 +149,8 @@ fun SettingsScreen(
 
         SectionHeader(R.string.settings_cleanup)
         Group {
+            ValueRow(stringResource(R.string.settings_cleaned_count), cleaned.toString())
+            HorizontalDivider(Modifier.padding(start = 16.dp))
             ValueRow(stringResource(R.string.settings_kept_count), keptIds.size.toString())
             HorizontalDivider(Modifier.padding(start = 16.dp))
             Row(

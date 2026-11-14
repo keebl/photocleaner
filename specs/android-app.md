@@ -23,7 +23,7 @@ that can be published on Google Play.
 - **Dubbelen**: exact duplicates (capture second + dimensions) and similar photos (dHash +
   Hamming distance), with an on-disk hash cache — same rules as `DuplicateDetector`,
   `PerceptualDetector` and `ImageHashing` on iOS.
-- **Prullenbak**: 30-day in-app retention, restore, empty now, lifetime "cleaned" counter.
+- **Prullenbak**: 30-day in-app retention, restore, empty now; the media screen shows how many items are in the trash, Settings shows the lifetime "cleaned" counter.
 - Keep-store: kept items never come back in review views; reset in Settings.
 - Photo zoom, video playback, share button.
 - Settings: theme (system/light/dark), daily "Op deze dag" reminder with time, keep reset,

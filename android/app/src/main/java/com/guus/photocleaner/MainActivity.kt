@@ -151,6 +151,7 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     keep = container.keep,
+                    trash = container.trash,
                     versionText = versionText(),
                 )
             },
