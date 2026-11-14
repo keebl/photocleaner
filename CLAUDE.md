@@ -73,6 +73,9 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - `adb shell input text` drops characters when typing fast or before a field has focus, which
   looks like a wrong NAS password. Type in small chunks and check the field before
   submitting before concluding a login bug.
+- Android: regenerate `verification-metadata.xml` with an empty Gradle home
+  (`GRADLE_USER_HOME=$(mktemp -d) ./gradlew --write-verification-metadata sha256 …`). With the
+  warm local cache, BOM `.module` files a clean CI runner downloads are missed and CI fails.
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 
