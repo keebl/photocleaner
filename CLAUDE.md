@@ -9,7 +9,6 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Build: `xcodebuild build -project PhotoCleaner.xcodeproj -scheme PhotoCleaner -destination 'generic/platform=iOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO`
 - Run on simulator (after a build): `xcrun simctl install booted com.guus.photocleaner` then `xcrun simctl launch booted com.guus.photocleaner` (locate the built `.app` under DerivedData/.../Build/Products/Debug-iphonesimulator/)
 - Run on device / in Xcode: `open PhotoCleaner.xcodeproj`, pick a target, press ▶︎
-- Test (all): none yet — no test target exists. TODO(guus): add `PhotoCleanerTests`
 - Test (iOS unit, `PhotoCleanerTests`, Swift Testing; since 2026-11-14): `xcodebuild test -project PhotoCleaner.xcodeproj -scheme PhotoCleaner -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO | xcbeautify -q`
 - Test (one iOS test): add `-only-testing:PhotoCleanerTests/DuplicateDetectorTests` to the command above
 - Typecheck: covered by `xcodebuild build` (no separate step for Swift)
@@ -57,8 +56,6 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Static analysis on pull requests: SonarCloud — browser `sonarcloud.io` (results arrive as PR comments) — project `keebl_photocleaner` (public repo, automatic analysis; seen on PR 4, 2026-11-14)
 
 ## Gotchas
-- The `PhotoCleaner` scheme is not shared (it lives in git-ignored `xcuserdata/`). Xcode
-  regenerates it locally, but CI would need a shared scheme. TODO(guus).
 - Since 2026-11-14 a shared `PhotoCleaner` scheme lives in `PhotoCleaner.xcodeproj/xcshareddata/` (needed for the
   test target and CI). A local copy in `xcuserdata/` can show up as a second scheme: delete the local one.
 - `PhotoCleanerTests` was added to `project.pbxproj` by hand (IDs `AA…0101`–`AA…010B`); prefer Xcode or

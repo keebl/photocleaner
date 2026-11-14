@@ -22,7 +22,7 @@ Last updated: 2026-11-14
    NAS traffic (`docs/PLAYSTORE.md`).
 4. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
    system trash dialog, reminder timing, video playback.
-5. iOS: run `swiftformat PhotoCleaner` once as its own commit; share the scheme and add CI.
+5. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
 
 ## Blocked / open questions
 - README's architecture section names `NASFolderSource`, but the code implements `SMBSource`.
@@ -69,7 +69,7 @@ Last updated: 2026-11-14
 - 2026-11-14 — `tools` did not infer SonarCloud: the project uses automatic analysis (no `sonar-project.properties`), so it only showed up as a PR comment.
 
 ## Health
-- iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: none yet ·
+- iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: 11 unit (PhotoCleanerTests), green ·
   Store: not submitted · Dependencies: SPM, `Package.resolved` committed
 - Android: Version 1.0 (1) · Build: green (`assembleDebug`, `bundleRelease`) · Tests: 97 unit,
   34 instrumented, all green · Lint: 0 errors · Store: not submitted (account verification
