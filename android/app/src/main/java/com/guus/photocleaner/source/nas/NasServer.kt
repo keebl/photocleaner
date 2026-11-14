@@ -194,7 +194,7 @@ class NasServer(
             conn.authenticate(auth)
         } catch (e: Exception) {
             conn.close()
-            throw NasException(NasErrors.classify(e).takeIf { it != NasError.OTHER } ?: NasError.AUTH_FAILED, e)
+            throw NasErrors.wrap(e) // logon failures map to AUTH_FAILED; others stay generic
         }
         connection = conn
         session = s
