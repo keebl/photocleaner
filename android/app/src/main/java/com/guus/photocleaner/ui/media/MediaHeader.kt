@@ -6,6 +6,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.guus.photocleaner.R
 import java.time.Instant
 import java.time.LocalDate
@@ -69,20 +72,32 @@ val CategoryOptions = listOf(
     MenuOption(CategoryFilter.PANORAMAS, R.string.media_category_panoramas, R.drawable.ic_panorama),
 )
 
-/** Top row: grid/deck toggle and the cleaned counter that opens the trash. */
+/**
+ * Top row: the photo source menu (leading, as on iOS), "scan again" for a NAS, the grid/deck
+ * toggle and the number of items in the trash, which opens it.
+ */
 @Composable
 fun MediaTopBar(
     showGridToggle: Boolean,
     gridMode: Boolean,
     onToggleGrid: () -> Unit,
-    cleanedCount: Int,
+    trashCount: Int,
     onOpenTrash: () -> Unit,
+    sourceMenu: @Composable () -> Unit = {},
+    onRescan: (() -> Unit)? = null,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End,
     ) {
+        sourceMenu()
+        Spacer(Modifier.weight(1f))
+        if (onRescan != null) {
+            IconButton(onClick = onRescan) {
+                Icon(painterResource(R.drawable.ic_refresh), contentDescription = stringResource(R.string.media_rescan))
+            }
+        }
         if (showGridToggle) {
             IconButton(onClick = onToggleGrid) {
                 Icon(
@@ -91,8 +106,8 @@ fun MediaTopBar(
                 )
             }
         }
-        if (cleanedCount > 0) {
-            val description = stringResource(R.string.media_open_trash, cleanedCount)
+        if (trashCount > 0) {
+            val description = stringResource(R.string.media_open_trash, trashCount)
             TextButton(onClick = onOpenTrash, modifier = Modifier.semantics { contentDescription = description }) {
                 Icon(
                     painterResource(R.drawable.ic_delete),
@@ -101,7 +116,7 @@ fun MediaTopBar(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(4.dp))
-                Text(cleanedCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(trashCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -116,6 +131,8 @@ fun MediaChips(
     onTab: (MediaTab) -> Unit,
     onBrowse: (Browse) -> Unit,
     onCategory: (CategoryFilter) -> Unit,
+    /** False for a NAS: plain files have no screenshot/favourite/panorama flags. */
+    showCategory: Boolean = true,
 ) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -123,7 +140,7 @@ fun MediaChips(
     ) {
         DropdownChip(TabOptions, tab, onTab)
         if (tab != MediaTab.DUPLICATES) DropdownChip(BrowseOptions, browse, onBrowse)
-        if (tab == MediaTab.PHOTOS) DropdownChip(CategoryOptions, category, onCategory)
+        if (tab == MediaTab.PHOTOS && showCategory) DropdownChip(CategoryOptions, category, onCategory)
     }
 }
 
@@ -187,16 +204,30 @@ fun PeriodBar(
         IconButton(onClick = { onShift(-1) }) {
             Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.media_previous), tint = MaterialTheme.colorScheme.primary)
         }
-        TextButton(onClick = { picking = true }, modifier = Modifier.weight(1f)) {
+        TextButton(
+            onClick = { picking = true },
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+        ) {
             Icon(painterResource(R.drawable.ic_calendar_today), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            // Long titles ("12 november") next to the back-to-now button shrink instead of wrapping.
+            Text(
+                title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 22.sp, stepSize = 1.sp),
+            )
         }
         IconButton(onClick = { onShift(1) }) {
             Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.media_next), tint = MaterialTheme.colorScheme.primary)
         }
         if (showBackToNow) {
-            OutlinedButton(onClick = onBackToNow) { Text(stringResource(backToNowLabel)) }
+            OutlinedButton(onClick = onBackToNow, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Text(stringResource(backToNowLabel), maxLines = 1)
+            }
         }
         Box {
             FilledTonalIconButton(onClick = { sortMenu = true }) {

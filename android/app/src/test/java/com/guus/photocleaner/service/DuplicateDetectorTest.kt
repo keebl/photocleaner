@@ -36,6 +36,19 @@ class DuplicateDetectorTest {
     }
 
     @Test
+    fun unknownDimensions_areSplitByByteSize() {
+        // NAS items (specs/android-nas.md AC 17): no pixel size, so the file size decides.
+        val a = asset("a", width = 0, height = 0, bytes = 500)
+        val b = asset("b", width = 0, height = 0, bytes = 500)
+        val c = asset("c", width = 0, height = 0, bytes = 501)
+
+        val groups = DuplicateDetector.findDuplicates(listOf(a, b, c))
+
+        assertEquals(1, groups.size)
+        assertEquals(setOf("a", "b"), groups[0].all.map { it.id }.toSet())
+    }
+
+    @Test
     fun itemsWithoutCaptureDate_areNeverGrouped() {
         val a = asset("a", capturedAtMillis = null)
         val b = asset("b", capturedAtMillis = null)

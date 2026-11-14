@@ -15,7 +15,14 @@ class FakePhotoSource(
     initial: List<PhotoAsset> = emptyList(),
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val hashes: Map<String, Long> = emptyMap(),
+    override val kind: SourceKind = SourceKind.DEVICE,
+    override val deletion: Deletion = Deletion.SYSTEM_TRASH,
+    /** Ids this source claims; null = every id. */
+    private val ownsId: ((String) -> Boolean)? = null,
 ) : PhotoSource {
+
+    /** When set, [deletePermanently] throws it (an unreachable NAS). */
+    var deleteFailure: Exception? = null
 
     private val items = initial.toMutableList()
     private val changeEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -31,6 +38,8 @@ class FakePhotoSource(
         }
         changeEvents.tryEmit(Unit)
     }
+
+    override fun owns(id: String): Boolean = ownsId?.invoke(id) ?: true
 
     override fun changes(): Flow<Unit> = changeEvents
 
@@ -62,5 +71,10 @@ class FakePhotoSource(
         trashedIds += assets.map { it.id }.distinct()
         changeEvents.tryEmit(Unit)
         return null
+    }
+
+    override suspend fun deletePermanently(assets: List<PhotoAsset>) {
+        deleteFailure?.let { throw it }
+        createTrashRequest(assets)
     }
 }

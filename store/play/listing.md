@@ -44,8 +44,11 @@ PhotoCleaner zoekt exacte dubbelen en foto's die op elkaar lijken, zoals bewerkt
 VEILIG OPRUIMEN
 Weggegooide foto's blijven 30 dagen in de prullenbak van PhotoCleaner, zodat je ze makkelijk terugzet. Pas daarna gaan ze, na jouw bevestiging, naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn. Foto's die je behoudt komen niet meer langs.
 
-ALLES BLIJFT OP JE TELEFOON
-PhotoCleaner heeft geen internettoegang. Geen account, geen advertenties, geen tracking. Je foto's en je keuzes verlaten je toestel nooit.
+OOK OP JE NAS
+Koppel een map op je eigen NAS (SMB) en ruim die op dezelfde manier op. Je wachtwoord staat versleuteld op je telefoon. Een NAS heeft geen prullenbak: na de 30 dagen worden NAS-items pas na jouw bevestiging definitief verwijderd.
+
+ALLES BLIJFT BIJ JOU
+Geen account, geen advertenties, geen tracking. PhotoCleaner maakt alleen verbinding met een NAS op je eigen netwerk, en alleen als je die zelf koppelt. Verder verlaten je foto's en je keuzes je toestel nooit.
 
 Verder: foto's vergroten, video's afspelen, delen, een dagelijkse herinnering voor "Op deze dag", en een licht of donker thema.
 ```
@@ -83,8 +86,11 @@ PhotoCleaner finds exact duplicates and photos that look alike, such as edited o
 CLEAN UP SAFELY
 Discarded photos stay in PhotoCleaner's trash for 30 days, so restoring them is easy. Only then, after you confirm, do they move to Android's trash, where they stay recoverable for another 30 days. Photos you keep won't come back.
 
-EVERYTHING STAYS ON YOUR PHONE
-PhotoCleaner has no internet access. No account, no ads, no tracking. Your photos and your choices never leave your device.
+ON YOUR NAS TOO
+Link a folder on your own NAS (SMB) and clean it up the same way. Your password is stored encrypted on your phone. A NAS has no trash: after the 30 days, NAS items are deleted for good only after you confirm.
+
+EVERYTHING STAYS WITH YOU
+No account, no ads, no tracking. PhotoCleaner only connects to a NAS on your own network, and only if you link one yourself. Otherwise your photos and your choices never leave your device.
 
 Also: zoom into photos, play videos, share, a daily "On this day" reminder, and a light or dark theme.
 ```

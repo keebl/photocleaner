@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Temporary local copies of NAS items, shared with other apps or played (specs/android-nas.md AC 15-16). -->
+<paths>
+    <cache-path name="nas" path="nas-share/" />
+</paths>

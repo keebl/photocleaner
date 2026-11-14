@@ -48,6 +48,7 @@ import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.TrashItem
 import com.guus.photocleaner.service.TrashStore
+import com.guus.photocleaner.source.Deletion
 import com.guus.photocleaner.source.PhotoSource
 import com.guus.photocleaner.ui.deck.EmptyState
 import kotlinx.coroutines.launch
@@ -63,19 +64,23 @@ fun TrashScreen(
     systemTrash: SystemTrash,
     modifier: Modifier = Modifier,
 ) {
-    val items by trash.items.collectAsState()
+    val allItems by trash.items.collectAsState()
+    // Only the active source's items (specs/android-nas.md AC 21).
+    val items = remember(allItems, source) { allItems.filter { source.owns(it.id) } }
     var assets by remember { mutableStateOf<Map<String, PhotoAsset>>(emptyMap()) }
     var menuOpen by remember { mutableStateOf(false) }
     var confirmAll by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(items) {
+    LaunchedEffect(items, source) {
         assets = source.assets(items.map { it.id }).associateBy { it.id }
     }
     val remove: (List<TrashItem>) -> Unit = { chosen ->
         scope.launch { moveToSystemTrash(chosen, source, trash, systemTrash) }
     }
-    val expired = trash.expiredItems()
+    val expired = trash.expiredItems().filter { source.owns(it.id) }
+    // A NAS has no system trash: texts say the items are deleted for good (ADR-0003).
+    val permanent = source.deletion == Deletion.PERMANENT
 
     Column(modifier.fillMaxSize()) {
         Row(
@@ -132,7 +137,10 @@ fun TrashScreen(
                 }
                 item {
                     Text(
-                        stringResource(R.string.trash_footer, TrashStore.RETENTION_DAYS.toInt()),
+                        stringResource(
+                            if (permanent) R.string.trash_footer_nas else R.string.trash_footer,
+                            TrashStore.RETENTION_DAYS.toInt(),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -145,13 +153,21 @@ fun TrashScreen(
     if (confirmAll) {
         AlertDialog(
             onDismissRequest = { confirmAll = false },
-            title = { Text(pluralStringResource(R.plurals.trash_delete_all_title, items.size, items.size)) },
-            text = { Text(stringResource(R.string.trash_delete_all_message)) },
+            title = {
+                val title = if (permanent) R.plurals.trash_delete_all_title_nas else R.plurals.trash_delete_all_title
+                Text(pluralStringResource(title, items.size, items.size))
+            },
+            text = {
+                Text(stringResource(if (permanent) R.string.trash_delete_all_message_nas else R.string.trash_delete_all_message))
+            },
             confirmButton = {
                 TextButton(onClick = {
                     confirmAll = false
                     remove(items)
-                }) { Text(stringResource(R.string.trash_delete_confirm), color = MaterialTheme.colorScheme.error) }
+                }) {
+                    val confirm = if (permanent) R.string.trash_expired_confirm_nas else R.string.trash_delete_confirm
+                    Text(stringResource(confirm), color = MaterialTheme.colorScheme.error)
+                }
             },
             dismissButton = { TextButton(onClick = { confirmAll = false }) { Text(stringResource(R.string.media_cancel)) } },
         )
@@ -198,19 +214,23 @@ fun reasonLabel(reason: String): Int = when (reason) {
 fun ExpiredTrashPrompt(source: PhotoSource, trash: TrashStore, systemTrash: SystemTrash) {
     var dismissed by rememberSaveable { mutableStateOf(false) }
     val items by trash.items.collectAsState()
-    val expired = remember(items) { trash.expiredItems() }
+    val expired = remember(items, source) { trash.expiredItems().filter { source.owns(it.id) } }
+    val permanent = source.deletion == Deletion.PERMANENT
     val scope = rememberCoroutineScope()
     if (dismissed || expired.isEmpty()) return
 
     AlertDialog(
         onDismissRequest = { dismissed = true },
         title = { Text(pluralStringResource(R.plurals.trash_expired_title, expired.size, expired.size)) },
-        text = { Text(stringResource(R.string.trash_expired_message, TrashStore.RETENTION_DAYS.toInt())) },
+        text = {
+            val message = if (permanent) R.string.trash_expired_message_nas else R.string.trash_expired_message
+            Text(stringResource(message, TrashStore.RETENTION_DAYS.toInt()))
+        },
         confirmButton = {
             TextButton(onClick = {
                 dismissed = true
                 scope.launch { moveToSystemTrash(expired, source, trash, systemTrash) }
-            }) { Text(stringResource(R.string.trash_expired_confirm)) }
+            }) { Text(stringResource(if (permanent) R.string.trash_expired_confirm_nas else R.string.trash_expired_confirm)) }
         },
         dismissButton = { TextButton(onClick = { dismissed = true }) { Text(stringResource(R.string.trash_expired_later)) } },
     )

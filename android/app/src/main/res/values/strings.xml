@@ -16,7 +16,7 @@
     <string name="onboarding_2_title">Clean up safely</string>
     <string name="onboarding_2_text">Discarded photos stay in the trash for 30 days — one tap to undo. Photos you keep won\'t come back.</string>
     <string name="onboarding_3_title">Everything stays on your phone</string>
-    <string name="onboarding_3_text">PhotoCleaner has no internet access, so your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
+    <string name="onboarding_3_text">PhotoCleaner only connects to a NAS on your own network, and only if you link one; otherwise your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
 
     <!-- Permission gate -->
     <string name="gate_title">Access to your photos</string>
@@ -81,7 +81,7 @@
     <string name="media_sort_oldest">Oldest first</string>
     <string name="media_show_grid">Show as grid</string>
     <string name="media_show_deck">Show as swipe deck</string>
-    <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d cleaned, open trash</string>
+    <string name="media_open_trash" tools:ignore="PluralsCandidate">%1$d in trash, open trash</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Cancel</string>
 
@@ -109,6 +109,10 @@
     <string name="trash_empty_expired" tools:ignore="PluralsCandidate">Empty expired (%1$d)</string>
     <string name="trash_delete_all">Delete everything now</string>
     <string name="trash_delete_confirm">Move to Android trash</string>
+    <plurals name="trash_delete_all_title_nas">
+        <item quantity="one">Delete %1$d item from your NAS?</item>
+        <item quantity="other">Delete all %1$d items from your NAS?</item>
+    </plurals>
     <plurals name="trash_delete_all_title">
         <item quantity="one">Remove %1$d item from this device?</item>
         <item quantity="other">Remove all %1$d items from this device?</item>
@@ -129,6 +133,10 @@
     </plurals>
     <string name="trash_expired_message" tools:ignore="PluralsCandidate">Move them to Android\'s trash now? They stay recoverable there for another 30 days; space is freed once Android empties it. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
     <string name="trash_expired_confirm">Move</string>
+    <string name="trash_delete_all_message_nas">They are deleted from your NAS for good. A NAS has no trash, so this cannot be undone.</string>
+    <string name="trash_footer_nas" tools:ignore="PluralsCandidate">After %1$d days, items are deleted from your NAS for good, after you confirm. A NAS has no trash, so this trash is the only way back.</string>
+    <string name="trash_expired_message_nas" tools:ignore="PluralsCandidate">Delete them from your NAS for good now? A NAS has no trash, so this cannot be undone. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
+    <string name="trash_expired_confirm_nas">Delete</string>
     <string name="trash_expired_later">Later</string>
     <string name="reason_on_this_day">On this day</string>
     <string name="reason_random">Random</string>
@@ -149,6 +157,7 @@
     <string name="settings_reminder_denied">Notifications are off for PhotoCleaner. Allow them in the system settings to get the reminder.</string>
     <string name="settings_open_system">Open settings</string>
     <string name="settings_cleanup">Clean-up</string>
+    <string name="settings_cleaned_count">Cleaned up in total</string>
     <string name="settings_kept_count">Kept photos</string>
     <string name="settings_reset_kept">Clear keep choices</string>
     <string name="settings_reset_footer">Photos you kept no longer come back in the clean-up views. Clearing lets them appear again.</string>
@@ -189,4 +198,62 @@
     <string name="placeholder_media">Your photos appear here.</string>
     <string name="placeholder_trash">Discarded photos appear here.</string>
     <string name="placeholder_settings">Settings appear here.</string>
+    <!-- NAS (SMB) source, specs/android-nas.md -->
+    <string name="source_device">Phone</string>
+    <string name="source_nas_default">NAS (SMB)</string>
+    <string name="source_link_nas">Link NAS…</string>
+    <string name="source_change_nas">Change NAS link…</string>
+    <string name="source_menu">Photo source</string>
+    <string name="settings_source">Photo source</string>
+    <string name="settings_nas_not_linked">Not linked yet</string>
+    <string name="settings_nas_clear_cache">Clear NAS cache</string>
+    <string name="settings_source_footer">Link your NAS directly in the app over SMB: server address, share and login. Your password is stored encrypted on this device, and the app only connects to a NAS on your own network. ‘Clear NAS cache’ discards the stored folder list and previews for a fresh start (photos are untouched).</string>
+    <string name="nas_connect_title">Link NAS</string>
+    <string name="nas_server_section">Server</string>
+    <string name="nas_server">Server address</string>
+    <string name="nas_server_hint">192.168.1.10 or nas.local</string>
+    <string name="nas_username">Username</string>
+    <string name="nas_username_hint">empty = guest</string>
+    <string name="nas_password">Password</string>
+    <string name="nas_server_footer">The address of your NAS and your login. Your password is stored encrypted with a key in Android\'s keystore. Only a NAS on your own network (Wi-Fi or VPN) is allowed; if a .local name is not found, use the IP address.</string>
+    <string name="nas_connect_button">Connect and show shares</string>
+    <string name="nas_connecting">Connecting…</string>
+    <string name="nas_unlink">Remove current NAS link</string>
+    <string name="nas_unlink_title">Remove the NAS link?</string>
+    <string name="nas_unlink_message">The stored address, password, folder list and previews are deleted from this phone. Photos on the NAS are untouched.</string>
+    <string name="nas_unlink_confirm">Remove</string>
+    <string name="nas_shares_title">Shares</string>
+    <string name="nas_choose_share">Choose a share</string>
+    <string name="nas_no_shares">No shares found.</string>
+    <string name="nas_loading">Loading…</string>
+    <string name="nas_use_share">Use whole share</string>
+    <string name="nas_use_folder">Use this folder</string>
+    <string name="nas_folder_footer">The app shows all photos and videos in here, including subfolders.</string>
+    <string name="nas_subfolders">Subfolders</string>
+    <string name="nas_no_subfolders">No subfolders.</string>
+    <string name="nas_linking">Linking…</string>
+    <string name="nas_back">Back</string>
+    <string name="nas_error_title">Something went wrong</string>
+    <string name="nas_error_auth">Login failed — check your username and password.</string>
+    <string name="nas_error_unreachable">Can\'t reach the server. Check the server address and that you\'re on the same network as the NAS (Wi-Fi/VPN).</string>
+    <string name="nas_error_not_local">Only a NAS on your own network is allowed.</string>
+    <string name="nas_error_share">Share or folder not found — check the share name.</string>
+    <string name="nas_error_smb1">This NAS uses the outdated SMB1; turn on SMB2 or later on the NAS.</string>
+    <string name="nas_error_bad_server">Invalid server address.</string>
+    <string name="nas_error_not_configured">No NAS linked yet.</string>
+    <string name="nas_error_other">Connecting failed. Check the server address, your login, and that you\'re on the same network as the NAS.</string>
+    <string name="nas_delete_title">Delete from your NAS for good?</string>
+    <plurals name="nas_delete_message">
+        <item quantity="one">%d item will be deleted from your NAS. This cannot be undone.</item>
+        <item quantity="other">%d items will be deleted from your NAS. This cannot be undone.</item>
+    </plurals>
+    <string name="media_nas_unreachable">NAS not reachable</string>
+    <string name="media_retry">Try again</string>
+    <string name="media_rescan">Scan again</string>
+    <plurals name="media_nas_scanning">
+        <item quantity="one">Scanning the NAS… %d item found</item>
+        <item quantity="other">Scanning the NAS… %d items found</item>
+    </plurals>
+    <string name="zoom_video_loading">Downloading video…</string>
+    <string name="zoom_video_failed">The video could not be loaded.</string>
 </resources>

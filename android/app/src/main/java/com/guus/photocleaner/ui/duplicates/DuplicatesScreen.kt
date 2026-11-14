@@ -66,6 +66,7 @@ import com.guus.photocleaner.source.PhotoSource
 import com.guus.photocleaner.ui.deck.EmptyState
 import com.guus.photocleaner.ui.theme.DecisionColors
 import com.guus.photocleaner.ui.zoom.MediaInspector
+import com.guus.photocleaner.ui.zoom.mediaUri
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -191,7 +192,7 @@ fun DuplicatesScreen(
         MediaInspector(
             asset = asset,
             imageModel = source.imageModel(asset),
-            contentUri = source.contentUri(asset),
+            contentUri = mediaUri(source, asset),
             dateText = dateText(asset),
             onKeep = null,
             onDiscard = null,

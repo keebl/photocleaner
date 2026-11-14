@@ -23,7 +23,7 @@ that can be published on Google Play.
 - **Dubbelen**: exact duplicates (capture second + dimensions) and similar photos (dHash +
   Hamming distance), with an on-disk hash cache — same rules as `DuplicateDetector`,
   `PerceptualDetector` and `ImageHashing` on iOS.
-- **Prullenbak**: 30-day in-app retention, restore, empty now, lifetime "cleaned" counter.
+- **Prullenbak**: 30-day in-app retention, restore, empty now; the media screen shows how many items are in the trash, Settings shows the lifetime "cleaned" counter.
 - Keep-store: kept items never come back in review views; reset in Settings.
 - Photo zoom, video playback, share button.
 - Settings: theme (system/light/dark), daily "Op deze dag" reminder with time, keep reset,
@@ -90,7 +90,9 @@ that can be published on Google Play.
 20. Given the release build, when `./gradlew :app:bundleRelease` runs with a configured
     upload key, then a signed `.aab` is produced that targets the API level Google Play
     requires at submission time.
-21. Given the merged manifest of the release build, then it requests no `INTERNET`
+21. (Network part superseded on 2026-11-14 by ADR-0006 and `specs/android-nas.md` AC 24:
+    `INTERNET` is now declared for the NAS source, local network only.)
+    Given the merged manifest of the release build, then it requests no `INTERNET`
     permission and no permissions beyond media read (images/video/user-selected),
     post-notifications, and receive-boot-completed (re-arms the daily reminder after a
     reboot; approved by Guus on 2026-11-10). AndroidX's internal

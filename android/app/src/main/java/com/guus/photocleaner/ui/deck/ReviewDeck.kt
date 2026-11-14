@@ -56,9 +56,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import android.net.Uri
 import androidx.compose.foundation.shape.CircleShape
 import coil3.compose.AsyncImage
+import com.guus.photocleaner.ui.zoom.MediaUri
 import com.guus.photocleaner.ui.zoom.ShareButton
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
@@ -86,12 +86,13 @@ private val SwipeThreshold = 90.dp
 /**
  * Swipe deck: one item at a time, right = keep, left = discard, with undo of the last
  * decision. Port of iOS `ReviewDeck`. The caller owns the stores; [decidedIds] are the kept
- * and trashed ids, which never appear in the queue.
+ * and trashed ids, which never appear in the queue; [keptIds] is the kept part of them.
  */
 @Composable
 fun ReviewDeck(
     assets: List<PhotoAsset>,
     decidedIds: Set<String>,
+    keptIds: Set<String>,
     imageModel: (PhotoAsset) -> Any,
     badge: @Composable (PhotoAsset) -> String?,
     emptyTitle: String,
@@ -104,7 +105,7 @@ fun ReviewDeck(
     modifier: Modifier = Modifier,
     nextLabel: String? = null,
     onNext: (() -> Unit)? = null,
-    shareUri: (PhotoAsset) -> Uri? = { null },
+    shareUri: (PhotoAsset) -> MediaUri? = { null },
     inspector: Inspector? = null,
 ) {
     // Keyed on ids, so a reload with the same items keeps the undo history.
@@ -127,7 +128,9 @@ fun ReviewDeck(
     Box(modifier.fillMaxSize()) {
         when {
             assets.isEmpty() -> EmptyState(emptyTitle, emptyMessage) { NextButton(nextLabel, onNext) }
-            current == null -> DoneState(history, onUndo = undo) { NextButton(nextLabel, onNext) }
+            current == null -> DoneState(assets, keptIds, canUndo = history.isNotEmpty(), onUndo = undo) {
+                NextButton(nextLabel, onNext)
+            }
             else -> {
                 Column(
                     Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp),
@@ -228,7 +231,7 @@ private fun DeckCard(
     asset: PhotoAsset,
     imageModel: Any,
     badge: String?,
-    shareUri: Uri?,
+    shareUri: MediaUri?,
     onTap: () -> Unit,
     onDecide: (kept: Boolean) -> Unit,
 ) {
@@ -419,11 +422,22 @@ fun NextButton(label: String?, onNext: (() -> Unit)?) {
     }
 }
 
+/**
+ * Summary of every item in this period, all decided: counted from the stores rather than this
+ * session, so a day finished earlier does not read "0 kept · 0 discarded". Items already moved
+ * to Android's trash are no longer in [assets] and so not counted.
+ */
 @Composable
-private fun DoneState(history: List<Decision>, onUndo: () -> Unit, actions: @Composable () -> Unit) {
-    val kept = history.count { it.kept }
-    val discarded = history.filterNot { it.kept }
-    val freed = discarded.sumOf { it.decisionBytes() }
+private fun DoneState(
+    assets: List<PhotoAsset>,
+    keptIds: Set<String>,
+    canUndo: Boolean,
+    onUndo: () -> Unit,
+    actions: @Composable () -> Unit,
+) {
+    val kept = assets.count { it.id in keptIds }
+    val discarded = assets.filterNot { it.id in keptIds }
+    val freed = discarded.sumOf { it.byteSize }
     val context = LocalContext.current
     Column(
         Modifier.fillMaxSize().padding(24.dp),
@@ -456,7 +470,7 @@ private fun DoneState(history: List<Decision>, onUndo: () -> Unit, actions: @Com
             }
         }
         actions()
-        if (history.isNotEmpty()) {
+        if (canUndo) {
             Spacer(Modifier.height(12.dp))
             OutlinedButton(onClick = onUndo) {
                 Icon(painterResource(R.drawable.ic_undo), contentDescription = null)
@@ -466,8 +480,6 @@ private fun DoneState(history: List<Decision>, onUndo: () -> Unit, actions: @Com
         }
     }
 }
-
-private fun Decision.decisionBytes(): Long = asset.byteSize
 
 @Composable
 fun EmptyState(

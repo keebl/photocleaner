@@ -86,6 +86,12 @@ dependencies {
     implementation(libs.coil.video)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
+    // NAS source (specs/android-nas.md): SMB 2/3 client, and SRVSVC share enumeration.
+    implementation(libs.smbj)
+    // Parses EXIF of untrusted NAS files; already in the graph via Coil, the platform
+    // ExifInterface has known security bugs on older Android versions.
+    implementation(libs.androidx.exifinterface)
+    implementation(libs.dcerpc)
 
     testImplementation(libs.junit)
 

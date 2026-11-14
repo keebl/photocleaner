@@ -6,7 +6,9 @@ everything else is prepared in the repo. Spec: `specs/android-app.md`.
 
 ## Status (2026-11-10)
 - App: feature-complete for v1 (`specs/android-app.md` steps 1–13), target API 36 (Play
-  requirement since 2026-08-31), min API 30, version 1.0 (1), no `INTERNET` permission.
+  requirement since 2026-08-31), min API 30, version 1.0 (1). Since 2026-11-14 the NAS
+  source (`specs/android-nas.md`) adds `INTERNET`, used only for SMB to a NAS on the user's
+  own network (ADR-0006).
 - Store assets: `store/play/` (listing texts NL/EN, 512 px icon, feature graphic, phone
   screenshots NL/EN).
 - Privacy policy: `docs/privacy-policy.md` (EN + NL). Public URL once merged to `main`:
@@ -53,7 +55,8 @@ java -jar bundletool.jar dump manifest --bundle app/build/outputs/bundle/release
 Expected: `targetSdkVersion="36"`, permissions `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`,
 `READ_MEDIA_VISUAL_USER_SELECTED`, `READ_EXTERNAL_STORAGE` (max SDK 32),
 `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` and AndroidX's internal
-`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; no `INTERNET`.
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, and `INTERNET` (NAS source only); no
+`ACCESS_NETWORK_STATE` or `WAKE_LOCK`.
 
 Every new upload needs a higher `versionCode` in `android/app/build.gradle.kts`.
 
@@ -80,9 +83,18 @@ URL from the status section above.
   interaction and data sharing → expected rating PEGI 3 / Everyone.
 - **Target audience**: 18 and over (not designed for children).
 - **Data safety**: "Does your app collect or share any of the required user data types?" →
-  **No**. The app has no internet access; photos, the trash and keep lists, hashes and
-  settings stay on the device in app-private storage (excluded from backup). Sharing a photo
-  is user-initiated through Android's share sheet, which Play does not count as collection.
+  proposed answer **No** — Guus decides before submitting (checked 2026-11-14 against Play's
+  help page "Provide information for Google Play's Data safety section"). Photos, the trash
+  and keep lists, hashes and settings stay on the device in app-private storage (excluded
+  from backup). Play defines collection as "transmitting data from your app off a user's
+  device"; the only traffic is SMB between the phone and the user's own NAS on the local
+  network — the developer never receives or can access any of it, and the app contacts no
+  other server. Play does not name this case; its closest guidance (uploads to the user's
+  own Drive/Dropbox that the app "never collects or accesses") says such traffic may not
+  need declaring. The conservative alternative is to declare "Photos and videos" (and the
+  NAS username) as collected, not shared, purpose "App functionality", not encrypted in
+  transit unless the NAS enforces SMB3 encryption. Sharing a photo is user-initiated through
+  Android's share sheet, which Play does not count as sharing.
 - **Photo and video permissions** declaration (required for `READ_MEDIA_IMAGES` /
   `READ_MEDIA_VIDEO`): core functionality is **photo management / gallery cleanup**. Suggested
   text:
@@ -90,7 +102,8 @@ URL from the status section above.
   > user's whole library: an "on this day" swipe deck, day/month/year browsing, a grid for
   > bulk decisions, and finding exact and visually similar duplicates across all photos.
   > Finding duplicates requires reading every photo, which the system photo picker cannot
-  > provide. All processing happens on the device; the app has no internet access.
+  > provide. All processing happens on the device; the app only connects to a NAS on the
+  > user's own network when the user links one.
 - **DSA trader status**: the account belongs to an organisation, so declare as **trader**;
   name, address, e-mail and phone become public on the listing.
 - **Government apps / financial features / health**: not applicable.

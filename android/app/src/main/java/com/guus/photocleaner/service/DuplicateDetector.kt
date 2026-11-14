@@ -23,6 +23,9 @@ object DuplicateDetector {
     private fun signature(asset: PhotoAsset): String? {
         val millis = asset.capturedAtMillis ?: return null
         val second = Math.floorDiv(millis, 1000L)
+        // NAS items have no pixel size without reading the file; their byte size stands in
+        // (specs/android-nas.md AC 17).
+        if (asset.pixelCount == 0L) return "$second|bytes:${asset.byteSize}"
         return "$second|${asset.pixelWidth}x${asset.pixelHeight}"
     }
 }

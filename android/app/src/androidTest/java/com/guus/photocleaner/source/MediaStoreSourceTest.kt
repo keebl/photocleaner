@@ -17,9 +17,11 @@ import com.guus.photocleaner.service.HashCache
 import java.io.File
 import java.time.Instant
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -97,6 +99,25 @@ class MediaStoreSourceTest {
 
         assertNotNull(source.createTrashRequest(listOf(found)))
         source.invalidateCache()
+    }
+
+    /**
+     * The cached library must drop items deleted while nobody collects [MediaStoreSource.changes]
+     * (e.g. emptied from the Trash tab while the media screen is not shown).
+     */
+    @Test
+    fun fetchAll_dropsItemDeletedWhileNotCollectingChanges() = runBlocking {
+        val uri = insertImage("Pictures/PhotoCleanerTest/", "pc_test_gone.jpg", 80, 60)
+        val id = uri.lastPathSegment!!
+        source.invalidateCache()
+        assertTrue(source.fetchAll().any { it.id == id })
+
+        context.contentResolver.delete(uri, null, null)
+        inserted -= uri
+
+        val deadline = System.currentTimeMillis() + 5_000
+        while (source.fetchAll().any { it.id == id } && System.currentTimeMillis() < deadline) delay(100)
+        assertFalse(source.fetchAll().any { it.id == id })
     }
 
     /** Inserts a gradient image owned by the test app and returns its content URI. */

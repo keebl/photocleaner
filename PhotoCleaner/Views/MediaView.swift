@@ -170,7 +170,7 @@ struct MediaView: View {
                         .accessibilityLabel(gridMode ? "Toon als veegstapel" : "Toon als raster")
                     }
                 }
-                if trash.totalCleaned > 0 {
+                if !trash.items.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             Haptics.tap()
@@ -178,14 +178,14 @@ struct MediaView: View {
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "trash")
-                                Text("\(trash.totalCleaned)").monospacedDigit()
+                                Text("\(trash.items.count)").monospacedDigit()
                             }
                             .font(.subheadline)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 3)
                         }
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel("\(trash.totalCleaned) opgeschoond, open prullenbak")
+                        .accessibilityLabel("\(trash.items.count) in prullenbak, open prullenbak")
                     }
                 }
             }

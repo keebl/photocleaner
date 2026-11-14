@@ -14,7 +14,7 @@
     <string name="onboarding_2_title">Veilig opruimen</string>
     <string name="onboarding_2_text">Weggegooide foto\'s blijven 30 dagen in de prullenbak — één tik om iets ongedaan te maken. Foto\'s die je behoudt, komen niet meer langs.</string>
     <string name="onboarding_3_title">Alles blijft op je telefoon</string>
-    <string name="onboarding_3_text">PhotoCleaner heeft geen internettoegang, dus je foto\'s verlaten je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
+    <string name="onboarding_3_text">PhotoCleaner maakt alleen verbinding met een NAS op je eigen netwerk, en alleen als je die koppelt; verder verlaten je foto\'s je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
 
     <!-- Permission gate -->
     <string name="gate_title">Toegang tot je foto\'s</string>
@@ -79,7 +79,7 @@
     <string name="media_sort_oldest">Oudste eerst</string>
     <string name="media_show_grid">Toon als raster</string>
     <string name="media_show_deck">Toon als veegstapel</string>
-    <string name="media_open_trash">%1$d opgeschoond, open prullenbak</string>
+    <string name="media_open_trash">%1$d in prullenbak, open prullenbak</string>
     <string name="media_ok">OK</string>
     <string name="media_cancel">Annuleren</string>
 
@@ -107,6 +107,10 @@
     <string name="trash_empty_expired">Verlopen legen (%1$d)</string>
     <string name="trash_delete_all">Alles nu verwijderen</string>
     <string name="trash_delete_confirm">Naar prullenbak van Android</string>
+    <plurals name="trash_delete_all_title_nas">
+        <item quantity="one">%1$d item van je NAS verwijderen?</item>
+        <item quantity="other">Alle %1$d items van je NAS verwijderen?</item>
+    </plurals>
     <plurals name="trash_delete_all_title">
         <item quantity="one">%1$d item van dit toestel verwijderen?</item>
         <item quantity="other">Alle %1$d items van dit toestel verwijderen?</item>
@@ -127,6 +131,10 @@
     </plurals>
     <string name="trash_expired_message">Nu naar de prullenbak van Android verplaatsen? Daar blijven ze nog 30 dagen herstelbaar; de ruimte komt vrij zodra Android die leegt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
     <string name="trash_expired_confirm">Verplaatsen</string>
+    <string name="trash_delete_all_message_nas">Ze worden definitief van je NAS verwijderd. Een NAS heeft geen prullenbak, dus dit kan niet ongedaan worden gemaakt.</string>
+    <string name="trash_footer_nas">Na %1$d dagen worden items definitief van je NAS verwijderd, nadat je dat bevestigt. Een NAS heeft geen prullenbak, dus deze prullenbak is de enige weg terug.</string>
+    <string name="trash_expired_message_nas">Nu definitief van je NAS verwijderen? Een NAS heeft geen prullenbak, dus dit kan niet ongedaan worden gemaakt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
+    <string name="trash_expired_confirm_nas">Verwijderen</string>
     <string name="trash_expired_later">Later</string>
     <string name="reason_on_this_day">Op deze dag</string>
     <string name="reason_random">Random</string>
@@ -147,6 +155,7 @@
     <string name="settings_reminder_denied">Meldingen staan uit voor PhotoCleaner. Zet ze aan in de systeeminstellingen om de herinnering te krijgen.</string>
     <string name="settings_open_system">Open instellingen</string>
     <string name="settings_cleanup">Opschonen</string>
+    <string name="settings_cleaned_count">Totaal opgeschoond</string>
     <string name="settings_kept_count">Behouden foto\'s</string>
     <string name="settings_reset_kept">Behoud-keuzes wissen</string>
     <string name="settings_reset_footer">Foto\'s die je hebt behouden komen niet meer terug in de opschoon-weergaven. Wissen laat ze weer verschijnen.</string>
@@ -187,4 +196,62 @@
     <string name="placeholder_media">Hier verschijnen je foto\'s.</string>
     <string name="placeholder_trash">Hier verschijnen weggegooide foto\'s.</string>
     <string name="placeholder_settings">Hier verschijnen de instellingen.</string>
+    <!-- NAS (SMB)-bron, specs/android-nas.md -->
+    <string name="source_device">Telefoon</string>
+    <string name="source_nas_default">NAS (SMB)</string>
+    <string name="source_link_nas">NAS koppelen…</string>
+    <string name="source_change_nas">NAS-koppeling wijzigen…</string>
+    <string name="source_menu">Fotobron</string>
+    <string name="settings_source">Fotobron</string>
+    <string name="settings_nas_not_linked">Nog niet gekoppeld</string>
+    <string name="settings_nas_clear_cache">NAS-cache legen</string>
+    <string name="settings_source_footer">Koppel je NAS rechtstreeks in de app via SMB: serveradres, share en inloggegevens. Je wachtwoord staat versleuteld op dit toestel, en de app maakt alleen verbinding met een NAS op je eigen netwerk. ‘NAS-cache legen’ gooit de bewaarde mappenlijst en previews weg voor een verse start (foto’s blijven ongemoeid).</string>
+    <string name="nas_connect_title">NAS koppelen</string>
+    <string name="nas_server_section">Server</string>
+    <string name="nas_server">Serveradres</string>
+    <string name="nas_server_hint">192.168.1.10 of nas.local</string>
+    <string name="nas_username">Gebruikersnaam</string>
+    <string name="nas_username_hint">leeg = gast</string>
+    <string name="nas_password">Wachtwoord</string>
+    <string name="nas_server_footer">Het adres van je NAS en je inloggegevens. Je wachtwoord wordt versleuteld bewaard met een sleutel in de Android-sleutelopslag. Alleen een NAS op je eigen netwerk (wifi of VPN) is toegestaan; wordt een .local-naam niet gevonden, gebruik dan het IP-adres.</string>
+    <string name="nas_connect_button">Verbinden en shares tonen</string>
+    <string name="nas_connecting">Verbinden…</string>
+    <string name="nas_unlink">Huidige NAS-koppeling verwijderen</string>
+    <string name="nas_unlink_title">NAS-koppeling verwijderen?</string>
+    <string name="nas_unlink_message">Het bewaarde adres, wachtwoord, de mappenlijst en previews worden van deze telefoon verwijderd. Foto\'s op de NAS blijven ongemoeid.</string>
+    <string name="nas_unlink_confirm">Verwijderen</string>
+    <string name="nas_shares_title">Shares</string>
+    <string name="nas_choose_share">Kies een share</string>
+    <string name="nas_no_shares">Geen shares gevonden.</string>
+    <string name="nas_loading">Laden…</string>
+    <string name="nas_use_share">Hele share gebruiken</string>
+    <string name="nas_use_folder">Deze map gebruiken</string>
+    <string name="nas_folder_footer">De app toont alle foto\'s en filmpjes hierin, inclusief submappen.</string>
+    <string name="nas_subfolders">Submappen</string>
+    <string name="nas_no_subfolders">Geen submappen.</string>
+    <string name="nas_linking">Koppelen…</string>
+    <string name="nas_back">Terug</string>
+    <string name="nas_error_title">Er ging iets mis</string>
+    <string name="nas_error_auth">Inloggen mislukt — controleer je gebruikersnaam en wachtwoord.</string>
+    <string name="nas_error_unreachable">Kan de server niet bereiken. Controleer het serveradres en of je op hetzelfde netwerk zit als de NAS (wifi/VPN).</string>
+    <string name="nas_error_not_local">Alleen een NAS op je eigen netwerk is toegestaan.</string>
+    <string name="nas_error_share">Share of map niet gevonden — controleer de sharenaam.</string>
+    <string name="nas_error_smb1">Deze NAS gebruikt het verouderde SMB1; zet SMB2 of hoger aan op de NAS.</string>
+    <string name="nas_error_bad_server">Ongeldig serveradres.</string>
+    <string name="nas_error_not_configured">Nog geen NAS ingesteld.</string>
+    <string name="nas_error_other">Verbinden mislukt. Controleer het serveradres, je inloggegevens, en of je op hetzelfde netwerk zit als de NAS.</string>
+    <string name="nas_delete_title">Definitief verwijderen van je NAS?</string>
+    <plurals name="nas_delete_message">
+        <item quantity="one">%d item wordt van je NAS verwijderd. Dit kan niet ongedaan worden gemaakt.</item>
+        <item quantity="other">%d items worden van je NAS verwijderd. Dit kan niet ongedaan worden gemaakt.</item>
+    </plurals>
+    <string name="media_nas_unreachable">NAS niet bereikbaar</string>
+    <string name="media_retry">Opnieuw proberen</string>
+    <string name="media_rescan">Opnieuw scannen</string>
+    <plurals name="media_nas_scanning">
+        <item quantity="one">NAS doorzoeken… %d item gevonden</item>
+        <item quantity="other">NAS doorzoeken… %d items gevonden</item>
+    </plurals>
+    <string name="zoom_video_loading">Video downloaden…</string>
+    <string name="zoom_video_failed">De video kon niet worden geladen.</string>
 </resources>
