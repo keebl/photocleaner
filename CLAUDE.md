@@ -9,7 +9,8 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Build: `xcodebuild build -project PhotoCleaner.xcodeproj -scheme PhotoCleaner -destination 'generic/platform=iOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO`
 - Run on simulator (after a build): `xcrun simctl install booted com.guus.photocleaner` then `xcrun simctl launch booted com.guus.photocleaner` (locate the built `.app` under DerivedData/.../Build/Products/Debug-iphonesimulator/)
 - Run on device / in Xcode: `open PhotoCleaner.xcodeproj`, pick a target, press ▶︎
-- Test (all): none yet — no test target exists. TODO(guus): add `PhotoCleanerTests`
+- Test (iOS unit, `PhotoCleanerTests`, Swift Testing; since 2026-11-14): `xcodebuild test -project PhotoCleaner.xcodeproj -scheme PhotoCleaner -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO | xcbeautify -q`
+- Test (one iOS test): add `-only-testing:PhotoCleanerTests/DuplicateDetectorTests` to the command above
 - Typecheck: covered by `xcodebuild build` (no separate step for Swift)
 - Lint / format: `swiftformat --lint PhotoCleaner` / `swiftformat PhotoCleaner`
 - Screenshot (UI check): `xcrun simctl io booted screenshot /tmp/shot.png`
@@ -47,9 +48,18 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   (bundletool from github.com/google/bundletool releases; not in the repo)
 - Where it runs: Android Emulator (AVD `pc_api36`, Pixel 8, API 36) or a physical phone
 
+## Tools
+<!-- One line per service: job: service — how Claude reaches it — the name here. Services and access paths: `_workbench/standard/toolbox.json`. No keys, tokens or e-mail addresses. -->
+- Code, pull requests, issues, Actions: GitHub — `gh` CLI (checked 2026-11-14) — `keebl/photocleaner` (public, default branch `main`)
+- iOS signing, TestFlight, App Store: Apple Developer / App Store Connect — browser `appstoreconnect.apple.com` — none yet: Apple Developer is not enrolled (toolbox, 2026-11-14); bundle ID will be `com.guus.photocleaner`
+- Android releases and store listing: Google Play Console — browser `play.google.com/console` — not looked up: the built-in browser is not signed in (2026-11-14); package name `com.guus.photocleaner`, organisation account verification pending (STATUS.md)
+- Static analysis on pull requests: SonarCloud — browser `sonarcloud.io` (results arrive as PR comments) — project `keebl_photocleaner` (public repo, automatic analysis; seen on PR 4, 2026-11-14)
+
 ## Gotchas
-- The `PhotoCleaner` scheme is not shared (it lives in git-ignored `xcuserdata/`). Xcode
-  regenerates it locally, but CI would need a shared scheme. TODO(guus).
+- Since 2026-11-14 a shared `PhotoCleaner` scheme lives in `PhotoCleaner.xcodeproj/xcshareddata/` (needed for the
+  test target and CI). A local copy in `xcuserdata/` can show up as a second scheme: delete the local one.
+- `PhotoCleanerTests` was added to `project.pbxproj` by hand (IDs `AA…0101`–`AA…010B`); prefer Xcode or
+  XcodeGen for further target changes.
 - Existing code does not pass `swiftformat` yet (30/33 files). Run `swiftformat PhotoCleaner`
   once as its own commit before relying on the format hook.
 - Left screen edge reserves touches ~2s for the iOS back-gesture ("system gesture gate"
@@ -63,6 +73,11 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - `adb shell input text` drops characters when typing fast or before a field has focus, which
   looks like a wrong NAS password. Type in small chunks and check the field before
   submitting before concluding a login bug.
+- Android: regenerate `verification-metadata.xml` with an empty Gradle home
+  (`GRADLE_USER_HOME=$(mktemp -d) ./gradlew --write-verification-metadata sha256 …`). With the
+  warm local cache, BOM `.module` files a clean CI runner downloads are missed and CI fails.
+  `aapt2` is per OS: the Mac run records only `-osx.jar`; after an AGP bump add the `-linux.jar`
+  sha256 (from `dl.google.com/dl/android/maven2/…/aapt2-<ver>-linux.jar.sha256`) by hand for CI.
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 

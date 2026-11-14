@@ -1,0 +1,16 @@
+# Weekly dependency updates: Swift packages (iOS), Gradle (android/) and GitHub Actions.
+# Gradle bumps must also regenerate android/gradle/verification-metadata.xml (CLAUDE.md).
+version: 2
+updates:
+  - package-ecosystem: swift
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
