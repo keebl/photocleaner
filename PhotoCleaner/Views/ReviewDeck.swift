@@ -182,9 +182,11 @@ struct ReviewDeck: View {
         )
     }
 
+    /// Counts this period's stored decisions, not only this session's swipes, so a day
+    /// finished earlier does not read "0 behouden · 0 weggegooid".
     private var doneState: some View {
-        let kept = history.filter { $0.kept }.count
-        let tossed = history.filter { !$0.kept }.count
+        let kept = assets.filter { keep.contains($0.id) }.count
+        let tossed = assets.filter { trash.contains($0.id) }.count
         return VStack(spacing: 16) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
@@ -249,9 +251,8 @@ struct ReviewDeck: View {
     /// Berekent hoeveel opslag de weggegooide items van deze sessie ongeveer
     /// vrijmaken (grootte wordt zo nodig lui bij de bron opgevraagd).
     private func computeFreedBytes() async {
-        let tossedIDs = Set(history.filter { !$0.kept }.map(\.id))
-        guard !tossedIDs.isEmpty else { freedBytes = 0; return }
-        let tossedAssets = assets.filter { tossedIDs.contains($0.id) }
+        let tossedAssets = assets.filter { trash.contains($0.id) }
+        guard !tossedAssets.isEmpty else { freedBytes = 0; return }
         let sizes = await source.byteSizes(for: tossedAssets)
         freedBytes = sizes.values.reduce(0, +)
     }
