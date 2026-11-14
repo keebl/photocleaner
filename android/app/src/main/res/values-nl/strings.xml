@@ -14,7 +14,7 @@
     <string name="onboarding_2_title">Veilig opruimen</string>
     <string name="onboarding_2_text">Weggegooide foto\'s blijven 30 dagen in de prullenbak — één tik om iets ongedaan te maken. Foto\'s die je behoudt, komen niet meer langs.</string>
     <string name="onboarding_3_title">Alles blijft op je telefoon</string>
-    <string name="onboarding_3_text">PhotoCleaner heeft geen internettoegang, dus je foto\'s verlaten je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
+    <string name="onboarding_3_text">PhotoCleaner maakt alleen verbinding met een NAS op je eigen netwerk, en alleen als je die koppelt; verder verlaten je foto\'s je toestel nooit. Na 30 dagen gaan weggegooide items naar de prullenbak van Android.</string>
 
     <!-- Permission gate -->
     <string name="gate_title">Toegang tot je foto\'s</string>
@@ -107,6 +107,10 @@
     <string name="trash_empty_expired">Verlopen legen (%1$d)</string>
     <string name="trash_delete_all">Alles nu verwijderen</string>
     <string name="trash_delete_confirm">Naar prullenbak van Android</string>
+    <plurals name="trash_delete_all_title_nas">
+        <item quantity="one">%1$d item van je NAS verwijderen?</item>
+        <item quantity="other">Alle %1$d items van je NAS verwijderen?</item>
+    </plurals>
     <plurals name="trash_delete_all_title">
         <item quantity="one">%1$d item van dit toestel verwijderen?</item>
         <item quantity="other">Alle %1$d items van dit toestel verwijderen?</item>
@@ -127,6 +131,10 @@
     </plurals>
     <string name="trash_expired_message">Nu naar de prullenbak van Android verplaatsen? Daar blijven ze nog 30 dagen herstelbaar; de ruimte komt vrij zodra Android die leegt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
     <string name="trash_expired_confirm">Verplaatsen</string>
+    <string name="trash_delete_all_message_nas">Ze worden definitief van je NAS verwijderd. Een NAS heeft geen prullenbak, dus dit kan niet ongedaan worden gemaakt.</string>
+    <string name="trash_footer_nas">Na %1$d dagen worden items definitief van je NAS verwijderd, nadat je dat bevestigt. Een NAS heeft geen prullenbak, dus deze prullenbak is de enige weg terug.</string>
+    <string name="trash_expired_message_nas">Nu definitief van je NAS verwijderen? Een NAS heeft geen prullenbak, dus dit kan niet ongedaan worden gemaakt. Items blijven eerst %1$d dagen in de prullenbak van PhotoCleaner.</string>
+    <string name="trash_expired_confirm_nas">Verwijderen</string>
     <string name="trash_expired_later">Later</string>
     <string name="reason_on_this_day">Op deze dag</string>
     <string name="reason_random">Random</string>

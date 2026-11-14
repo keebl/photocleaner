@@ -64,7 +64,7 @@ fun rememberSystemTrash(source: PhotoSource): SystemTrash {
                 TextButton(onClick = {
                     confirm = null
                     answer.complete(true)
-                }) { Text(stringResource(R.string.trash_delete_confirm), color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.trash_expired_confirm_nas), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = {

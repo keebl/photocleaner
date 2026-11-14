@@ -16,7 +16,7 @@
     <string name="onboarding_2_title">Clean up safely</string>
     <string name="onboarding_2_text">Discarded photos stay in the trash for 30 days — one tap to undo. Photos you keep won\'t come back.</string>
     <string name="onboarding_3_title">Everything stays on your phone</string>
-    <string name="onboarding_3_text">PhotoCleaner has no internet access, so your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
+    <string name="onboarding_3_text">PhotoCleaner only connects to a NAS on your own network, and only if you link one; otherwise your photos never leave your device. After 30 days, discarded items move to Android\'s own trash.</string>
 
     <!-- Permission gate -->
     <string name="gate_title">Access to your photos</string>
@@ -109,6 +109,10 @@
     <string name="trash_empty_expired" tools:ignore="PluralsCandidate">Empty expired (%1$d)</string>
     <string name="trash_delete_all">Delete everything now</string>
     <string name="trash_delete_confirm">Move to Android trash</string>
+    <plurals name="trash_delete_all_title_nas">
+        <item quantity="one">Delete %1$d item from your NAS?</item>
+        <item quantity="other">Delete all %1$d items from your NAS?</item>
+    </plurals>
     <plurals name="trash_delete_all_title">
         <item quantity="one">Remove %1$d item from this device?</item>
         <item quantity="other">Remove all %1$d items from this device?</item>
@@ -129,6 +133,10 @@
     </plurals>
     <string name="trash_expired_message" tools:ignore="PluralsCandidate">Move them to Android\'s trash now? They stay recoverable there for another 30 days; space is freed once Android empties it. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
     <string name="trash_expired_confirm">Move</string>
+    <string name="trash_delete_all_message_nas">They are deleted from your NAS for good. A NAS has no trash, so this cannot be undone.</string>
+    <string name="trash_footer_nas" tools:ignore="PluralsCandidate">After %1$d days, items are deleted from your NAS for good, after you confirm. A NAS has no trash, so this trash is the only way back.</string>
+    <string name="trash_expired_message_nas" tools:ignore="PluralsCandidate">Delete them from your NAS for good now? A NAS has no trash, so this cannot be undone. Items stay %1$d days in PhotoCleaner\'s trash first.</string>
+    <string name="trash_expired_confirm_nas">Delete</string>
     <string name="trash_expired_later">Later</string>
     <string name="reason_on_this_day">On this day</string>
     <string name="reason_random">Random</string>
