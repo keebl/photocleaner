@@ -47,6 +47,12 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   (bundletool from github.com/google/bundletool releases; not in the repo)
 - Where it runs: Android Emulator (AVD `pc_api36`, Pixel 8, API 36) or a physical phone
 
+## Tools
+<!-- One line per service: job: service — how Claude reaches it — the name here. Services and access paths: `_workbench/standard/toolbox.json`. No keys, tokens or e-mail addresses. -->
+- Code, pull requests, issues, Actions: GitHub — `gh` CLI (checked 2026-11-14) — `keebl/photocleaner` (public, default branch `main`)
+- iOS signing, TestFlight, App Store: Apple Developer / App Store Connect — browser `appstoreconnect.apple.com` — none yet: Apple Developer is not enrolled (toolbox, 2026-11-14); bundle ID will be `com.guus.photocleaner`
+- Android releases and store listing: Google Play Console — browser `play.google.com/console` — not looked up: the built-in browser is not signed in (2026-11-14); package name `com.guus.photocleaner`, organisation account verification pending (STATUS.md)
+
 ## Gotchas
 - The `PhotoCleaner` scheme is not shared (it lives in git-ignored `xcuserdata/`). Xcode
   regenerates it locally, but CI would need a shared scheme. TODO(guus).
