@@ -37,18 +37,31 @@
   app-private storage: `trash.json`, `kept.json`, the hash cache and preferences. All app
   data is excluded from cloud backup and device transfer (`data_extraction_rules.xml`,
   `full_backup_content.xml`), because it holds device-specific media ids.
-- **No network**: the app declares no `INTERNET` permission; Media3's network permissions are
-  removed from the merged manifest. No analytics, crash reporting, ads or accounts.
-- **Permissions** (checked on the release bundle with bundletool, spec AC 21): media read
-  (images, video, user-selected; `READ_EXTERNAL_STORAGE` up to API 32), `POST_NOTIFICATIONS`
-  and `RECEIVE_BOOT_COMPLETED` for the optional daily reminder.
+- **NAS (optional, `specs/android-nas.md`)**: host, port, share, folder and username in
+  app-private SharedPreferences; the password encrypted with AES-256-GCM under a
+  non-exportable Android Keystore key, ciphertext in `noBackupFilesDir` — never in
+  preferences, code or logs. Folder listing, previews and temporary share/playback copies in
+  the app cache. All of it is deleted when the user removes the NAS link.
+- **Network: local only** (ADR-0006): `INTERNET` is declared for the NAS source alone.
+  `LocalAddressPolicy` refuses any server that does not resolve to a private, link-local,
+  CGNAT (VPN) or loopback address, and connects to the checked address. SMB signing is on;
+  SMB3 encryption is used when the server offers it. Media3's `ACCESS_NETWORK_STATE` and
+  `WAKE_LOCK` stay removed. No analytics, crash reporting, ads or accounts; no developer
+  server.
+- **Permissions** (checked on the release bundle with bundletool): media read (images,
+  video, user-selected; `READ_EXTERNAL_STORAGE` up to API 32), `POST_NOTIFICATIONS` and
+  `RECEIVE_BOOT_COMPLETED` for the optional daily reminder, `INTERNET` for the NAS source.
 - **Deletion**: never silent. Items go to the in-app trash for 30 days, then to Android's
-  system trash only after the user confirms Android's own dialog.
+  system trash only after the user confirms Android's own dialog. NAS items have no system
+  trash: they are deleted on the NAS only after the app's own "cannot be undone" dialog.
 - **Signing**: the Play upload keystore lives outside the repo; `android/keystore.properties`
   (git-ignored, also `*.jks` / `*.keystore`) holds its path and passwords, with placeholders
   in `android/keystore.properties.example`. Play App Signing holds the app signing key.
 - **Dependencies**: Gradle version catalog (`android/gradle/libs.versions.toml`), wrapper
-  pinned by SHA-256. All libraries are AndroidX/JetBrains/Coil (no networking SDKs).
+  pinned by SHA-256, every artifact checked against `gradle/verification-metadata.xml`.
+  Libraries are AndroidX/JetBrains/Coil plus, for the NAS source, smbj (Apache-2.0) and
+  rapid7 dcerpc (BSD-3) with their dependencies (BouncyCastle, Guava, commons, slf4j-api
+  without a logging backend). No analytics or networking SDKs.
 - **Privacy policy**: `docs/privacy-policy.md` (EN + NL), the public URL for Google Play.
 
 ## Reporting a problem

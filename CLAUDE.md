@@ -33,6 +33,11 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   then `adb shell am start -n com.guus.photocleaner/.MainActivity`
 - Seed test photos (emulator running, needs Pillow): `scripts/seed-emulator.sh`
   (`--clean` removes them)
+- NAS test server (needs `brew install samba`, Pillow, ffmpeg): `scripts/nas-test-server.sh start`
+  (Samba on port 1445, share `photos`, seeded; the emulator reaches it at `10.0.2.2:1445`;
+  `stop` stops it). Run the NAS instrumented tests with its credentials:
+  `./gradlew :app:connectedDebugAndroidTest $(scripts/nas-test-server.sh env)` (without them
+  `NasSourceTest` is skipped). `NasSourceTest` deletes a file: `start` re-seeds.
 - Screenshot (UI check): `adb exec-out screencap -p > /tmp/android-shot.png`
 - Release bundle: `./gradlew :app:lintRelease :app:bundleRelease` → `app/build/outputs/bundle/release/app-release.aab`
   (signed only when the git-ignored `android/keystore.properties` exists; see `keystore.properties.example`)
@@ -53,6 +58,11 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   `targetSdk` stays 36 until Play's required level is checked in spec step 12.
 - Android: the system `java` wrapper finds no JDK (Homebrew's `openjdk@17` is keg-only and
   not symlinked), so `JAVA_HOME` must be set before `./gradlew`.
+- Android NAS test server: Homebrew installs Samba's daemon as `samba-dot-org-smbd` (macOS has
+  its own `smbd`), and `smbpasswd -a` needs root — the script uses `pdbedit` instead.
+- `adb shell input text` drops characters when typing fast or before a field has focus, which
+  looks like a wrong NAS password. Type in small chunks and check the field before
+  submitting before concluding a login bug.
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 

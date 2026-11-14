@@ -12,6 +12,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   sharing; exact and similar duplicates; 30-day trash that then moves items to Android's
   trash after confirmation; theme and a daily reminder; Dutch and English. No internet
   access. Google Play store package and privacy policy (EN + NL).
+- Android: NAS (SMB) photo source, as on iOS — link a server, share and folder in the app,
+  then review, find duplicates, zoom, play, share and trash NAS photos and videos. Only a NAS
+  on your own network (Wi-Fi or VPN) is allowed; the password is stored encrypted with an
+  Android Keystore key. NAS items are deleted permanently after the in-app trash, only after
+  confirming. Adds the INTERNET permission (ADR-0006); onboarding, Play listing and privacy
+  policy updated.
 - Project standard adopted (CLAUDE.md, STATUS.md, docs, specs, security baseline).
 - Category filter in the photo review: Alle / Screenshots / Selfies / Favorieten / Panorama's
   (iPhone library only).

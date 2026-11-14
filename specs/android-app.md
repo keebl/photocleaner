@@ -90,7 +90,9 @@ that can be published on Google Play.
 20. Given the release build, when `./gradlew :app:bundleRelease` runs with a configured
     upload key, then a signed `.aab` is produced that targets the API level Google Play
     requires at submission time.
-21. Given the merged manifest of the release build, then it requests no `INTERNET`
+21. (Network part superseded on 2026-11-14 by ADR-0006 and `specs/android-nas.md` AC 24:
+    `INTERNET` is now declared for the NAS source, local network only.)
+    Given the merged manifest of the release build, then it requests no `INTERNET`
     permission and no permissions beyond media read (images/video/user-selected),
     post-notifications, and receive-boot-completed (re-arms the daily reminder after a
     reboot; approved by Guus on 2026-11-10). AndroidX's internal

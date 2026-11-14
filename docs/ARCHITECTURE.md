@@ -41,15 +41,22 @@ on-device; nothing is uploaded. Duplicate detection runs on-device with on-disk 
 ## External services
 - The user's NAS over SMB — used for the NAS photo source — failure handled by surfacing
   connection errors in `SMBConnectView`; no retries against unknown hosts.
-- No other network services. No analytics, no third-party SDKs.
+- No other network services. No analytics, no third-party SDKs. Android: the same NAS
+  source, limited to local-network addresses in code (ADR-0006).
 
 ## Android app (`android/`)
 A separate Gradle project (Kotlin, Jetpack Compose, Material 3; min API 30, target 36). It
 mirrors the iOS boundaries in `app/src/main/java/com/guus/photocleaner/`:
 - `model/` — `PhotoAsset`, `DuplicateGroup` (no Android types).
 - `source/` — `PhotoSource` interface, `MediaStoreSource` (MediaStore queries, thumbnails via
-  Coil, system trash request), `FakePhotoSource` for tests and previews, pure helpers
-  (`ImageHashing`, `OnThisDay`, `MediaCategories`).
+  Coil, system trash request), `SourceManager` (active source), `FakePhotoSource` for tests
+  and previews, pure helpers (`ImageHashing`, `OnThisDay`, `MediaCategories`).
+- `source/nas/` — the NAS source (`specs/android-nas.md`): `NasServer` (smbj session, dcerpc
+  share list, at most 6 parallel operations, reconnects once), `NasSource` (recursive scan,
+  listing cache, permanent delete, local copies via `FileProvider`), `NasThumbnails` +
+  `NasImageFetcher` (Coil fetcher; EXIF thumbnail from the first 512 KB, else full decode;
+  video posters from byte ranges), `LocalAddressPolicy` (ADR-0006), `PasswordVault`
+  (Keystore), `NasConfigStore`, `NasListingCache`, `NasPaths`, `NasErrors`.
 - `service/` — stores (`TrashStore`, `KeepStore`, `HashCache` as atomic JSON files),
   `CachedHasher`, `DuplicateDetector`, `PerceptualDetector`, `DuplicateScanner`,
   `StoreReconciler`, `MediaAccess`, preferences and the reminder (`ReminderScheduler`).
@@ -59,7 +66,10 @@ mirrors the iOS boundaries in `app/src/main/java/com/guus/photocleaner/`:
 
 Differences from iOS by design: the source provides an image model for Coil instead of
 loading thumbnails itself; file sizes come with every query; deleting goes through
-MediaStore's trash request (Android's confirmation dialog) instead of a direct delete; the
+MediaStore's trash request (Android's confirmation dialog) instead of a direct delete (NAS:
+the app's own confirmation, then a permanent delete, ADR-0003); trash and keep entries are
+scoped per source with `PhotoSource.owns` (MediaStore ids are numeric, NAS ids start with
+`nas://`); the
 reminder is an inexact `AlarmManager` alarm re-armed after reboot (no WorkManager, to keep
 permissions minimal).
 
@@ -69,8 +79,9 @@ permissions minimal).
 - Android: JVM unit tests for all pure logic (detectors, dHash, stores, date and category
   rules, media selection, reminder timing) and instrumented tests on the emulator for
   MediaStore, the reminder notification and the Compose screens (against `FakePhotoSource`
-  with real stores). Commands in `CLAUDE.md`; manual checks with
-  `android/scripts/seed-emulator.sh` (synthetic photos only).
+  with real stores), and `NasSourceTest` against a local Samba server
+  (`android/scripts/nas-test-server.sh`, skipped without it). Commands in `CLAUDE.md`;
+  manual checks with `android/scripts/seed-emulator.sh` (synthetic photos only).
 
 ## Known debt
 - `swiftformat` not yet applied to existing code (30/33 files) — accepted until a dedicated
