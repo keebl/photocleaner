@@ -137,6 +137,9 @@ NL and EN strings.
   restore after reinstall, refund from Play Console → locked again, offline start.
 
 ## Open questions
+- 2026-11-15 — Since the NAS source (ADR-0006, 2026-11-14) the app declares `INTERNET`, so
+  the question below is moot: billing gets network access. Step 1 still checks the bundle's
+  permissions; the privacy policy and Data safety must cover both NAS traffic and billing.
 - Can billing work with the `INTERNET` permission removed (`tools:node="remove"`)? The
   Play Billing Library 9.1.0 itself only declares `BILLING`, but it depends on Google's
   `transport-backend-cct` (usage logging to Google, needs network) and
