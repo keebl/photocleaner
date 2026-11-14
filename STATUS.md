@@ -5,16 +5,20 @@ Last updated: 2026-11-14
 ## Now
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
   all v1 features, release bundle configuration, store assets (`store/play/`), privacy
-  policy and `docs/PLAYSTORE.md`. Not merged to `main` yet.
-- Android NAS (SMB) source built on `feat/android-app` (`specs/android-nas.md`, ADR-0006):
+  policy and `docs/PLAYSTORE.md`. Merged to `main` (PR 1).
+- Android NAS (SMB) source built (`specs/android-nas.md`, ADR-0006), merged to `main` (PR 3):
   link screen, source menu, Fotobron in Settings, scan/previews/duplicates/zoom/video/share,
   permanent NAS delete after the in-app trash. Tested on the emulator against a local Samba
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
 - Play organisation account verification pending (Guus).
+- Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned);
+  "Android photo-cleaner app for Play Store" — `feat/android-app`, PRs 1 and 3 merged, idle,
+  finished; "Photo-cleaner project setup" — `chore/adopt-standard`, merged into `main`, idle,
+  finished. Open PRs 5 and 6 (Dependabot: actions/checkout 7, actions/setup-java 5) — CI
+  green, unreviewed, not merged: waiting on Guus.
 
 ## Next
-1. Guus: open the PR for `feat/android-app`, review and merge (the privacy policy URL on
-   `main` is needed for the Play listing).
+1. Guus: review and merge Dependabot PRs 5 and 6 (CI green).
 2. Guus: create the upload key and `android/keystore.properties`, then follow
    `docs/PLAYSTORE.md` (Console forms, internal testing, production).
 3. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
@@ -65,6 +69,9 @@ Last updated: 2026-11-14
 - 2026-11-14 — The `tests` repair needed a new Xcode target, which `~/.claude/rules/swift.md` forbids by hand-editing `project.pbxproj`; the standard has no sanctioned path (XcodeGen?).
 - 2026-11-14 — Play Console lookup for `## Tools` failed: the built-in browser has no Google sign-in; the toolbox gives no other access path.
 
+- 2026-11-14 — `/main-session`: the session-start check ran on the main checkout's stale, already-merged `feat/android-app` branch and reported a missing `## Tools` that `main` has; Start/Intake has no step to put the checkout back on an up-to-date `main` first.
+- 2026-11-14 — `/main-session` Start pins before filing in the group, and `move_sessions` unpins: re-pin needed (also seen in oakbook).
+- 2026-11-14 — `/main-session` merge rule needs "green and reviewed"; Dependabot PRs never get a review, so they always wait on Guus (also seen in Puzzels).
 - 2026-11-14 — Setting `UI: yes` (product-complete) opened three new design items mid-round; and `design-refs` counts only top-level files, so `design/refs/ios/` (14 screenshots) scored 0.
 - 2026-11-14 — `tools` did not infer SonarCloud: the project uses automatic analysis (no `sonar-project.properties`), so it only showed up as a PR comment.
 
