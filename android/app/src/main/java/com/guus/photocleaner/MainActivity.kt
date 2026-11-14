@@ -15,6 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +29,11 @@ import com.guus.photocleaner.service.AppTheme
 import com.guus.photocleaner.service.MediaAccess
 import com.guus.photocleaner.service.ReminderScheduler
 import com.guus.photocleaner.service.StoreReconciler
+import com.guus.photocleaner.source.SourceKind
+import com.guus.photocleaner.source.nas.NasServer
 import com.guus.photocleaner.ui.AppShell
+import com.guus.photocleaner.ui.nas.NasConnectScreen
+import com.guus.photocleaner.ui.nas.SourceMenu
 import com.guus.photocleaner.ui.MediaScreen
 import com.guus.photocleaner.ui.ShellState
 import com.guus.photocleaner.ui.media.Browse
@@ -77,7 +83,21 @@ class MainActivity : ComponentActivity() {
         var state by remember { mutableStateOf(currentState()) }
         var swipeHintSeen by remember { mutableStateOf(prefs.didSeeSwipeHint) }
         var reminder by remember { mutableStateOf(prefs.reminder) }
-        val systemTrash = rememberSystemTrash(container.source)
+        val sources = container.sources
+        val kind by sources.kind.collectAsState()
+        val nasConfig by sources.nas.config.collectAsState()
+        val source = sources.source(kind)
+        var showNasConnect by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        val systemTrash = rememberSystemTrash(source)
+        val sourceMenu: @Composable () -> Unit = {
+            SourceMenu(
+                kind = kind,
+                nasName = nasConfig?.displayName,
+                onSelect = sources::select,
+                onConnectNas = { showNasConnect = true },
+            )
+        }
         val permissions = remember { MediaAccess.permissionsToRequest(Build.VERSION.SDK_INT) }
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
@@ -106,7 +126,7 @@ class MainActivity : ComponentActivity() {
             onOpenSettings = ::openAppSettings,
             mediaContent = { openTrash ->
                 MediaScreen(
-                    source = container.source,
+                    source = source,
                     trash = container.trash,
                     keep = container.keep,
                     onOpenTrash = openTrash,
@@ -116,6 +136,10 @@ class MainActivity : ComponentActivity() {
                         if (openOnThisDay) saved.copy(tab = MediaTab.PHOTOS, browse = Browse.DAY) else saved
                     },
                     onSettingsChange = { prefs.mediaSettings = it },
+                    sourceMenu = sourceMenu,
+                    onRescan = if (kind == SourceKind.NAS) sources.nas::rescan else null,
+                    scanProgress = if (kind == SourceKind.NAS) sources.nas.scanned else null,
+                    onChangeNas = { showNasConnect = true },
                     swipeHintSeen = swipeHintSeen,
                     onSwipeHintSeen = {
                         if (!swipeHintSeen) {
@@ -126,7 +150,7 @@ class MainActivity : ComponentActivity() {
                 )
             },
             trashContent = {
-                TrashScreen(source = container.source, trash = container.trash, systemTrash = systemTrash)
+                TrashScreen(source = source, trash = container.trash, systemTrash = systemTrash)
             },
             settingsContent = {
                 SettingsScreen(
@@ -153,17 +177,35 @@ class MainActivity : ComponentActivity() {
                     keep = container.keep,
                     trash = container.trash,
                     versionText = versionText(),
+                    sourceKind = kind,
+                    nasName = nasConfig?.displayName,
+                    onSelectSource = sources::select,
+                    onConnectNas = { showNasConnect = true },
+                    onClearNasCache = sources.nas::clearCaches,
                 )
             },
             startupContent = {
                 // Drop items deleted outside the app (AC 16), only with full access: with
                 // "selected photos only" every unselected item would look deleted.
-                LaunchedEffect(state.access) {
-                    if (state.access == MediaAccess.FULL) {
-                        StoreReconciler(container.source, container.trash, container.keep).dropMissing()
+                // The NAS is reconciled after it loaded; unreachable items are never dropped.
+                LaunchedEffect(state.access, source) {
+                    if (state.access == MediaAccess.FULL || source.kind == SourceKind.NAS) {
+                        StoreReconciler(source, container.trash, container.keep).dropMissing()
                     }
                 }
-                ExpiredTrashPrompt(source = container.source, trash = container.trash, systemTrash = systemTrash)
+                ExpiredTrashPrompt(source = source, trash = container.trash, systemTrash = systemTrash)
+                if (showNasConnect) {
+                    NasConnectScreen(
+                        current = nasConfig,
+                        openBrowser = ::NasServer,
+                        onLink = { config, password ->
+                            sources.nas.link(config, password)
+                            sources.select(SourceKind.NAS)
+                        },
+                        onUnlink = { sources.unlinkNas() },
+                        onClose = { showNasConnect = false },
+                    )
+                }
             },
         )
     }

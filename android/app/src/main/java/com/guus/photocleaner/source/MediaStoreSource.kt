@@ -6,8 +6,6 @@ import android.content.ContentUris
 import android.content.Context
 import android.database.ContentObserver
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.Color
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -54,6 +52,9 @@ class MediaStoreSource(
     init {
         for (uri in WATCHED_URIS) resolver.registerContentObserver(uri, true, cacheObserver)
     }
+
+    /** MediaStore ids are numeric; NAS ids start with `nas://`. */
+    override fun owns(id: String): Boolean = id.toLongOrNull() != null
 
     override fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
@@ -176,24 +177,6 @@ class MediaStoreSource(
             MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         }
         return ContentUris.withAppendedId(collection, asset.id.toLong())
-    }
-
-    /** Scales a thumbnail to the 9×8 dHash grid and converts it to grey values. */
-    private fun greyGrid(source: Bitmap): IntArray {
-        val software = if (source.config == Bitmap.Config.HARDWARE) {
-            source.copy(Bitmap.Config.ARGB_8888, false)
-        } else {
-            source
-        }
-        val w = ImageHashing.GRID_WIDTH
-        val h = ImageHashing.GRID_HEIGHT
-        val small = Bitmap.createScaledBitmap(software, w, h, true)
-        val pixels = IntArray(w * h)
-        small.getPixels(pixels, 0, w, 0, 0, w, h)
-        return IntArray(pixels.size) { i ->
-            val p = pixels[i]
-            (Color.red(p) * 299 + Color.green(p) * 587 + Color.blue(p) * 114) / 1000
-        }
     }
 
     private companion object {

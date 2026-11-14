@@ -13,6 +13,8 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,9 +64,11 @@ import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
+import com.guus.photocleaner.source.PhotoSource
+import com.guus.photocleaner.source.SourceKind
+import kotlinx.coroutines.launch
 import com.guus.photocleaner.ui.theme.DecisionColors
 import kotlin.math.abs
-import kotlinx.coroutines.launch
 
 const val ZOOM_SCREEN_TAG = "zoomScreen"
 const val VIDEO_SCREEN_TAG = "videoScreen"
@@ -80,7 +86,7 @@ private const val DOUBLE_TAP_SCALE = 2.5f
 fun MediaInspector(
     asset: PhotoAsset,
     imageModel: Any,
-    contentUri: Uri?,
+    contentUri: MediaUri?,
     dateText: String?,
     onKeep: (() -> Unit)?,
     onDiscard: (() -> Unit)?,
@@ -103,7 +109,7 @@ fun MediaInspector(
 private fun PhotoZoomScreen(
     asset: PhotoAsset,
     imageModel: Any,
-    contentUri: Uri?,
+    contentUri: MediaUri?,
     dateText: String?,
     onKeep: (() -> Unit)?,
     onDiscard: (() -> Unit)?,
@@ -203,11 +209,58 @@ private fun PhotoZoomScreen(
     }
 }
 
-/** Plays the video; the bar has discard, keep, share and close. */
+/**
+ * Plays the video; the bar has discard, keep, share and close. A NAS video is first
+ * downloaded to a temporary local copy, with progress (specs/android-nas.md AC 15).
+ */
 @Composable
 private fun VideoPlayerScreen(
     asset: PhotoAsset,
+    media: MediaUri,
+    dateText: String?,
+    onKeep: (() -> Unit)?,
+    onDiscard: (() -> Unit)?,
+    onClose: () -> Unit,
+) {
+    var uri by remember(asset.id) { mutableStateOf<Uri?>(null) }
+    var progress by remember(asset.id) { mutableFloatStateOf(0f) }
+    var failed by remember(asset.id) { mutableStateOf(false) }
+    LaunchedEffect(asset.id) {
+        uri = media { progress = it }
+        failed = uri == null
+    }
+    val loaded = uri
+    if (loaded == null) {
+        Box(Modifier.fillMaxSize().background(Color.Black).testTag(VIDEO_SCREEN_TAG)) {
+            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (failed) {
+                    Text(stringResource(R.string.zoom_video_failed), color = Color.White)
+                } else {
+                    CircularProgressIndicator(progress = { progress }, color = Color.White)
+                    Spacer(Modifier.height(12.dp))
+                    Text(stringResource(R.string.zoom_video_loading), color = Color.White)
+                }
+            }
+            TopBar(
+                dateText = dateText,
+                shareUri = null,
+                isVideo = true,
+                onClose = onClose,
+                onKeep = onKeep,
+                onDiscard = onDiscard,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
+        return
+    }
+    LoadedVideo(asset, loaded, media, dateText, onKeep, onDiscard, onClose)
+}
+
+@Composable
+private fun LoadedVideo(
+    asset: PhotoAsset,
     uri: Uri,
+    media: MediaUri,
     dateText: String?,
     onKeep: (() -> Unit)?,
     onDiscard: (() -> Unit)?,
@@ -230,7 +283,7 @@ private fun VideoPlayerScreen(
         )
         TopBar(
             dateText = dateText,
-            shareUri = uri,
+            shareUri = media,
             isVideo = asset.isVideo,
             onClose = onClose,
             onKeep = onKeep?.let { keep ->
@@ -253,7 +306,7 @@ private fun VideoPlayerScreen(
 @Composable
 private fun TopBar(
     dateText: String?,
-    shareUri: Uri?,
+    shareUri: MediaUri?,
     isVideo: Boolean,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -290,25 +343,55 @@ private fun RoundIcon(icon: Int, description: String, background: Color, onClick
     }
 }
 
-/** Opens the system share sheet for one photo or video. Port of iOS `ShareButton`. */
+/**
+ * Loads a URI to share or play an item; a NAS item is downloaded first and reports progress
+ * from 0 to 1 (specs/android-nas.md AC 15–16). Null when the item is unavailable.
+ */
+typealias MediaUri = suspend (onProgress: (Float) -> Unit) -> Uri?
+
+/** Share/play loader for [asset]: a NAS item downloads first; null when unavailable. */
+fun mediaUri(source: PhotoSource, asset: PhotoAsset): MediaUri? =
+    if (source.kind == SourceKind.NAS || source.contentUri(asset) != null) {
+        { onProgress -> source.localUri(asset, onProgress) }
+    } else {
+        null
+    }
+
+/**
+ * Opens the system share sheet for one photo or video. Port of iOS `ShareButton`. Shows a
+ * spinner while a NAS item is downloaded.
+ */
 @Composable
-fun ShareButton(uri: Uri, isVideo: Boolean, modifier: Modifier = Modifier) {
+fun ShareButton(uri: MediaUri, isVideo: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val title = stringResource(R.string.zoom_share)
+    val scope = rememberCoroutineScope()
+    var loading by remember { mutableStateOf(false) }
     IconButton(
         modifier = modifier,
+        enabled = !loading,
         onClick = {
-            val send = Intent(Intent.ACTION_SEND).apply {
-                type = if (isVideo) "video/*" else "image/*"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                clipData = ClipData.newRawUri(null, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            loading = true
+            scope.launch {
+                val loaded = uri {}
+                loading = false
+                if (loaded == null) return@launch
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = if (isVideo) "video/*" else "image/*"
+                    putExtra(Intent.EXTRA_STREAM, loaded)
+                    clipData = ClipData.newRawUri(null, loaded)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(send, title))
             }
-            context.startActivity(Intent.createChooser(send, title))
         },
     ) {
         Box(Modifier.size(36.dp).background(Color.Black.copy(alpha = 0.4f), CircleShape), contentAlignment = Alignment.Center) {
-            Icon(painterResource(R.drawable.ic_share), contentDescription = title, tint = Color.White)
+            if (loading) {
+                CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+            } else {
+                Icon(painterResource(R.drawable.ic_share), contentDescription = title, tint = Color.White)
+            }
         }
     }
 }

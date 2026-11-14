@@ -63,19 +63,21 @@ fun TrashScreen(
     systemTrash: SystemTrash,
     modifier: Modifier = Modifier,
 ) {
-    val items by trash.items.collectAsState()
+    val allItems by trash.items.collectAsState()
+    // Only the active source's items (specs/android-nas.md AC 21).
+    val items = remember(allItems, source) { allItems.filter { source.owns(it.id) } }
     var assets by remember { mutableStateOf<Map<String, PhotoAsset>>(emptyMap()) }
     var menuOpen by remember { mutableStateOf(false) }
     var confirmAll by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(items) {
+    LaunchedEffect(items, source) {
         assets = source.assets(items.map { it.id }).associateBy { it.id }
     }
     val remove: (List<TrashItem>) -> Unit = { chosen ->
         scope.launch { moveToSystemTrash(chosen, source, trash, systemTrash) }
     }
-    val expired = trash.expiredItems()
+    val expired = trash.expiredItems().filter { source.owns(it.id) }
 
     Column(modifier.fillMaxSize()) {
         Row(
@@ -198,7 +200,7 @@ fun reasonLabel(reason: String): Int = when (reason) {
 fun ExpiredTrashPrompt(source: PhotoSource, trash: TrashStore, systemTrash: SystemTrash) {
     var dismissed by rememberSaveable { mutableStateOf(false) }
     val items by trash.items.collectAsState()
-    val expired = remember(items) { trash.expiredItems() }
+    val expired = remember(items, source) { trash.expiredItems().filter { source.owns(it.id) } }
     val scope = rememberCoroutineScope()
     if (dismissed || expired.isEmpty()) return
 

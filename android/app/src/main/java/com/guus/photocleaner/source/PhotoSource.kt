@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Access to a photo collection, independent of where the photos live (ADR-0002). Port of
- * iOS `Sources/PhotoSource.swift`; v1 has one implementation, [MediaStoreSource].
+ * iOS `Sources/PhotoSource.swift`; implementations: [MediaStoreSource] (the phone library)
+ * and `NasSource` (a NAS folder over SMB, `specs/android-nas.md`).
  *
  * Differences from iOS: thumbnails are loaded by the image loader from [imageModel] instead
  * of by the source; file sizes come with every query, so there is no separate byte-size
@@ -15,6 +16,20 @@ import kotlinx.coroutines.flow.Flow
  * for the UI to launch; sharing and video playback use [contentUri].
  */
 interface PhotoSource {
+
+    val kind: SourceKind get() = SourceKind.DEVICE
+
+    /**
+     * How items leave the device after the in-app trash: through Android's system trash, or
+     * deleted permanently after the app's own confirmation (NAS: no system trash, ADR-0003).
+     */
+    val deletion: Deletion get() = Deletion.SYSTEM_TRASH
+
+    /**
+     * Whether a stored trash or keep id belongs to this source. Trash and keep lists hold ids
+     * of every source; each source shows, deletes and reconciles only its own (spec AC 21).
+     */
+    fun owns(id: String): Boolean
 
     /** Emits when the underlying library changed (bursts may arrive; debounce in the UI). */
     fun changes(): Flow<Unit>
@@ -43,6 +58,12 @@ interface PhotoSource {
      */
     fun contentUri(asset: PhotoAsset): Uri?
 
+    /**
+     * URI to share or play this item once it is available on the device; for a NAS item this
+     * downloads a temporary local copy, reporting progress from 0 to 1. Null when unavailable.
+     */
+    suspend fun localUri(asset: PhotoAsset, onProgress: (Float) -> Unit = {}): Uri? = contentUri(asset)
+
     /** Perceptual hash (dHash) for finding similar photos; null for videos or unreadable images. */
     suspend fun perceptualHash(asset: PhotoAsset): Long?
 
@@ -52,4 +73,12 @@ interface PhotoSource {
      * or the source removed them directly (test fake).
      */
     suspend fun createTrashRequest(assets: List<PhotoAsset>): PendingIntent?
+
+    /** Deletes the items for good; only for [Deletion.PERMANENT] sources. */
+    suspend fun deletePermanently(assets: List<PhotoAsset>): Unit =
+        throw UnsupportedOperationException("This source deletes through the system trash")
 }
+
+enum class SourceKind { DEVICE, NAS }
+
+enum class Deletion { SYSTEM_TRASH, PERMANENT }

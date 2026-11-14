@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.guus.photocleaner.R
+import com.guus.photocleaner.source.SourceKind
 import com.guus.photocleaner.service.AppTheme
 import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.ReminderSettings
@@ -50,9 +51,11 @@ import kotlinx.coroutines.launch
 
 const val REMINDER_SWITCH_TAG = "reminderSwitch"
 
+const val SOURCE_SEGMENT_NAS_TAG = "sourceSegmentNas"
+
 /**
- * Settings: theme, daily reminder, keep reset and version. Port of iOS `SettingsView`
- * (without the NAS source, which is out of scope for Android v1).
+ * Settings: theme, photo source (phone or NAS, specs/android-nas.md), daily reminder, keep
+ * reset and version. Port of iOS `SettingsView`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +70,12 @@ fun SettingsScreen(
     trash: TrashStore,
     versionText: String,
     modifier: Modifier = Modifier,
+    sourceKind: SourceKind = SourceKind.DEVICE,
+    /** Display name of the linked NAS; null when none is linked. */
+    nasName: String? = null,
+    onSelectSource: (SourceKind) -> Unit = {},
+    onConnectNas: () -> Unit = {},
+    onClearNasCache: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -101,6 +110,37 @@ fun SettingsScreen(
                 }
             }
         }
+
+        SectionHeader(R.string.settings_source)
+        Group {
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(16.dp)) {
+                val options = listOf(SourceKind.DEVICE to R.string.source_device, SourceKind.NAS to R.string.source_nas_default)
+                options.forEachIndexed { index, (value, label) ->
+                    SegmentedButton(
+                        selected = sourceKind == value,
+                        onClick = {
+                            // NAS without a link opens the link screen first (iOS parity).
+                            if (value == SourceKind.NAS && nasName == null) onConnectNas() else onSelectSource(value)
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                        modifier = if (value == SourceKind.NAS) Modifier.testTag(SOURCE_SEGMENT_NAS_TAG) else Modifier,
+                    ) { Text(stringResource(label)) }
+                }
+            }
+            HorizontalDivider(Modifier.padding(start = 16.dp))
+            ValueRow(stringResource(R.string.source_nas_default), nasName ?: stringResource(R.string.settings_nas_not_linked))
+            HorizontalDivider(Modifier.padding(start = 16.dp))
+            IconRow(
+                icon = if (nasName != null) R.drawable.ic_settings else R.drawable.ic_hard_drive,
+                label = stringResource(if (nasName != null) R.string.source_change_nas else R.string.source_link_nas),
+                onClick = onConnectNas,
+            )
+            if (nasName != null) {
+                HorizontalDivider(Modifier.padding(start = 16.dp))
+                IconRow(R.drawable.ic_refresh, stringResource(R.string.settings_nas_clear_cache), onClearNasCache)
+            }
+        }
+        Footer(stringResource(R.string.settings_source_footer))
 
         SectionHeader(R.string.settings_on_this_day)
         Group {
@@ -217,7 +257,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionHeader(label: Int) {
+internal fun SectionHeader(label: Int) {
     Text(
         stringResource(label),
         style = MaterialTheme.typography.titleMedium,
@@ -228,20 +268,28 @@ private fun SectionHeader(label: Int) {
 }
 
 @Composable
-private fun Group(content: @Composable () -> Unit) {
+internal fun Group(content: @Composable () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(20.dp)) {
         Column { content() }
     }
 }
 
 @Composable
-private fun Footer(text: String) {
+internal fun Footer(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
+}
+
+@Composable
+private fun IconRow(icon: Int, label: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Text(label, modifier = Modifier.padding(start = 16.dp))
+    }
 }
 
 @Composable

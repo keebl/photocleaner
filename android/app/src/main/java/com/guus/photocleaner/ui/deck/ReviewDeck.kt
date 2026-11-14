@@ -56,9 +56,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import android.net.Uri
 import androidx.compose.foundation.shape.CircleShape
 import coil3.compose.AsyncImage
+import com.guus.photocleaner.ui.zoom.MediaUri
 import com.guus.photocleaner.ui.zoom.ShareButton
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
@@ -105,7 +105,7 @@ fun ReviewDeck(
     modifier: Modifier = Modifier,
     nextLabel: String? = null,
     onNext: (() -> Unit)? = null,
-    shareUri: (PhotoAsset) -> Uri? = { null },
+    shareUri: (PhotoAsset) -> MediaUri? = { null },
     inspector: Inspector? = null,
 ) {
     // Keyed on ids, so a reload with the same items keeps the undo history.
@@ -231,7 +231,7 @@ private fun DeckCard(
     asset: PhotoAsset,
     imageModel: Any,
     badge: String?,
-    shareUri: Uri?,
+    shareUri: MediaUri?,
     onTap: () -> Unit,
     onDecide: (kept: Boolean) -> Unit,
 ) {

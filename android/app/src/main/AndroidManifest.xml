@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No INTERNET permission: nothing leaves the device (spec AC 21). -->
+    <!-- Network access only for the NAS source (SMB), and only to servers on the user's own
+         network: LocalAddressPolicy refuses every other address before connecting
+         (specs/android-nas.md AC 6 and AC 24, ADR-0006). Nothing else uses the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Media read: Android 13+ per media type, 14+ partial ("selected photos") access. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -46,6 +49,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Local copies of NAS items for the share sheet and the video player. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <receiver
             android:name=".service.ReminderReceiver"

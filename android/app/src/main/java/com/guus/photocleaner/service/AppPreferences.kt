@@ -2,6 +2,7 @@ package com.guus.photocleaner.service
 
 import android.content.Context
 import androidx.core.content.edit
+import com.guus.photocleaner.source.SourceKind
 import com.guus.photocleaner.ui.MediaSettings
 
 /** Small app preferences in SharedPreferences (spec: preferences in SharedPreferences). */
@@ -40,6 +41,11 @@ class AppPreferences(context: Context) {
             putBoolean(KEY_OLDEST_FIRST, value.oldestFirst)
         }
 
+    /** Active photo source: phone library or NAS (specs/android-nas.md). */
+    var sourceKind: SourceKind
+        get() = enumOrDefault(prefs.getString(KEY_SOURCE_KIND, null), SourceKind.DEVICE)
+        set(value) = prefs.edit { putString(KEY_SOURCE_KIND, value.name) }
+
     var theme: AppTheme
         get() = enumOrDefault(prefs.getString(KEY_THEME, null), AppTheme.DARK)
         set(value) = prefs.edit { putString(KEY_THEME, value.name) }
@@ -65,6 +71,7 @@ class AppPreferences(context: Context) {
     companion object {
         const val FILE_NAME = "settings"
         private const val KEY_THEME = "appTheme"
+        private const val KEY_SOURCE_KIND = "sourceKind"
         private const val KEY_REMINDER_ENABLED = "reminderEnabled"
         private const val KEY_REMINDER_HOUR = "reminderHour"
         private const val KEY_REMINDER_MINUTE = "reminderMinute"

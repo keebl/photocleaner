@@ -43,4 +43,20 @@ class StoreReconcilerTest {
 
         assertEquals(emptySet<String>(), trash.trashedIds)
     }
+
+    @Test
+    fun otherSourcesEntries_areNeitherQueriedNorDropped() = runBlocking {
+        // specs/android-nas.md AC 21: the phone library must not drop NAS entries, and back.
+        val nasId = "nas://nas:445/photo/a.jpg"
+        val device = FakePhotoSource(listOf(asset("1")), ownsId = { it.toLongOrNull() != null })
+        val trash = TrashStore(File(tmp.root, "trash.json"))
+        val keep = KeepStore(File(tmp.root, "kept.json"))
+        trash.markAll(listOf(asset("1"), asset(nasId), asset("2")), "deck")
+        keep.keep(nasId)
+
+        StoreReconciler(device, trash, keep).dropMissing()
+
+        assertEquals(setOf("1", nasId), trash.trashedIds)
+        assertEquals(setOf(nasId), keep.ids.value)
+    }
 }

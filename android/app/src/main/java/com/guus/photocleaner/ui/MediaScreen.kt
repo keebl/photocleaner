@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,14 +27,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.source.PhotoSource
+import com.guus.photocleaner.source.SourceKind
+import com.guus.photocleaner.source.nas.NasError
+import com.guus.photocleaner.source.nas.NasException
+import com.guus.photocleaner.ui.nas.nasErrorMessage
 import com.guus.photocleaner.ui.deck.Inspector
 import com.guus.photocleaner.ui.duplicates.DuplicatesScreen
 import com.guus.photocleaner.ui.deck.ReviewDeck
@@ -43,12 +55,14 @@ import com.guus.photocleaner.ui.media.MediaTab
 import com.guus.photocleaner.ui.media.MediaTopBar
 import com.guus.photocleaner.ui.media.PeriodBar
 import com.guus.photocleaner.ui.zoom.MediaInspector
+import com.guus.photocleaner.ui.zoom.mediaUri
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 
 /** Trash reasons, stored with each discarded item. */
@@ -83,17 +97,28 @@ fun MediaScreen(
     onSettingsChange: (MediaSettings) -> Unit = {},
     today: LocalDate = LocalDate.now(),
     zone: ZoneId = ZoneId.systemDefault(),
+    /** The photo source menu in the header (specs/android-nas.md). */
+    sourceMenu: @Composable () -> Unit = {},
+    /** "Scan again"; only for a NAS. */
+    onRescan: (() -> Unit)? = null,
+    /** Items found so far while a NAS is scanned; null for the phone library. */
+    scanProgress: StateFlow<Int>? = null,
+    /** Opens the NAS link screen, from the "NAS not reachable" state. */
+    onChangeNas: () -> Unit = {},
 ) {
     var settings by remember { mutableStateOf(initialSettings) }
     var dateEpochDay by rememberSaveable { mutableLongStateOf(today.toEpochDay()) }
     var gridMode by rememberSaveable { mutableStateOf(false) }
     var randomSeed by rememberSaveable { mutableLongStateOf(System.nanoTime()) }
     var library by remember { mutableStateOf<List<PhotoAsset>?>(null) }
+    var loadError by remember { mutableStateOf<NasError?>(null) }
     var reloads by remember { mutableIntStateOf(0) }
 
     val date = LocalDate.ofEpochDay(dateEpochDay)
     val keptIds by keep.ids.collectAsState()
-    val trashItems by trash.items.collectAsState()
+    val allTrashItems by trash.items.collectAsState()
+    // Only this source's items count (specs/android-nas.md AC 21).
+    val trashItems = remember(allTrashItems, source) { allTrashItems.filter { source.owns(it.id) } }
     val decidedIds = remember(keptIds, trashItems) { keptIds + trashItems.map { it.id } }
 
     fun update(change: MediaSettings) {
@@ -102,7 +127,15 @@ fun MediaScreen(
         onSettingsChange(change)
     }
 
-    LaunchedEffect(source, reloads) { library = source.fetchAll() }
+    LaunchedEffect(source, reloads) {
+        loadError = null
+        library = try {
+            source.fetchAll()
+        } catch (e: NasException) {
+            loadError = e.error // NAS not reachable: error state with retry
+            null
+        }
+    }
     // Large libraries send bursts of change notifications; reload once they settle.
     LaunchedEffect(source) { source.changes().debounce(CHANGE_DEBOUNCE_MILLIS).collect { reloads++ } }
 
@@ -116,6 +149,8 @@ fun MediaScreen(
             onToggleGrid = { gridMode = !gridMode },
             trashCount = trashItems.size,
             onOpenTrash = onOpenTrash,
+            sourceMenu = sourceMenu,
+            onRescan = onRescan,
         )
         MediaChips(
             tab = settings.tab,
@@ -124,6 +159,7 @@ fun MediaScreen(
             onTab = { update(settings.copy(tab = it)) },
             onBrowse = { update(settings.copy(browse = it)) },
             onCategory = { update(settings.copy(category = it)) },
+            showCategory = source.kind == SourceKind.DEVICE,
         )
         Spacer(Modifier.height(4.dp))
         val title = periodTitle(date, settings.browse, locale)
@@ -148,7 +184,25 @@ fun MediaScreen(
 
         Box(Modifier.weight(1f).fillMaxWidth()) {
             val all = library
+            val error = loadError
             when {
+                error != null -> NasUnreachable(
+                    message = nasErrorMessage(LocalContext.current, error),
+                    onRetry = { reloads++ },
+                    onChangeNas = onChangeNas,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                all == null && scanProgress != null -> {
+                    val found by scanProgress.collectAsState()
+                    Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            pluralStringResource(R.plurals.media_nas_scanning, found, found),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 all == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 settings.tab == MediaTab.DUPLICATES -> {
                     val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
@@ -162,7 +216,8 @@ fun MediaScreen(
                 }
                 else -> ReviewContent(
                     all = all,
-                    settings = settings,
+                    // NAS items have no categories: filter on "Alle" there.
+                    settings = if (source.kind == SourceKind.DEVICE) settings else settings.copy(category = CategoryFilter.ALL),
                     date = date,
                     title = title,
                     gridMode = gridMode,
@@ -242,7 +297,7 @@ private fun ReviewContent(
         MediaInspector(
             asset = asset,
             imageModel = source.imageModel(asset),
-            contentUri = source.contentUri(asset),
+            contentUri = mediaUri(source, asset),
             dateText = dateText(asset),
             onKeep = onKeep,
             onDiscard = onDiscard,
@@ -292,10 +347,27 @@ private fun ReviewContent(
                 onUndo = { if (it.kept) keep.unkeep(it.asset.id) else trash.restore(it.asset.id) },
                 nextLabel = nextLabel,
                 onNext = onNext,
-                shareUri = source::contentUri,
+                shareUri = { mediaUri(source, it) },
                 inspector = inspector,
             )
         }
+    }
+}
+
+/** Shown when the NAS cannot be reached and nothing is cached. */
+@Composable
+private fun NasUnreachable(message: String, onRetry: () -> Unit, onChangeNas: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            stringResource(R.string.media_nas_unreachable),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onRetry) { Text(stringResource(R.string.media_retry)) }
+        TextButton(onClick = onChangeNas) { Text(stringResource(R.string.source_change_nas)) }
     }
 }
 

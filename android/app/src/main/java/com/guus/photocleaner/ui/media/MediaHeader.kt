@@ -72,7 +72,10 @@ val CategoryOptions = listOf(
     MenuOption(CategoryFilter.PANORAMAS, R.string.media_category_panoramas, R.drawable.ic_panorama),
 )
 
-/** Top row: grid/deck toggle and the number of items in the trash, which opens it. */
+/**
+ * Top row: the photo source menu (leading, as on iOS), "scan again" for a NAS, the grid/deck
+ * toggle and the number of items in the trash, which opens it.
+ */
 @Composable
 fun MediaTopBar(
     showGridToggle: Boolean,
@@ -80,12 +83,21 @@ fun MediaTopBar(
     onToggleGrid: () -> Unit,
     trashCount: Int,
     onOpenTrash: () -> Unit,
+    sourceMenu: @Composable () -> Unit = {},
+    onRescan: (() -> Unit)? = null,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End,
     ) {
+        sourceMenu()
+        Spacer(Modifier.weight(1f))
+        if (onRescan != null) {
+            IconButton(onClick = onRescan) {
+                Icon(painterResource(R.drawable.ic_refresh), contentDescription = stringResource(R.string.media_rescan))
+            }
+        }
         if (showGridToggle) {
             IconButton(onClick = onToggleGrid) {
                 Icon(
@@ -119,6 +131,8 @@ fun MediaChips(
     onTab: (MediaTab) -> Unit,
     onBrowse: (Browse) -> Unit,
     onCategory: (CategoryFilter) -> Unit,
+    /** False for a NAS: plain files have no screenshot/favourite/panorama flags. */
+    showCategory: Boolean = true,
 ) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -126,7 +140,7 @@ fun MediaChips(
     ) {
         DropdownChip(TabOptions, tab, onTab)
         if (tab != MediaTab.DUPLICATES) DropdownChip(BrowseOptions, browse, onBrowse)
-        if (tab == MediaTab.PHOTOS) DropdownChip(CategoryOptions, category, onCategory)
+        if (tab == MediaTab.PHOTOS && showCategory) DropdownChip(CategoryOptions, category, onCategory)
     }
 }
 
