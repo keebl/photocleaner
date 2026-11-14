@@ -4,9 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.Matrix
-import android.media.ExifInterface
 import android.media.MediaDataSource
 import android.media.MediaMetadataRetriever
+import androidx.exifinterface.media.ExifInterface
 import com.guus.photocleaner.model.PhotoAsset
 import java.io.ByteArrayInputStream
 import java.io.File
