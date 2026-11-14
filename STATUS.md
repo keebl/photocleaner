@@ -12,19 +12,17 @@ Last updated: 2026-11-14
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
 - Play organisation account verification pending (Guus).
 - Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned) only;
-  the two finished sessions were archived. Open PRs 5 and 6 (Dependabot: actions/checkout 7, actions/setup-java 5) — CI
-  green, unreviewed, not merged: waiting on Guus.
+  the two finished sessions were archived. No open PRs (Dependabot PRs 5 and 6 merged).
 
 ## Next
-1. Guus: review and merge Dependabot PRs 5 and 6 (CI green).
-2. Guus: create the upload key and `android/keystore.properties`, then follow
+1. Guus: create the upload key and `android/keystore.properties`, then follow
    `docs/PLAYSTORE.md` (Console forms, internal testing, production).
-3. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
+2. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
    `.local` name, a large folder and HEIC/RAW files; decide the Play data-safety answer for
    NAS traffic (`docs/PLAYSTORE.md`).
-4. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
+3. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
    system trash dialog, reminder timing, video playback.
-5. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
+4. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
 
 ## Blocked / open questions
 - README's architecture section names `NASFolderSource`, but the code implements `SMBSource`.
