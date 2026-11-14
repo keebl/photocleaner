@@ -1,7 +1,6 @@
 # CI for PhotoCleaner: the iOS build and the Android build, unit tests and lint, with the
 # commands from CLAUDE.md. From the workbench template github/workflows/ci-swift.yml, with
 # an Android job added (the repo holds two native apps). Public repo: macOS minutes are free.
-# iOS has no test target yet, so the iOS job only builds (see STATUS.md).
 name: CI
 
 on:
@@ -18,11 +17,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Build
+      - name: Build and unit tests
         run: |
           set -o pipefail
-          xcodebuild build -project PhotoCleaner.xcodeproj -scheme PhotoCleaner \
-            -destination 'generic/platform=iOS Simulator' -configuration Debug \
+          xcodebuild test -project PhotoCleaner.xcodeproj -scheme PhotoCleaner \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
             CODE_SIGNING_ALLOWED=NO -quiet
 
   android:

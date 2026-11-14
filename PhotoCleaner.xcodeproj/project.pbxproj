@@ -11,6 +11,16 @@
 		AA00000000000000000000F3 /* AMSMB2 in Embed Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000F1 /* AMSMB2 */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000107 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA00000000000000000000EA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA00000000000000000000E6;
+			remoteInfo = PhotoCleaner;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		AA00000000000000000000F4 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -27,10 +37,12 @@
 
 /* Begin PBXFileReference section */
 		AA00000000000000000000E1 /* PhotoCleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PhotoCleaner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000101 /* PhotoCleanerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PhotoCleanerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AA00000000000000000000E2 /* PhotoCleaner */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PhotoCleaner; sourceTree = "<group>"; };
+		AA0000000000000000000102 /* PhotoCleanerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PhotoCleanerTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +54,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000103 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -49,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				AA00000000000000000000E2 /* PhotoCleaner */,
+				AA0000000000000000000102 /* PhotoCleanerTests */,
 				AA00000000000000000000E5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				AA00000000000000000000E1 /* PhotoCleaner.app */,
+				AA0000000000000000000101 /* PhotoCleanerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,6 +109,27 @@
 			productReference = AA00000000000000000000E1 /* PhotoCleaner.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA0000000000000000000106 /* PhotoCleanerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000000000000000000010B /* Build configuration list for PBXNativeTarget "PhotoCleanerTests" */;
+			buildPhases = (
+				AA0000000000000000000104 /* Sources */,
+				AA0000000000000000000103 /* Frameworks */,
+				AA0000000000000000000105 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA0000000000000000000108 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000102 /* PhotoCleanerTests */,
+			);
+			name = PhotoCleanerTests;
+			productName = PhotoCleanerTests;
+			productReference = AA0000000000000000000101 /* PhotoCleanerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -100,6 +142,10 @@
 				TargetAttributes = {
 					AA00000000000000000000E6 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					AA0000000000000000000106 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = AA00000000000000000000E6;
 					};
 				};
 			};
@@ -120,12 +166,20 @@
 			projectRoot = "";
 			targets = (
 				AA00000000000000000000E6 /* PhotoCleaner */,
+				AA0000000000000000000106 /* PhotoCleanerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		AA00000000000000000000E9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000105 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -142,7 +196,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000108 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA00000000000000000000E6 /* PhotoCleaner */;
+			targetProxy = AA0000000000000000000107 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AA00000000000000000000EC /* Debug */ = {
@@ -324,6 +393,40 @@
 			};
 			name = Release;
 		};
+		AA0000000000000000000109 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guus.photocleaner.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PhotoCleaner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PhotoCleaner";
+			};
+			name = Debug;
+		};
+		AA000000000000000000010A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guus.photocleaner.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PhotoCleaner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PhotoCleaner";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -341,6 +444,15 @@
 			buildConfigurations = (
 				AA00000000000000000000EC /* Debug */,
 				AA00000000000000000000ED /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA000000000000000000010B /* Build configuration list for PBXNativeTarget "PhotoCleanerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000109 /* Debug */,
+				AA000000000000000000010A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
