@@ -95,6 +95,7 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent("Totaal opgeschoond", value: "\(trash.totalCleaned)")
                     LabeledContent("Behouden foto's", value: "\(keep.ids.count)")
                     Button(role: .destructive) {
                         confirmResetKept = true
