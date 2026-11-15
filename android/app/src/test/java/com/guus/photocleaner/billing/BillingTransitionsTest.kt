@@ -117,6 +117,16 @@ class BillingTransitionsTest {
     }
 
     @Test
+    fun staleQueryAfterPurchase_doesNotLockProAgain() {
+        val tracker = EntitlementTracker(EntitlementStore(file))
+        val startedAt = tracker.generation // query sent on resume, before the dialog result
+        tracker.onUpdate(listOf(StorePurchase(listOf("pro_lifetime"), PurchaseStatus.PURCHASED, "t", acknowledged = false)))
+        tracker.onQuery(emptyList(), startedAt)
+
+        assertEquals(ProState.PRO, tracker.state.value)
+    }
+
+    @Test
     fun pendingSecondAttempt_doesNotLockOwnedPro() {
         val billing = billing()
         billing.purchase()

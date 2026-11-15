@@ -16,13 +16,19 @@ class EntitlementTracker(private val store: EntitlementStore) {
     private val _state = MutableStateFlow(store.state)
     val state: StateFlow<ProState> = _state.asStateFlow()
 
+    /** Bumped by every [onUpdate]; a query started before it may predate the purchase. */
+    @Volatile var generation: Long = 0L
+        private set
+
     /**
      * A full purchase query: the store's word is final, so a refunded or revoked purchase
      * (absent from the list) locks Pro again (AC 15). Returns the purchases to acknowledge.
+     * [startedAt] is [generation] when the query was sent: an answer that started before a
+     * purchase dialog result (e.g. the resume right after the dialog) does not overwrite it.
      */
     @Synchronized
-    fun onQuery(purchases: List<StorePurchase>): List<StorePurchase> {
-        apply(ProEntitlement.resolve(purchases), ProEntitlement.proToken(purchases))
+    fun onQuery(purchases: List<StorePurchase>, startedAt: Long = generation): List<StorePurchase> {
+        if (startedAt == generation) apply(ProEntitlement.resolve(purchases), ProEntitlement.proToken(purchases))
         return ProEntitlement.toAcknowledge(purchases)
     }
 
@@ -32,6 +38,7 @@ class EntitlementTracker(private val store: EntitlementStore) {
      */
     @Synchronized
     fun onUpdate(purchases: List<StorePurchase>): List<StorePurchase> {
+        generation++
         val resolved = ProEntitlement.resolve(purchases)
         if (resolved.ordinal > _state.value.ordinal) apply(resolved, ProEntitlement.proToken(purchases))
         return ProEntitlement.toAcknowledge(purchases)

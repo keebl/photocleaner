@@ -76,11 +76,12 @@ class PlayBilling(context: Context, private val tracker: EntitlementTracker) : B
             val formatted = found?.oneTimePurchaseOfferDetailsList?.firstOrNull()?.formattedPrice
             _price.value = if (result.ok && formatted != null) ProductPrice.Available(formatted) else ProductPrice.Unavailable
         }
+        val startedAt = tracker.generation
         client.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
         ) { result, purchases ->
             // Only a successful answer is authoritative; otherwise the cache stays (offline, AC 16).
-            if (result.ok) acknowledge(tracker.onQuery(purchases.map { it.toStore() }))
+            if (result.ok) acknowledge(tracker.onQuery(purchases.map { it.toStore() }, startedAt))
         }
     }
 
