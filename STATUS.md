@@ -90,6 +90,6 @@ Last updated: 2026-11-15
 ## Health
 - iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: 11 unit (PhotoCleanerTests), green ·
   Store: not submitted · Dependencies: SPM, `Package.resolved` committed
-- Android: Version 1.0 (2) · Build: green (`assembleDebug`, `bundleRelease`) · Tests: 154 unit,
+- Android: Version 1.0 (2) · Build: green (`assembleDebug`, `bundleRelease`) · Tests: 155 unit,
   81 instrumented (8 NAS tests skipped without the Samba server), all green · Lint: 0 errors · Store: not submitted (account verification
   pending) · Dependencies: Gradle version catalog, wrapper pinned by SHA-256
