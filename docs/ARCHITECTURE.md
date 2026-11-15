@@ -57,11 +57,20 @@ mirrors the iOS boundaries in `app/src/main/java/com/guus/photocleaner/`:
   `NasImageFetcher` (Coil fetcher; EXIF thumbnail from the first 512 KB, else full decode;
   video posters from byte ranges), `LocalAddressPolicy` (ADR-0006), `PasswordVault`
   (Keystore), `NasConfigStore`, `NasListingCache`, `NasPaths`, `NasErrors`.
-- `service/` — stores (`TrashStore`, `KeepStore`, `HashCache` as atomic JSON files),
+- `billing/` — the Pro unlock's store boundary (`specs/pro-unlock.md`): `Billing` interface,
+  `PlayBilling` (Google Play Billing: connect, query `pro_lifetime` and owned purchases on
+  start/resume and when the Pro sheet opens, purchase listener, acknowledge), `FakeBilling`
+  for tests, and `EntitlementTracker`, which both share: purchase lists → entitlement,
+  written to `EntitlementStore`. No backend; Play's purchase list is the source of truth
+  and the cache answers at start-up and offline.
+- `service/` — stores (`TrashStore`, `KeepStore`, `HashCache`, `EntitlementStore` as
+  atomic JSON files), `ProEntitlement` (pure purchase rules),
   `CachedHasher`, `DuplicateDetector`, `PerceptualDetector`, `DuplicateScanner`,
   `StoreReconciler`, `MediaAccess`, preferences and the reminder (`ReminderScheduler`).
 - `ui/` — Compose screens: shell and onboarding, `deck/`, `media/` (selection logic, header,
-  grid), `zoom/`, `duplicates/`, `trash/`, `settings/`. Screens are stateless where it helps
+  grid), `zoom/`, `duplicates/`, `trash/`, `settings/`, `pro/` (`ProGate`: pure free/Pro
+  rules for the media controls; the Pro sheet and lock badge). Screens take the entitlement
+  as a value and report locked taps, so they stay testable without a store. Screens are stateless where it helps
   testing; `MainActivity` wires stores, permissions and system dialogs.
 
 Differences from iOS by design: the source provides an image model for Coil instead of

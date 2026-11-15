@@ -9,7 +9,8 @@ Assets in this folder: `icon-512.png` (app icon, 512×512), `feature-graphic.png
 `design/icon/android-launcher.svg`, `design/icon/play-feature-graphic.svg`.
 
 Category: Photography · Tags: photo management, gallery cleanup · Contains ads: no ·
-In-app purchases: none.
+In-app purchases: one, PhotoCleaner Pro (`pro_lifetime`, €4.99 once, no subscription;
+`specs/pro-unlock.md`).
 
 ---
 
@@ -35,14 +36,17 @@ PhotoCleaner maakt het opruimen van je foto's en video's snel en zonder risico. 
 OP DEZE DAG
 Bekijk de foto's van vandaag door de jaren heen. Veeg naar rechts om te behouden, naar links om weg te gooien. Per ongeluk geveegd? Eén tik maakt het ongedaan.
 
-BLADEREN ZOALS JIJ WILT
+BLADEREN ZOALS JIJ WILT (PRO)
 Per dag, maand of jaar, of willekeurig. Filter op screenshots, favorieten of panorama's, en schakel naar een raster om veel foto's tegelijk te behouden of weg te gooien.
 
 DUBBELEN VINDEN
-PhotoCleaner zoekt exacte dubbelen en foto's die op elkaar lijken, zoals bewerkte of opnieuw opgeslagen versies. Per groep wordt de beste versie voorgesteld; jij beslist.
+PhotoCleaner zoekt exacte dubbelen en foto's die op elkaar lijken, zoals bewerkte of opnieuw opgeslagen versies. Per groep wordt de beste versie voorgesteld; jij beslist. Zoeken is gratis, opruimen hoort bij Pro.
 
 VEILIG OPRUIMEN
 Weggegooide foto's blijven 30 dagen in de prullenbak van PhotoCleaner, zodat je ze makkelijk terugzet. Pas daarna gaan ze, na jouw bevestiging, naar de prullenbak van Android, waar ze nog 30 dagen herstelbaar zijn. Foto's die je behoudt komen niet meer langs.
+
+GRATIS EN PRO
+"Op deze dag" voor vandaag is gratis, elke dag weer, net als de prullenbak, de herinnering en het zoeken naar dubbelen. PhotoCleaner Pro is een eenmalige aankoop via Google Play, geen abonnement: daarmee blader je door elke dag, maand of jaar of willekeurig, ruim je filmpjes op, gebruik je het raster en gooi je dubbelen weg.
 
 OOK OP JE NAS
 Koppel een map op je eigen NAS (SMB) en ruim die op dezelfde manier op. Je wachtwoord staat versleuteld op je telefoon. Een NAS heeft geen prullenbak: na de 30 dagen worden NAS-items pas na jouw bevestiging definitief verwijderd.
@@ -77,14 +81,17 @@ PhotoCleaner makes cleaning up your photos and videos fast and risk-free. Review
 ON THIS DAY
 See today's photos through the years. Swipe right to keep, left to discard. Swiped by mistake? One tap undoes it.
 
-BROWSE YOUR WAY
+BROWSE YOUR WAY (PRO)
 By day, month or year, or at random. Filter on screenshots, favourites or panoramas, and switch to a grid to keep or discard many photos at once.
 
 FIND DUPLICATES
-PhotoCleaner finds exact duplicates and photos that look alike, such as edited or re-saved versions. For each group the best copy is suggested; you decide.
+PhotoCleaner finds exact duplicates and photos that look alike, such as edited or re-saved versions. For each group the best copy is suggested; you decide. Finding them is free, cleaning them up is part of Pro.
 
 CLEAN UP SAFELY
 Discarded photos stay in PhotoCleaner's trash for 30 days, so restoring them is easy. Only then, after you confirm, do they move to Android's trash, where they stay recoverable for another 30 days. Photos you keep won't come back.
+
+FREE AND PRO
+Today's "On this day" is free, every day, as are the trash, the reminder and finding duplicates. PhotoCleaner Pro is a one-time purchase through Google Play, not a subscription: browse any day, month or year or at random, clean up videos, use the grid and discard duplicates.
 
 ON YOUR NAS TOO
 Link a folder on your own NAS (SMB) and clean it up the same way. Your password is stored encrypted on your phone. A NAS has no trash: after the 30 days, NAS items are deleted for good only after you confirm.

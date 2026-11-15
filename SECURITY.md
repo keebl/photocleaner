@@ -48,9 +48,18 @@
   SMB3 encryption is used when the server offers it. Media3's `ACCESS_NETWORK_STATE` and
   `WAKE_LOCK` stay removed. No analytics, crash reporting, ads or accounts; no developer
   server.
-- **Permissions** (checked on the release bundle with bundletool): media read (images,
+- **Pro unlock (`specs/pro-unlock.md`)**: Google Play Billing 9.1.0, no backend or receipt
+  server. The app stores only the entitlement (FREE / PENDING / PRO) and Play's purchase
+  token in `entitlement.json` (app-private, excluded from backup); a missing or corrupt file
+  means FREE. It never reads the Google account. Purchases are acknowledged on-device;
+  piracy of the €4.99 unlock is an accepted risk. The library's usage logger
+  (`transport-backend-cct`) is shipped but cannot send: `ACCESS_NETWORK_STATE` stays
+  removed, so it fails and drops its events (checked in the library code, 2026-11-15; to be
+  confirmed on a real phone in Plan step 8).
+- **Permissions** (checked on the release bundle's manifest): media read (images,
   video, user-selected; `READ_EXTERNAL_STORAGE` up to API 32), `POST_NOTIFICATIONS` and
-  `RECEIVE_BOOT_COMPLETED` for the optional daily reminder, `INTERNET` for the NAS source.
+  `RECEIVE_BOOT_COMPLETED` for the optional daily reminder, `INTERNET` for the NAS source,
+  `com.android.vending.BILLING` for the Pro purchase.
 - **Deletion**: never silent. Items go to the in-app trash for 30 days, then to Android's
   system trash only after the user confirms Android's own dialog. NAS items have no system
   trash: they are deleted on the NAS only after the app's own "cannot be undone" dialog.
@@ -61,7 +70,8 @@
   pinned by SHA-256, every artifact checked against `gradle/verification-metadata.xml`.
   Libraries are AndroidX/JetBrains/Coil plus, for the NAS source, smbj (Apache-2.0) and
   rapid7 dcerpc (BSD-3) with their dependencies (BouncyCastle, Guava, commons, slf4j-api
-  without a logging backend). No analytics or networking SDKs.
+  without a logging backend), and Play Billing (Google; brings play-services-base/location
+  and datatransport). No analytics SDKs.
 - **Privacy policy**: `docs/privacy-policy.md` (EN + NL), the public URL for Google Play.
 
 ## Reporting a problem

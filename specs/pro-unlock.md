@@ -151,6 +151,12 @@ NL and EN strings.
 - iOS round: is the NAS (SMB) source free or Pro? Decide before Plan step 9.
 
 ## Plan (added before building)
+Progress (2026-11-15): Android steps 1–7 built on branch `claude/busy-cori-55da63`. Step 1's
+Console part (upload a `BILLING` build to internal testing, create `pro_lifetime`) and steps 8
+(manual Play test) and 9 (iOS) are open. Step 1 finding: Play Billing's usage logger also
+declares `ACCESS_NETWORK_STATE`; it stays removed and the logger then drops its events (its
+scheduler catches the exception), so the bundle gains only `BILLING`.
+
 Android first (steps 1–8), then iOS (step 9). Follow the existing patterns: stores as atomic
 JSON files (`service/TrashStore.kt`, `service/JsonFile.kt`), a pure-logic object with JVM
 unit tests (`ui/media/MediaSelection.kt`), an interface with a fake for UI tests
