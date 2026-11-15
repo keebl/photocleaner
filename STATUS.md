@@ -10,22 +10,34 @@ Last updated: 2026-11-15
   link screen, source menu, Fotobron in Settings, scan/previews/duplicates/zoom/video/share,
   permanent NAS delete after the in-app trash. Tested on the emulator against a local Samba
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
+- Android Pro unlock built (`specs/pro-unlock.md` steps 1–7, branch `claude/busy-cori-55da63`,
+  PR to `main` open): Play Billing 9.1.0, entitlement cache, Pro sheet, Settings row, locks on
+  the media tab and duplicate discard; version 1.0 (2). Tested with `FakeBilling` (unit and
+  emulator); not yet against Play (needs the Console product, step 8).
 - Play organisation account verification pending (Guus).
 - Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
   "Pro unlock bouwen (Android)" — `claude/busy-cori-55da63`, PR 7 (spec steps 1–7) open, CI
   running, unreviewed: waiting on Guus.
 
 ## Next
-1. Build the Pro unlock (`specs/pro-unlock.md`, approved, Android first) before the public
-   Play release; its step 1 needs Guus in the Play Console (`pro_lifetime` product).
-2. Guus: create the upload key and `android/keystore.properties`, then follow
+1. Guus: create the upload key and `android/keystore.properties`, then follow
    `docs/PLAYSTORE.md` (Console forms, internal testing, production).
-3. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
+2. Guus (Pro step 1, Console part): upload a 1.0 (2) bundle to internal testing, then create
+   the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
+   (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
+   track.
+3. Pro step 8 (with Guus): manual test on a real phone as license tester — buy, cancel,
+   pending (slow test card), restore after reinstall, refund from the Console → locked,
+   offline start with Pro; also confirm billing works with `ACCESS_NETWORK_STATE` removed.
+   Record results here.
+4. Pro step 9: iOS StoreKit 2 round (`specs/pro-unlock.md`); decide first whether the NAS
+   source is free or Pro on iOS (Open questions).
+5. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
    `.local` name, a large folder and HEIC/RAW files; decide the Play data-safety answer for
    NAS traffic (`docs/PLAYSTORE.md`).
-4. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
+6. Test the Android app on a physical phone (so far emulator only, API 36): partial access,
    system trash dialog, reminder timing, video playback.
-5. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
+7. iOS: run `swiftformat PhotoCleaner` once as its own commit (scheme shared and CI added 2026-11-14).
 
 ## Blocked / open questions
 - README's architecture section names `NASFolderSource`, but the code implements `SMBSource`.
@@ -50,6 +62,7 @@ Last updated: 2026-11-15
    except to the user's NAS".
 
 ## Recent decisions
+- 2026-11-15 — Android Pro: `ACCESS_NETWORK_STATE` stays removed with Play Billing; its usage logger then drops its events (spec Plan, step 1 finding)
 - 2026-11-11 — Monetization: one-time €4.99 "PhotoCleaner Pro", today's "Op deze dag" stays free (`specs/pro-unlock.md`; on `main` since 2026-11-15)
 - 2026-11-14 — Android NAS: local network only, `INTERNET` added — see `docs/decisions/0006-android-local-network-access.md`
 - 2026-11-14 — Android NAS: smbj + rapid7 dcerpc (share list as on iOS); NAS items deleted permanently after confirmation (`specs/android-nas.md`)
@@ -78,6 +91,6 @@ Last updated: 2026-11-15
 ## Health
 - iOS: Version 1.0 (build 1) · Build: green (xcodebuild, iOS Simulator) · Tests: 11 unit (PhotoCleanerTests), green ·
   Store: not submitted · Dependencies: SPM, `Package.resolved` committed
-- Android: Version 1.0 (1) · Build: green (`assembleDebug`, `bundleRelease`) · Tests: 97 unit,
-  34 instrumented, all green · Lint: 0 errors · Store: not submitted (account verification
+- Android: Version 1.0 (2) · Build: green (`assembleDebug`, `bundleRelease`) · Tests: 155 unit,
+  81 instrumented (8 NAS tests skipped without the Samba server), all green · Lint: 0 errors · Store: not submitted (account verification
   pending) · Dependencies: Gradle version catalog, wrapper pinned by SHA-256

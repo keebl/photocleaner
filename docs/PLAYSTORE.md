@@ -4,7 +4,7 @@ Step-by-step route from this repo to a production release. Steps marked **(Guus)
 Play Console account, passwords or the upload key and can only be done by the account owner;
 everything else is prepared in the repo. Spec: `specs/android-app.md`.
 
-## Status (2026-11-10)
+## Status (2026-11-15)
 - App: feature-complete for v1 (`specs/android-app.md` steps 1–13), target API 36 (Play
   requirement since 2026-08-31), min API 30, version 1.0 (1). Since 2026-11-14 the NAS
   source (`specs/android-nas.md`) adds `INTERNET`, used only for SMB to a NAS on the user's
@@ -13,7 +13,11 @@ everything else is prepared in the repo. Spec: `specs/android-app.md`.
   screenshots NL/EN).
 - Privacy policy: `docs/privacy-policy.md` (EN + NL). Public URL once merged to `main`:
   https://github.com/keebl/photocleaner/blob/main/docs/privacy-policy.md
-- Open: organisation account verification, upload key, Console forms below.
+- Since 2026-11-15: PhotoCleaner Pro, a one-time in-app purchase `pro_lifetime` (€4.99,
+  `specs/pro-unlock.md`), built on Play Billing 9.1.0; version 1.0 (2) adds the `BILLING`
+  permission. Pro must be in the first public release (step 7a).
+- Open: organisation account verification, upload key, Console forms below, the Pro
+  product (step 7a).
 
 ## 1. Account (Guus)
 - Organisation developer account (verification started 2026-11-10). Because it is an
@@ -55,8 +59,10 @@ java -jar bundletool.jar dump manifest --bundle app/build/outputs/bundle/release
 Expected: `targetSdkVersion="36"`, permissions `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`,
 `READ_MEDIA_VISUAL_USER_SELECTED`, `READ_EXTERNAL_STORAGE` (max SDK 32),
 `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` and AndroidX's internal
-`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, and `INTERNET` (NAS source only); no
-`ACCESS_NETWORK_STATE` or `WAKE_LOCK`.
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, `INTERNET` (NAS source only) and
+`com.android.vending.BILLING` (Pro unlock); no `ACCESS_NETWORK_STATE` or `WAKE_LOCK`.
+Without bundletool, `unzip -p app-release.aab base/manifest/AndroidManifest.xml | strings |
+grep -i permission` lists the same names.
 
 Every new upload needs a higher `versionCode` in `android/app/build.gradle.kts`.
 
@@ -107,12 +113,36 @@ URL from the status section above.
 - **DSA trader status**: the account belongs to an organisation, so declare as **trader**;
   name, address, e-mail and phone become public on the listing.
 - **Government apps / financial features / health**: not applicable.
+- **In-app purchases**: Play adds "Contains in-app purchases" to the listing on its own once
+  `pro_lifetime` is active. Data safety for the purchase: the app uses Google Play Billing
+  only, the payment and account data are handled by Google Play, and the app keeps only
+  "Pro owned" plus Play's purchase token on the device (nothing reaches the developer). Check
+  the exact answer for "Purchase history" against Play's Data safety help when filling the
+  form (Guus); the proposed answer stays **No collection** unless that help page says
+  otherwise.
 
 ## 7. Internal testing first
 Test and release → Testing → **Internal testing** → create a release, upload
 `app-release.aab`, add testers (an e-mail list), roll out. Install from the opt-in link on a
 real Android phone and run the manual checks in `specs/android-app.md` (permissions incl.
 partial access, system trash dialog, reminder, video playback).
+
+## 7a. Pro product and license testers (Guus)
+Play only allows in-app products after a build with the `BILLING` permission is in a track,
+so do this after the first internal-testing upload (version 1.0 (2) or later):
+1. Monetize with Play → Products → **One-time products** → Create: product ID
+   `pro_lifetime` (permanent, must match `ProEntitlement.PRODUCT_ID`), name "PhotoCleaner
+   Pro", description "Browse any day, month or year, clean up videos, use the grid and
+   clean up duplicates. One-time purchase, no subscription." Default price **€4.99**
+   (let Play convert other countries), one purchase option "Buy", **family sharing on**.
+   Activate it.
+2. Setup → **License testing**: add the Google accounts that test purchases (test cards,
+   no real charge), response "RESPOND_NORMALLY".
+3. On a tester's phone (installed from the internal-testing link): the Pro sheet shows the
+   price; buy with the "Test card, always approves", then "slow test card" for the pending
+   state; reinstall and Restore; refund from Order management → Pro locks again at the next
+   start; airplane mode start keeps Pro. Record results in `STATUS.md`
+   (`specs/pro-unlock.md` Plan step 8).
 
 ## 8. Production
 When internal testing is clean: Test and release → **Production** → create release → promote

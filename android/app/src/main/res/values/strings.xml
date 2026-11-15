@@ -256,4 +256,29 @@
     </plurals>
     <string name="zoom_video_loading">Downloading video…</string>
     <string name="zoom_video_failed">The video could not be loaded.</string>
+
+    <!-- Pro unlock (specs/pro-unlock.md) -->
+    <string name="pro_locked">Pro feature</string>
+    <string name="pro_more_days">More days with Pro</string>
+    <string name="pro_today_done">Today is done</string>
+    <string name="pro_title">PhotoCleaner Pro</string>
+    <string name="pro_subtitle">One-time purchase, no subscription</string>
+    <string name="pro_intro">Today\'s memories stay free. With Pro you clean up your whole library in one go.</string>
+    <string name="pro_feature_periods">Any day, month or year, or at random</string>
+    <string name="pro_feature_videos">Clean up videos</string>
+    <string name="pro_feature_grid">Grid view to decide many at once</string>
+    <string name="pro_feature_duplicates">Clean up duplicates and similar photos</string>
+    <string name="pro_buy">Buy for %1$s</string>
+    <string name="pro_loading_price">Loading price…</string>
+    <string name="pro_buy_unavailable">Not available</string>
+    <string name="pro_store_unavailable">Google Play can\'t be reached right now. Try again later.</string>
+    <string name="pro_pending">Payment pending. Pro unlocks as soon as Google Play confirms it.</string>
+    <string name="pro_restore">Restore purchases</string>
+    <string name="pro_close">Close</string>
+    <string name="settings_pro_status">Status</string>
+    <string name="settings_pro_free">Free</string>
+    <string name="settings_pro_pending">Payment pending</string>
+    <string name="settings_pro_unlocked">PhotoCleaner Pro — unlocked</string>
+    <string name="settings_pro_unlock">Unlock Pro</string>
+    <string name="settings_pro_footer">One-time purchase through Google Play. Today’s ‘On this day’ stays free.</string>
 </resources>

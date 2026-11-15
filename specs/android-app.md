@@ -91,7 +91,8 @@ that can be published on Google Play.
     upload key, then a signed `.aab` is produced that targets the API level Google Play
     requires at submission time.
 21. (Network part superseded on 2026-11-14 by ADR-0006 and `specs/android-nas.md` AC 24:
-    `INTERNET` is now declared for the NAS source, local network only.)
+    `INTERNET` is now declared for the NAS source, local network only. On 2026-11-15
+    `specs/pro-unlock.md` AC 18 adds `com.android.vending.BILLING` for the Pro purchase.)
     Given the merged manifest of the release build, then it requests no `INTERNET`
     permission and no permissions beyond media read (images/video/user-selected),
     post-notifications, and receive-boot-completed (re-arms the daily reminder after a

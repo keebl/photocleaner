@@ -107,6 +107,8 @@ fun ReviewDeck(
     onNext: (() -> Unit)? = null,
     shareUri: (PhotoAsset) -> MediaUri? = { null },
     inspector: Inspector? = null,
+    /** Title once every item is decided; "Done" when null. */
+    doneTitle: String? = null,
 ) {
     // Keyed on ids, so a reload with the same items keeps the undo history.
     val assetIds = remember(assets) { assets.map { it.id } }
@@ -128,7 +130,7 @@ fun ReviewDeck(
     Box(modifier.fillMaxSize()) {
         when {
             assets.isEmpty() -> EmptyState(emptyTitle, emptyMessage) { NextButton(nextLabel, onNext) }
-            current == null -> DoneState(assets, keptIds, canUndo = history.isNotEmpty(), onUndo = undo) {
+            current == null -> DoneState(assets, keptIds, doneTitle, canUndo = history.isNotEmpty(), onUndo = undo) {
                 NextButton(nextLabel, onNext)
             }
             else -> {
@@ -431,6 +433,7 @@ fun NextButton(label: String?, onNext: (() -> Unit)?) {
 private fun DoneState(
     assets: List<PhotoAsset>,
     keptIds: Set<String>,
+    title: String?,
     canUndo: Boolean,
     onUndo: () -> Unit,
     actions: @Composable () -> Unit,
@@ -451,7 +454,7 @@ private fun DoneState(
             modifier = Modifier.size(64.dp),
         )
         Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.deck_done_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(title ?: stringResource(R.string.deck_done_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
             stringResource(R.string.deck_done_summary, kept, discarded.size),

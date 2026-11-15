@@ -18,6 +18,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   Android Keystore key. NAS items are deleted permanently after the in-app trash, only after
   confirming. Adds the INTERNET permission (ADR-0006); onboarding, Play listing and privacy
   policy updated.
+- Android: PhotoCleaner Pro, a one-time €4.99 purchase through Google Play (no
+  subscription). Free: "Op deze dag" for today (photos), the trash, reminder, filters and the
+  duplicate scan. Pro adds browsing any day, month or year or at random, videos, the grid and
+  discarding duplicates. Locked controls show a lock and open the Pro sheet; Settings shows
+  the status with Buy and Restore purchases. Works offline once bought. Adds the BILLING
+  permission; privacy policy, Play listing and Play guide updated.
 - Project standard adopted (CLAUDE.md, STATUS.md, docs, specs, security baseline).
 - Category filter in the photo review: Alle / Screenshots / Selfies / Favorieten / Panorama's
   (iPhone library only).

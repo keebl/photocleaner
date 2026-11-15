@@ -23,7 +23,7 @@ android {
         minSdk = 30
         // Google Play requires API 36 for new apps and updates since 2026-08-31.
         targetSdk = 36
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -92,6 +92,8 @@ dependencies {
     // ExifInterface has known security bugs on older Android versions.
     implementation(libs.androidx.exifinterface)
     implementation(libs.dcerpc)
+    // Pro unlock (specs/pro-unlock.md): one-time purchase through Google Play.
+    implementation(libs.play.billing)
 
     testImplementation(libs.junit)
 

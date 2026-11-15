@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.guus.photocleaner.R
+import com.guus.photocleaner.ui.pro.Lockable
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -85,6 +86,8 @@ fun MediaTopBar(
     onOpenTrash: () -> Unit,
     sourceMenu: @Composable () -> Unit = {},
     onRescan: (() -> Unit)? = null,
+    /** Free user: the toggle shows a lock and opens the Pro sheet. */
+    gridLocked: Boolean = false,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -99,11 +102,13 @@ fun MediaTopBar(
             }
         }
         if (showGridToggle) {
-            IconButton(onClick = onToggleGrid) {
-                Icon(
-                    painterResource(if (gridMode) R.drawable.ic_crop_portrait else R.drawable.ic_grid_view),
-                    contentDescription = stringResource(if (gridMode) R.string.media_show_deck else R.string.media_show_grid),
-                )
+            Lockable(gridLocked) {
+                IconButton(onClick = onToggleGrid) {
+                    Icon(
+                        painterResource(if (gridMode) R.drawable.ic_crop_portrait else R.drawable.ic_grid_view),
+                        contentDescription = stringResource(if (gridMode) R.string.media_show_deck else R.string.media_show_grid),
+                    )
+                }
             }
         }
         if (trashCount > 0) {
@@ -133,19 +138,27 @@ fun MediaChips(
     onCategory: (CategoryFilter) -> Unit,
     /** False for a NAS: plain files have no screenshot/favourite/panorama flags. */
     showCategory: Boolean = true,
+    /** Options that need Pro: shown with a lock; choosing one is still reported to the caller. */
+    lockedTab: (MediaTab) -> Boolean = { false },
+    lockedBrowse: (Browse) -> Boolean = { false },
 ) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        DropdownChip(TabOptions, tab, onTab)
-        if (tab != MediaTab.DUPLICATES) DropdownChip(BrowseOptions, browse, onBrowse)
+        DropdownChip(TabOptions, tab, onTab, lockedTab)
+        if (tab != MediaTab.DUPLICATES) DropdownChip(BrowseOptions, browse, onBrowse, lockedBrowse)
         if (tab == MediaTab.PHOTOS && showCategory) DropdownChip(CategoryOptions, category, onCategory)
     }
 }
 
 @Composable
-private fun <T> DropdownChip(options: List<MenuOption<T>>, selected: T, onSelect: (T) -> Unit) {
+private fun <T> DropdownChip(
+    options: List<MenuOption<T>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    locked: (T) -> Boolean = { false },
+) {
     var open by remember { mutableStateOf(false) }
     val current = options.first { it.value == selected }
     Box {
@@ -171,7 +184,15 @@ private fun <T> DropdownChip(options: List<MenuOption<T>>, selected: T, onSelect
                     text = { Text(stringResource(option.label)) },
                     leadingIcon = { Icon(painterResource(option.icon), contentDescription = null) },
                     trailingIcon = {
-                        if (option.value == selected) Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                        when {
+                            option.value == selected -> Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                            locked(option.value) -> Icon(
+                                painterResource(R.drawable.ic_lock),
+                                contentDescription = stringResource(R.string.pro_locked),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     },
                     onClick = {
                         open = false
@@ -196,16 +217,21 @@ fun PeriodBar(
     onPickDate: (LocalDate) -> Unit,
     onBackToNow: () -> Unit,
     onOldestFirst: (Boolean) -> Unit,
+    /** Free user: previous/next and the date picker show a lock and call [onLocked] instead. */
+    locked: Boolean = false,
+    onLocked: () -> Unit = {},
 ) {
     var picking by remember { mutableStateOf(false) }
     var sortMenu by remember { mutableStateOf(false) }
 
     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { onShift(-1) }) {
-            Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.media_previous), tint = MaterialTheme.colorScheme.primary)
+        Lockable(locked) {
+            IconButton(onClick = { if (locked) onLocked() else onShift(-1) }) {
+                Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.media_previous), tint = MaterialTheme.colorScheme.primary)
+            }
         }
         TextButton(
-            onClick = { picking = true },
+            onClick = { if (locked) onLocked() else picking = true },
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(horizontal = 4.dp),
         ) {
@@ -221,8 +247,10 @@ fun PeriodBar(
                 autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 22.sp, stepSize = 1.sp),
             )
         }
-        IconButton(onClick = { onShift(1) }) {
-            Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.media_next), tint = MaterialTheme.colorScheme.primary)
+        Lockable(locked) {
+            IconButton(onClick = { if (locked) onLocked() else onShift(1) }) {
+                Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.media_next), tint = MaterialTheme.colorScheme.primary)
+            }
         }
         if (showBackToNow) {
             OutlinedButton(onClick = onBackToNow, contentPadding = PaddingValues(horizontal = 12.dp)) {

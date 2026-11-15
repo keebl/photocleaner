@@ -78,6 +78,9 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   warm local cache, BOM `.module` files a clean CI runner downloads are missed and CI fails.
   `aapt2` is per OS: the Mac run records only `-osx.jar`; after an AGP bump add the `-linux.jar`
   sha256 (from `dl.google.com/dl/android/maven2/…/aapt2-<ver>-linux.jar.sha256`) by hand for CI.
+- Android Pro sheet shows "Google Play can't be reached" on the emulator and in debug builds:
+  Play only returns `pro_lifetime` to a Play-installed build once the product exists. Test the
+  sheet with `FakeBilling` (`ProSheetTest`); real purchases need internal testing.
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 

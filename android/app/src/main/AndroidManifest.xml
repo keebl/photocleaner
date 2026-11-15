@@ -21,7 +21,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Added by Media3 ExoPlayer for network streams and an optional wake lock; local
-         playback needs neither (spec AC 21: media read and notifications only). -->
+         playback needs neither (spec AC 21: media read and notifications only).
+         ACCESS_NETWORK_STATE is also declared by Play Billing's usage logger
+         (transport-backend-cct); without it that logger fails and drops its events (its
+         scheduler catches the SecurityException), billing itself does not need it.
+         com.android.vending.BILLING comes from the Play Billing library (specs/pro-unlock.md). -->
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />

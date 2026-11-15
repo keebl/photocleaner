@@ -30,7 +30,8 @@ cleanup fast and low-risk, one decision at a time.
 
 ## Non-goals (what it deliberately does not do)
 - No cloud upload, no analytics, no third-party services; nothing leaves the device except
-  traffic to the user's own NAS.
+  traffic to the user's own NAS. The optional Pro purchase is handled by the store (Google
+  Play, later the App Store); the app learns only whether Pro is owned.
 - No "Mensen" or "Documenten" category filter — Apple does not expose face/ML albums to
   third-party apps.
 - No barcode/QR filtering — would require scanning the whole library with image recognition.
@@ -54,8 +55,13 @@ UI: yes
 - Personal data: the user's own photos/videos and NAS credentials — purpose per item in
   `SECURITY.md`. Nothing is sent off-device except to the user's NAS.
 - Accounts: none.
-- Monetization: one-time €4.99 "PhotoCleaner Pro" unlock, no ads or subscription
-  (`specs/pro-unlock.md`, not built yet). TODO(guus): if sold in the EU, the DSA "trader" rules
+- Monetization (decided 2026-11-11): one-time €4.99 "PhotoCleaner Pro" unlock, no ads,
+  subscription or trial (`specs/pro-unlock.md`). Free forever: "Op deze dag" for today
+  (photos), keep/discard/undo, category filter and sort, zoom and share, the trash, the
+  reminder, theme, and the duplicate scan with its results. Pro adds Random / Dag / Maand /
+  Jaar browsing of any date, videos, the grid and discarding duplicates. Android built
+  2026-11-15 (Google Play Billing, no backend; the purchase is cached on-device); iOS
+  (StoreKit 2) follows before any App Store release. TODO(guus): if sold in the EU, the DSA "trader" rules
   require public contact details on the store page.
 
 ## Open product questions

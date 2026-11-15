@@ -83,6 +83,8 @@ private const val CHANGE_DEBOUNCE_MILLIS = 1_500L
 /**
  * Dubbelen: exact duplicates (metadata) and similar photos (dHash). Per group the best copy
  * is suggested to keep and the rest can be discarded. Port of iOS `DuplicatesView`.
+ * For a free user the scan and its results stay visible; discarding shows a lock and calls
+ * [onLocked] instead (specs/pro-unlock.md AC 6).
  */
 @OptIn(FlowPreview::class)
 @Composable
@@ -91,6 +93,8 @@ fun DuplicatesScreen(
     trash: TrashStore,
     dateText: (PhotoAsset) -> String?,
     modifier: Modifier = Modifier,
+    discardLocked: Boolean = false,
+    onLocked: () -> Unit = {},
 ) {
     val scanner = remember(source) { DuplicateScanner(source) }
     var mode by rememberSaveable { mutableStateOf(DuplicateMode.EXACT) }
@@ -174,7 +178,8 @@ fun DuplicatesScreen(
                         group = group,
                         imageModel = source::imageModel,
                         onOpen = { inspecting = it },
-                        onResolve = { kept -> resolve(group, kept) },
+                        onResolve = { kept -> if (discardLocked) onLocked() else resolve(group, kept) },
+                        locked = discardLocked,
                     )
                 }
                 if (groups.size > visibleCount) {
@@ -246,6 +251,7 @@ private fun GroupCard(
     imageModel: (PhotoAsset) -> Any,
     onOpen: (PhotoAsset) -> Unit,
     onResolve: (keptIds: Set<String>) -> Unit,
+    locked: Boolean = false,
 ) {
     val context = LocalContext.current
     var keptIds by remember(group.id) { mutableStateOf(setOf(group.keep.id)) }
@@ -283,7 +289,11 @@ private fun GroupCard(
                     enabled = discard.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(containerColor = red, contentColor = Color.White),
                 ) {
-                    Icon(painterResource(R.drawable.ic_delete), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        painterResource(if (locked) R.drawable.ic_lock else R.drawable.ic_delete),
+                        contentDescription = if (locked) stringResource(R.string.pro_locked) else null,
+                        modifier = Modifier.size(18.dp),
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.dup_discard_n, discard.size))
                 }

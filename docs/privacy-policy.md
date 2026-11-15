@@ -1,6 +1,6 @@
 # PhotoCleaner — Privacy Policy / Privacybeleid
 
-Last updated / Laatst bijgewerkt: 2026-11-14
+Last updated / Laatst bijgewerkt: 2026-11-15
 
 [English](#english) · [Nederlands](#nederlands)
 
@@ -22,12 +22,19 @@ device, except for the traffic between your phone and the NAS you link yourself.
   server, share and folder you choose, with the username and password you enter. It reads the
   photos and videos in that folder the same way as above, and deletes a file there only after
   you confirm (see below).
+- **Google Play, for the optional PhotoCleaner Pro purchase.** The app asks the Google Play
+  app on your phone whether you own Pro and opens Google Play's purchase screen when you tap
+  Buy. Google Play handles the payment and your Google account under
+  [Google's privacy policy](https://policies.google.com/privacy). The app receives only
+  whether Pro is owned (purchased, pending or not), with the purchase token Google Play
+  gives to confirm it; it never sees your name, e-mail address or payment details.
 
 ### What the app stores, and where
 Only on your device, in the app's private storage:
 - the list of items you discarded (the in-app trash) and the items you chose to keep;
 - comparison hashes of photos, so a second duplicate scan is fast;
 - your settings (theme, reminder time);
+- whether you own PhotoCleaner Pro, with its purchase token, so Pro also works offline;
 - if you link a NAS: its address, share, folder and username, your password (encrypted with
   a key in Android's keystore), the folder listing, previews and temporary copies of items
   you share or play.
@@ -37,9 +44,12 @@ them.
 
 ### What the app does not do
 - It only uses the network to reach a NAS **on your own network** (home Wi-Fi or your VPN),
-  and only after you link one. Any other address is refused. It never contacts a server of
+  and only after you link one. Any other address is refused. Apart from Google Play's
+  billing component for the optional purchase (see above), it never contacts a server of
   the developer or anyone else, so it cannot send your photos or other data anywhere else.
-- No accounts, no analytics, no advertising, no tracking, no third-party services.
+  Buying Pro goes through the Google Play app; your photos are never part of it.
+- No accounts, no analytics, no advertising, no tracking, and no third-party services other
+  than Google Play for the optional purchase.
 - It never deletes a photo without your action: discarded items stay in the in-app trash for
   30 days, and are then moved to Android's own trash only after you confirm Android's
   dialog. Android keeps them there for another 30 days before removing them. A NAS has no
@@ -48,7 +58,9 @@ them.
 
 ### Data sharing
 None. PhotoCleaner does not collect, sell or share personal data. If you use the share
-button, Android's share sheet sends that one photo or video to the app you pick.
+button, Android's share sheet sends that one photo or video to the app you pick. If you buy
+Pro, Google Play processes that purchase; the developer receives Google Play's usual sales
+reports, not your photos or anything from the app.
 
 ### Children
 The app is not directed at children and collects no data from anyone.
@@ -76,6 +88,12 @@ verlaten, behalve het verkeer tussen je telefoon en de NAS die je zelf koppelt.
   verbinding met de server, share en map die jij kiest, met de gebruikersnaam en het
   wachtwoord die je invult. Ze leest de foto's en video's in die map zoals hierboven, en
   verwijdert daar alleen een bestand nadat je dat bevestigt (zie hieronder).
+- **Google Play, voor de optionele aankoop van PhotoCleaner Pro.** De app vraagt de Google
+  Play-app op je telefoon of je Pro hebt en opent het aankoopscherm van Google Play als je op
+  Kopen tikt. Google Play regelt de betaling en je Google-account volgens
+  [het privacybeleid van Google](https://policies.google.com/privacy). De app krijgt alleen
+  te horen of je Pro hebt (gekocht, in behandeling of niet), met het aankoopbewijs (token)
+  dat Google Play daarvoor geeft; ze ziet nooit je naam, e-mailadres of betaalgegevens.
 
 ### Wat de app bewaart, en waar
 Alleen op je toestel, in de afgeschermde opslag van de app:
@@ -83,6 +101,7 @@ Alleen op je toestel, in de afgeschermde opslag van de app:
   wilt behouden;
 - vergelijkings-hashes van foto's, zodat een tweede dubbelen-scan snel is;
 - je instellingen (thema, tijdstip van de herinnering);
+- of je PhotoCleaner Pro hebt, met het aankoopbewijs, zodat Pro ook offline werkt;
 - als je een NAS koppelt: het adres, de share, map en gebruikersnaam, je wachtwoord
   (versleuteld met een sleutel in de Android-sleutelopslag), de mappenlijst, previews en
   tijdelijke kopieën van items die je deelt of afspeelt.
@@ -92,10 +111,13 @@ toestel. Als je de app verwijdert, verdwijnen ze.
 
 ### Wat de app niet doet
 - Ze gebruikt het netwerk alleen om een NAS **op je eigen netwerk** (thuis-wifi of je VPN)
-  te bereiken, en pas nadat je er een koppelt. Elk ander adres wordt geweigerd. Ze maakt
-  nooit verbinding met een server van de ontwikkelaar of van iemand anders, dus ze kan je
-  foto's of andere gegevens nergens anders naartoe sturen.
-- Geen accounts, geen analytics, geen advertenties, geen tracking, geen diensten van derden.
+  te bereiken, en pas nadat je er een koppelt. Elk ander adres wordt geweigerd. Behalve het
+  betaalonderdeel van Google Play voor de optionele aankoop (zie hierboven) maakt ze nooit
+  verbinding met een server van de ontwikkelaar of van iemand anders, dus ze kan je
+  foto's of andere gegevens nergens anders naartoe sturen. Pro kopen loopt via de Google
+  Play-app; je foto's spelen daarbij geen rol.
+- Geen accounts, geen analytics, geen advertenties, geen tracking, en geen diensten van
+  derden behalve Google Play voor de optionele aankoop.
 - Ze verwijdert nooit een foto zonder jouw actie: weggegooide items blijven 30 dagen in de
   prullenbak van de app en gaan daarna pas naar de prullenbak van Android nadat je de
   Android-dialoog hebt bevestigd. Android bewaart ze daar nog 30 dagen voordat ze echt
@@ -106,6 +128,8 @@ toestel. Als je de app verwijdert, verdwijnen ze.
 ### Gegevens delen
 Geen. PhotoCleaner verzamelt, verkoopt of deelt geen persoonsgegevens. Gebruik je de
 deelknop, dan stuurt het deelmenu van Android die ene foto of video naar de app die jij kiest.
+Koop je Pro, dan verwerkt Google Play die aankoop; de ontwikkelaar krijgt de gebruikelijke
+verkoopoverzichten van Google Play, niet je foto's of iets uit de app.
 
 ### Kinderen
 De app is niet op kinderen gericht en verzamelt van niemand gegevens.

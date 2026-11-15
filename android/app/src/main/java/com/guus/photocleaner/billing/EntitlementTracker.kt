@@ -1,0 +1,51 @@
+package com.guus.photocleaner.billing
+
+import com.guus.photocleaner.service.EntitlementStore
+import com.guus.photocleaner.service.ProEntitlement
+import com.guus.photocleaner.service.ProState
+import com.guus.photocleaner.service.StorePurchase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+/**
+ * Turns store answers into the entitlement and keeps the cache in step. Shared by
+ * [PlayBilling] and [FakeBilling], so the state transitions are tested once (AC 11–16).
+ */
+class EntitlementTracker(private val store: EntitlementStore) {
+    private val _state = MutableStateFlow(store.state)
+    val state: StateFlow<ProState> = _state.asStateFlow()
+
+    /** Bumped by every [onUpdate]; a query started before it may predate the purchase. */
+    @Volatile var generation: Long = 0L
+        private set
+
+    /**
+     * A full purchase query: the store's word is final, so a refunded or revoked purchase
+     * (absent from the list) locks Pro again (AC 15). Returns the purchases to acknowledge.
+     * [startedAt] is [generation] when the query was sent: an answer that started before a
+     * purchase dialog result (e.g. the resume right after the dialog) does not overwrite it.
+     */
+    @Synchronized
+    fun onQuery(purchases: List<StorePurchase>, startedAt: Long = generation): List<StorePurchase> {
+        if (startedAt == generation) apply(ProEntitlement.resolve(purchases), ProEntitlement.proToken(purchases))
+        return ProEntitlement.toAcknowledge(purchases)
+    }
+
+    /**
+     * Purchases from the purchase dialog: only the ones just bought, so this never lowers
+     * the entitlement (a pending second attempt does not lock an owned Pro).
+     */
+    @Synchronized
+    fun onUpdate(purchases: List<StorePurchase>): List<StorePurchase> {
+        generation++
+        val resolved = ProEntitlement.resolve(purchases)
+        if (resolved.ordinal > _state.value.ordinal) apply(resolved, ProEntitlement.proToken(purchases))
+        return ProEntitlement.toAcknowledge(purchases)
+    }
+
+    private fun apply(state: ProState, token: String?) {
+        store.save(state, token)
+        _state.value = state
+    }
+}

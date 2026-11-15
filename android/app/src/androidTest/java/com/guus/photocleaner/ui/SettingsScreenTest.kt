@@ -19,9 +19,11 @@ import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.AppTheme
 import com.guus.photocleaner.service.KeepStore
+import com.guus.photocleaner.service.ProState
 import com.guus.photocleaner.service.ReminderSettings
 import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.source.SourceKind
+import com.guus.photocleaner.ui.settings.PRO_UNLOCK_ROW_TAG
 import com.guus.photocleaner.ui.settings.REMINDER_SWITCH_TAG
 import com.guus.photocleaner.ui.settings.SOURCE_SEGMENT_NAS_TAG
 import com.guus.photocleaner.ui.settings.SettingsScreen
@@ -52,6 +54,8 @@ class SettingsScreenTest {
     private var selectedSource: SourceKind? = null
     private var connectNas = false
     private var clearedCache = false
+    private var openedPro = false
+    private var restored = false
 
     private fun text(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 
@@ -67,7 +71,7 @@ class SettingsScreenTest {
         dir.deleteRecursively()
     }
 
-    private fun show(notificationsAllowed: Boolean, nasName: String? = null) {
+    private fun show(notificationsAllowed: Boolean, nasName: String? = null, pro: ProState = ProState.FREE) {
         compose.setContent {
             var themeState by remember { mutableStateOf(theme) }
             var reminderState by remember { mutableStateOf(reminder) }
@@ -91,6 +95,9 @@ class SettingsScreenTest {
                     onSelectSource = { selectedSource = it },
                     onConnectNas = { connectNas = true },
                     onClearNasCache = { clearedCache = true },
+                    pro = pro,
+                    onOpenPro = { openedPro = true },
+                    onRestorePurchases = { restored = true },
                 )
             }
         }
@@ -183,5 +190,36 @@ class SettingsScreenTest {
         compose.onNodeWithText(text(R.string.settings_nas_clear_cache)).performScrollTo().performClick()
         assertTrue(clearedCache)
         compose.onNodeWithText(text(R.string.source_change_nas)).performScrollTo().assertIsDisplayed()
+    }
+
+    /** specs/pro-unlock.md: status, Buy (opens the sheet) and Restore for a free user. */
+    @Test
+    fun pro_free_showsStatusUnlockAndRestore() {
+        show(notificationsAllowed = true)
+
+        compose.onNodeWithText(text(R.string.settings_pro_free)).assertIsDisplayed()
+        compose.onNodeWithTag(PRO_UNLOCK_ROW_TAG).performClick()
+        compose.onNodeWithText(text(R.string.pro_restore)).performClick()
+        assertTrue(openedPro)
+        assertTrue(restored)
+    }
+
+    /** AC 13: a pending payment shows as such, without a second Buy. */
+    @Test
+    fun pro_pending_showsPaymentPending() {
+        show(notificationsAllowed = true, pro = ProState.PENDING)
+
+        compose.onNodeWithText(text(R.string.settings_pro_pending)).assertIsDisplayed()
+        compose.onNodeWithTag(PRO_UNLOCK_ROW_TAG).assertDoesNotExist()
+    }
+
+    /** AC 17: unlocked, without a Buy button. */
+    @Test
+    fun pro_unlocked_showsNoBuy() {
+        show(notificationsAllowed = true, pro = ProState.PRO)
+
+        compose.onNodeWithText(text(R.string.settings_pro_unlocked)).assertIsDisplayed()
+        compose.onNodeWithTag(PRO_UNLOCK_ROW_TAG).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.pro_restore)).assertDoesNotExist()
     }
 }
