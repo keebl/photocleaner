@@ -12,6 +12,7 @@ media3 = "1.11.1"
 exifinterface = "1.4.2"
 smbj = "0.15.0"
 dcerpc = "0.12.13"
+playBilling = "9.1.0"
 junit = "4.13.2"
 androidxTestRunner = "1.7.0"
 androidxTestRules = "1.7.0"
@@ -37,6 +38,7 @@ media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 smbj = { module = "com.hierynomus:smbj", version.ref = "smbj" }
 dcerpc = { module = "com.rapid7.client:dcerpc", version.ref = "dcerpc" }
+play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 kotlinx-coroutines-core ={ module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationJson" }
 junit = { module = "junit:junit", version.ref = "junit" }
