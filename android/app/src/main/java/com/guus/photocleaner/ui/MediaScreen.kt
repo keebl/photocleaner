@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.guus.photocleaner.R
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.service.KeepStore
+import com.guus.photocleaner.service.ProState
 import com.guus.photocleaner.service.TrashStore
 import com.guus.photocleaner.source.PhotoSource
 import com.guus.photocleaner.source.SourceKind
@@ -54,6 +55,7 @@ import com.guus.photocleaner.ui.media.MediaSelection
 import com.guus.photocleaner.ui.media.MediaTab
 import com.guus.photocleaner.ui.media.MediaTopBar
 import com.guus.photocleaner.ui.media.PeriodBar
+import com.guus.photocleaner.ui.pro.ProGate
 import com.guus.photocleaner.ui.zoom.MediaInspector
 import com.guus.photocleaner.ui.zoom.mediaUri
 import java.time.Instant
@@ -81,7 +83,8 @@ data class MediaSettings(
 /**
  * Media tab: kind, browse mode, category and period in the header; the swipe deck or the
  * grid below. Port of iOS `MediaView`. Starts on today ("Op deze dag"); the grid is a
- * per-session choice, like on iOS.
+ * per-session choice, like on iOS. A free user gets "Op deze dag" for today as a deck; the
+ * other controls show a lock and call [onLocked] (specs/pro-unlock.md).
  */
 @OptIn(FlowPreview::class)
 @Composable
@@ -105,6 +108,10 @@ fun MediaScreen(
     scanProgress: StateFlow<Int>? = null,
     /** Opens the NAS link screen, from the "NAS not reachable" state. */
     onChangeNas: () -> Unit = {},
+    /** The Pro entitlement. Pro by default, so the screen tests cover every feature. */
+    pro: ProState = ProState.PRO,
+    /** A Pro control was tapped by a free user: opens the Pro sheet. */
+    onLocked: () -> Unit = {},
 ) {
     var settings by remember { mutableStateOf(initialSettings) }
     var dateEpochDay by rememberSaveable { mutableLongStateOf(today.toEpochDay()) }
@@ -114,7 +121,12 @@ fun MediaScreen(
     var loadError by remember { mutableStateOf<NasError?>(null) }
     var reloads by remember { mutableIntStateOf(0) }
 
-    val date = LocalDate.ofEpochDay(dateEpochDay)
+    // What is shown: for a free user (or after a refund) "Op deze dag" for today, photos, deck.
+    // The saved choices are kept, so they come back once Pro is unlocked.
+    val view = ProGate.effectiveSettings(pro, settings)
+    val canNavigate = ProGate.allowsPeriodNavigation(pro)
+    val date = if (canNavigate) LocalDate.ofEpochDay(dateEpochDay) else today
+    val grid = gridMode && ProGate.allowsGrid(pro)
     val keptIds by keep.ids.collectAsState()
     val allTrashItems by trash.items.collectAsState()
     // Only this source's items count (specs/android-nas.md AC 21).
@@ -140,44 +152,49 @@ fun MediaScreen(
     LaunchedEffect(source) { source.changes().debounce(CHANGE_DEBOUNCE_MILLIS).collect { reloads++ } }
 
     val locale = LocalConfiguration.current.locales[0]
-    val showPeriod = settings.tab != MediaTab.DUPLICATES && settings.browse != Browse.RANDOM
+    val showPeriod = view.tab != MediaTab.DUPLICATES && view.browse != Browse.RANDOM
 
     Column(modifier.fillMaxSize()) {
         MediaTopBar(
-            showGridToggle = settings.tab != MediaTab.DUPLICATES,
-            gridMode = gridMode,
-            onToggleGrid = { gridMode = !gridMode },
+            showGridToggle = view.tab != MediaTab.DUPLICATES,
+            gridMode = grid,
+            onToggleGrid = { if (ProGate.allowsGrid(pro)) gridMode = !gridMode else onLocked() },
+            gridLocked = !ProGate.allowsGrid(pro),
             trashCount = trashItems.size,
             onOpenTrash = onOpenTrash,
             sourceMenu = sourceMenu,
             onRescan = onRescan,
         )
         MediaChips(
-            tab = settings.tab,
-            browse = settings.browse,
-            category = settings.category,
-            onTab = { update(settings.copy(tab = it)) },
-            onBrowse = { update(settings.copy(browse = it)) },
+            tab = view.tab,
+            browse = view.browse,
+            category = view.category,
+            onTab = { if (ProGate.allowsTab(pro, it)) update(settings.copy(tab = it)) else onLocked() },
+            onBrowse = { if (ProGate.allowsBrowse(pro, it)) update(settings.copy(browse = it)) else onLocked() },
             onCategory = { update(settings.copy(category = it)) },
             showCategory = source.kind == SourceKind.DEVICE,
+            lockedTab = { !ProGate.allowsTab(pro, it) },
+            lockedBrowse = { !ProGate.allowsBrowse(pro, it) },
         )
         Spacer(Modifier.height(4.dp))
-        val title = periodTitle(date, settings.browse, locale)
+        val title = periodTitle(date, view.browse, locale)
         if (showPeriod) {
             PeriodBar(
                 title = title,
                 date = date,
-                showBackToNow = !MediaSelection.isCurrentPeriod(date, settings.browse, today),
-                backToNowLabel = when (settings.browse) {
+                showBackToNow = !MediaSelection.isCurrentPeriod(date, view.browse, today),
+                backToNowLabel = when (view.browse) {
                     Browse.MONTH -> R.string.media_this_month
                     Browse.YEAR -> R.string.media_this_year
                     else -> R.string.media_today
                 },
                 oldestFirst = settings.oldestFirst,
-                onShift = { dateEpochDay = MediaSelection.shift(date, settings.browse, it).toEpochDay() },
+                onShift = { dateEpochDay = MediaSelection.shift(date, view.browse, it).toEpochDay() },
                 onPickDate = { dateEpochDay = it.toEpochDay() },
                 onBackToNow = { dateEpochDay = today.toEpochDay() },
                 onOldestFirst = { update(settings.copy(oldestFirst = it)) },
+                locked = !canNavigate,
+                onLocked = onLocked,
             )
         }
         HorizontalDivider()
@@ -204,7 +221,7 @@ fun MediaScreen(
                     }
                 }
                 all == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                settings.tab == MediaTab.DUPLICATES -> {
+                view.tab == MediaTab.DUPLICATES -> {
                     val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
                     DuplicatesScreen(
                         source = source,
@@ -217,10 +234,10 @@ fun MediaScreen(
                 else -> ReviewContent(
                     all = all,
                     // NAS items have no categories: filter on "Alle" there.
-                    settings = if (source.kind == SourceKind.DEVICE) settings else settings.copy(category = CategoryFilter.ALL),
+                    settings = if (source.kind == SourceKind.DEVICE) view else view.copy(category = CategoryFilter.ALL),
                     date = date,
                     title = title,
-                    gridMode = gridMode,
+                    gridMode = grid,
                     randomSeed = randomSeed,
                     decidedIds = decidedIds,
                     keptIds = keptIds,
@@ -232,6 +249,8 @@ fun MediaScreen(
                     swipeHintSeen = swipeHintSeen,
                     onSwipeHintSeen = onSwipeHintSeen,
                     onGoTo = { dateEpochDay = it.toEpochDay() },
+                    canNavigate = canNavigate,
+                    onLocked = onLocked,
                 )
             }
         }
@@ -256,6 +275,8 @@ private fun ReviewContent(
     swipeHintSeen: Boolean,
     onSwipeHintSeen: () -> Unit,
     onGoTo: (LocalDate) -> Unit,
+    canNavigate: Boolean,
+    onLocked: () -> Unit,
 ) {
     val (tab, browse, category, oldestFirst) = settings
     val items = remember(all, settings, date, randomSeed, zone) {
@@ -282,13 +303,16 @@ private fun ReviewContent(
     } else {
         stringResource(R.string.media_empty_message, noun, title)
     }
-    val nextLabel = when (browse) {
-        Browse.DAY -> stringResource(R.string.media_next_day, noun)
-        Browse.MONTH -> stringResource(R.string.media_next_month, noun)
-        Browse.YEAR -> stringResource(R.string.media_next_year, noun)
-        Browse.RANDOM -> null
+    // Free: today only, so the finished deck offers Pro instead of the next period (AC 4).
+    val nextLabel = when {
+        !canNavigate -> stringResource(R.string.pro_more_days)
+        browse == Browse.DAY -> stringResource(R.string.media_next_day, noun)
+        browse == Browse.MONTH -> stringResource(R.string.media_next_month, noun)
+        browse == Browse.YEAR -> stringResource(R.string.media_next_year, noun)
+        else -> null
     }
-    val onNext = next?.let { target -> { onGoTo(target) } }
+    val onNext = if (!canNavigate) onLocked else next?.let { target -> { onGoTo(target) } }
+    val doneTitle = if (canNavigate) null else stringResource(R.string.pro_today_done)
     val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
     val dateText: (PhotoAsset) -> String? = { asset ->
         asset.browseDateMillis?.let { Instant.ofEpochMilli(it).atZone(zone).format(dateFormat) }
@@ -349,6 +373,7 @@ private fun ReviewContent(
                 onNext = onNext,
                 shareUri = { mediaUri(source, it) },
                 inspector = inspector,
+                doneTitle = doneTitle,
             )
         }
     }

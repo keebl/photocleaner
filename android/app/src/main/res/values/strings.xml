@@ -256,4 +256,9 @@
     </plurals>
     <string name="zoom_video_loading">Downloading video…</string>
     <string name="zoom_video_failed">The video could not be loaded.</string>
+
+    <!-- Pro unlock (specs/pro-unlock.md) -->
+    <string name="pro_locked">Pro feature</string>
+    <string name="pro_more_days">More days with Pro</string>
+    <string name="pro_today_done">Today is done</string>
 </resources>

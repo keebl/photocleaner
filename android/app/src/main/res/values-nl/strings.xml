@@ -254,4 +254,9 @@
     </plurals>
     <string name="zoom_video_loading">Video downloaden…</string>
     <string name="zoom_video_failed">De video kon niet worden geladen.</string>
+
+    <!-- Pro unlock (specs/pro-unlock.md) -->
+    <string name="pro_locked">Pro-functie</string>
+    <string name="pro_more_days">Meer dagen met Pro</string>
+    <string name="pro_today_done">Vandaag is klaar</string>
 </resources>
