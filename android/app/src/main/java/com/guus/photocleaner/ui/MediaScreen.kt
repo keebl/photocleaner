@@ -229,6 +229,8 @@ fun MediaScreen(
                         dateText = { asset ->
                             asset.browseDateMillis?.let { Instant.ofEpochMilli(it).atZone(zone).format(dateFormat) }
                         },
+                        discardLocked = !ProGate.allowsDuplicateDiscard(pro),
+                        onLocked = onLocked,
                     )
                 }
                 else -> ReviewContent(

@@ -164,4 +164,28 @@ class TrashScreenTest {
         assertTrue(requested.isEmpty())
         assertEquals(setOf("a"), trash.trashedIds)
     }
+
+    /**
+     * specs/pro-unlock.md AC 8: the trash has no Pro gate, so items discarded from Pro views
+     * (videos, duplicates) can be restored and emptied by a free user, e.g. after a refund.
+     */
+    @Test
+    fun itemsFromProViews_restoreAndEmptyWithoutPro() {
+        store(start).mark(a, "video")
+        store(start).mark(b, "duplicate")
+        val trash = store(start)
+        show(trash, confirm = true)
+
+        compose.onAllNodesWithText(text(R.string.trash_restore))[0].performClick()
+        compose.waitForIdle()
+        assertEquals(1, trash.items.value.size)
+
+        compose.onNodeWithContentDescription(text(R.string.trash_more)).performClick()
+        compose.onNodeWithText(text(R.string.trash_delete_all)).performClick()
+        compose.onNodeWithText(text(R.string.trash_delete_confirm)).performClick()
+        compose.waitForIdle()
+
+        assertEquals(1, requested.size)
+        assertTrue(trash.items.value.isEmpty())
+    }
 }

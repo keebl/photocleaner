@@ -1,6 +1,8 @@
 package com.guus.photocleaner.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -16,6 +18,9 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.guus.photocleaner.R
+import com.guus.photocleaner.billing.EntitlementTracker
+import com.guus.photocleaner.billing.FakeBilling
+import com.guus.photocleaner.service.EntitlementStore
 import com.guus.photocleaner.model.MediaKind
 import com.guus.photocleaner.model.PhotoAsset
 import com.guus.photocleaner.model.PhotoCategory
@@ -225,5 +230,43 @@ class MediaScreenProTest {
         show(pro = ProState.PENDING)
         compose.onNodeWithContentDescription(text(R.string.media_show_grid)).performClick()
         assertEquals(1, lockedTaps)
+    }
+
+    /** AC 15 and the refund edge case: back to today; decisions and the trash are kept. */
+    @Test
+    fun refundWhileBrowsingAnotherPeriod_returnsToTodayAndKeepsDecisions() {
+        val billing = FakeBilling(EntitlementTracker(EntitlementStore(File(dir, "entitlement.json"))))
+        billing.purchase()
+        val source = FakePhotoSource(library, zone)
+        compose.setContent {
+            val pro by billing.entitlement.collectAsState()
+            PhotoCleanerTheme(darkTheme = false) {
+                MediaScreen(
+                    source = source,
+                    trash = trash,
+                    keep = keep,
+                    today = today,
+                    zone = zone,
+                    swipeHintSeen = true,
+                    onSwipeHintSeen = {},
+                    initialSettings = MediaSettings(browse = Browse.MONTH),
+                    pro = pro,
+                    onLocked = { lockedTaps++ },
+                )
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText(text(R.string.deck_progress, 1, 4)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(DECK_CARD_TAG).performTouchInput { swipeLeft() } // discard while Pro
+        compose.waitForIdle()
+
+        billing.refund()
+        billing.refresh()
+        compose.waitForIdle()
+
+        assertEquals(ProState.FREE, billing.entitlement.value)
+        compose.onNodeWithText(text(R.string.media_browse_day)).assertIsDisplayed()
+        assertEquals(1, trash.items.value.size)
+        // Today's three photos minus the one discarded while Pro.
+        compose.onNodeWithText(text(R.string.deck_progress, 1, 2)).assertIsDisplayed()
     }
 }
