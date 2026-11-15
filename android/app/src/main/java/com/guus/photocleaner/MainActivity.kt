@@ -38,6 +38,7 @@ import com.guus.photocleaner.ui.MediaScreen
 import com.guus.photocleaner.ui.ShellState
 import com.guus.photocleaner.ui.media.Browse
 import com.guus.photocleaner.ui.media.MediaTab
+import com.guus.photocleaner.ui.pro.ProSheetHost
 import com.guus.photocleaner.ui.settings.SettingsScreen
 import com.guus.photocleaner.ui.theme.PhotoCleanerTheme
 import com.guus.photocleaner.ui.trash.ExpiredTrashPrompt
@@ -88,6 +89,9 @@ class MainActivity : ComponentActivity() {
         val nasConfig by sources.nas.config.collectAsState()
         val source = sources.source(kind)
         var showNasConnect by remember { mutableStateOf(false) }
+        val billing = container.billing
+        val pro by billing.entitlement.collectAsState()
+        var showPro by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
         val systemTrash = rememberSystemTrash(source)
         val sourceMenu: @Composable () -> Unit = {
@@ -151,6 +155,8 @@ class MainActivity : ComponentActivity() {
                             prefs.didSeeSwipeHint = true
                         }
                     },
+                    pro = pro,
+                    onLocked = { showPro = true },
                 )
             },
             trashContent = {
@@ -186,6 +192,9 @@ class MainActivity : ComponentActivity() {
                     onSelectSource = sources::select,
                     onConnectNas = { showNasConnect = true },
                     onClearNasCache = sources.nas::clearCaches,
+                    pro = pro,
+                    onOpenPro = { showPro = true },
+                    onRestorePurchases = billing::restore,
                 )
             },
             startupContent = {
@@ -198,6 +207,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 ExpiredTrashPrompt(source = source, trash = container.trash, systemTrash = systemTrash)
+                if (showPro) ProSheetHost(billing = billing, onClose = { showPro = false })
                 if (showNasConnect) {
                     NasConnectScreen(
                         current = nasConfig,

@@ -45,6 +45,7 @@ import com.guus.photocleaner.R
 import com.guus.photocleaner.source.SourceKind
 import com.guus.photocleaner.service.AppTheme
 import com.guus.photocleaner.service.KeepStore
+import com.guus.photocleaner.service.ProState
 import com.guus.photocleaner.service.ReminderSettings
 import com.guus.photocleaner.service.TrashStore
 import kotlinx.coroutines.launch
@@ -53,8 +54,10 @@ const val REMINDER_SWITCH_TAG = "reminderSwitch"
 
 const val SOURCE_SEGMENT_NAS_TAG = "sourceSegmentNas"
 
+const val PRO_UNLOCK_ROW_TAG = "proUnlockRow"
+
 /**
- * Settings: theme, photo source (phone or NAS, specs/android-nas.md), daily reminder, keep
+ * Settings: PhotoCleaner Pro (specs/pro-unlock.md), theme, photo source (phone or NAS, specs/android-nas.md), daily reminder, keep
  * reset and version. Port of iOS `SettingsView`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +79,10 @@ fun SettingsScreen(
     onSelectSource: (SourceKind) -> Unit = {},
     onConnectNas: () -> Unit = {},
     onClearNasCache: () -> Unit = {},
+    pro: ProState = ProState.FREE,
+    /** Opens the Pro sheet (features, price, Buy). */
+    onOpenPro: () -> Unit = {},
+    onRestorePurchases: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -92,6 +99,34 @@ fun SettingsScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp),
         )
+
+        SectionHeader(R.string.pro_title)
+        Group {
+            if (pro == ProState.PRO) {
+                // AC 17: unlocked, no Buy button.
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(R.drawable.ic_check_circle), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.settings_pro_unlocked), modifier = Modifier.padding(start = 16.dp))
+                }
+            } else {
+                ValueRow(
+                    stringResource(R.string.settings_pro_status),
+                    stringResource(if (pro == ProState.PENDING) R.string.settings_pro_pending else R.string.settings_pro_free),
+                )
+                if (pro == ProState.FREE) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp))
+                    IconRow(
+                        R.drawable.ic_auto_awesome,
+                        stringResource(R.string.settings_pro_unlock),
+                        onOpenPro,
+                        Modifier.testTag(PRO_UNLOCK_ROW_TAG),
+                    )
+                }
+                HorizontalDivider(Modifier.padding(start = 16.dp))
+                IconRow(R.drawable.ic_history, stringResource(R.string.pro_restore), onRestorePurchases)
+            }
+        }
+        if (pro != ProState.PRO) Footer(stringResource(R.string.settings_pro_footer))
 
         SectionHeader(R.string.settings_appearance)
         Group {
@@ -285,8 +320,8 @@ internal fun Footer(text: String) {
 }
 
 @Composable
-private fun IconRow(icon: Int, label: String, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun IconRow(icon: Int, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Text(label, modifier = Modifier.padding(start = 16.dp))
     }

@@ -259,4 +259,24 @@
     <string name="pro_locked">Pro-functie</string>
     <string name="pro_more_days">Meer dagen met Pro</string>
     <string name="pro_today_done">Vandaag is klaar</string>
+    <string name="pro_title">PhotoCleaner Pro</string>
+    <string name="pro_subtitle">Eenmalig, geen abonnement</string>
+    <string name="pro_intro">De herinneringen van vandaag blijven gratis. Met Pro ruim je je hele bibliotheek in één keer op.</string>
+    <string name="pro_feature_periods">Elke dag, maand of jaar, of willekeurig</string>
+    <string name="pro_feature_videos">Filmpjes opruimen</string>
+    <string name="pro_feature_grid">Rasterweergave om veel tegelijk te kiezen</string>
+    <string name="pro_feature_duplicates">Dubbelen en lijkende foto\'s opruimen</string>
+    <string name="pro_buy">Kopen voor %1$s</string>
+    <string name="pro_loading_price">Prijs laden…</string>
+    <string name="pro_buy_unavailable">Niet beschikbaar</string>
+    <string name="pro_store_unavailable">Google Play is nu niet bereikbaar. Probeer het later opnieuw.</string>
+    <string name="pro_pending">Betaling in behandeling. Pro wordt ontgrendeld zodra Google Play hem bevestigt.</string>
+    <string name="pro_restore">Aankopen herstellen</string>
+    <string name="pro_close">Sluiten</string>
+    <string name="settings_pro_status">Status</string>
+    <string name="settings_pro_free">Gratis</string>
+    <string name="settings_pro_pending">Betaling in behandeling</string>
+    <string name="settings_pro_unlocked">PhotoCleaner Pro — ontgrendeld</string>
+    <string name="settings_pro_unlock">Pro ontgrendelen</string>
+    <string name="settings_pro_footer">Eenmalige aankoop via Google Play. ‘Op deze dag’ voor vandaag blijft gratis.</string>
 </resources>
