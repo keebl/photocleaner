@@ -10,19 +10,19 @@ Last updated: 2026-11-15
   link screen, source menu, Fotobron in Settings, scan/previews/duplicates/zoom/video/share,
   permanent NAS delete after the in-app trash. Tested on the emulator against a local Samba
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
-- Android Pro unlock built (`specs/pro-unlock.md` steps 1–7, branch `claude/busy-cori-55da63`,
-  PR to `main` open): Play Billing 9.1.0, entitlement cache, Pro sheet, Settings row, locks on
+- Android Pro unlock built (`specs/pro-unlock.md` steps 1–7), merged to `main` (PR 7): Play Billing 9.1.0, entitlement cache, Pro sheet, Settings row, locks on
   the media tab and duplicate discard; version 1.0 (2). Tested with `FakeBilling` (unit and
   emulator); not yet against Play (needs the Console product, step 8).
 - Play organisation account verification pending (Guus).
+- Signed release bundle 1.0 (2) with `BILLING` built locally on 2026-11-15
+  (`android/app/build/outputs/bundle/release/app-release.aab`, lintRelease 0 errors); not uploaded yet.
 - Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
-  "Pro unlock bouwen (Android)" — `claude/busy-cori-55da63`, PR 7 (spec steps 1–7) open, CI
-  running, unreviewed: waiting on Guus.
+  "Pro unlock bouwen (Android)" — PR 7 merged, idle, finished.
 
 ## Next
-1. Guus: create the upload key and `android/keystore.properties`, then follow
-   `docs/PLAYSTORE.md` (Console forms, internal testing, production).
-2. Guus (Pro step 1, Console part): upload a 1.0 (2) bundle to internal testing, then create
+1. Guus: finish the Console forms in `docs/PLAYSTORE.md` (upload key and
+   `android/keystore.properties` exist since 2026-11-15).
+2. Guus (Pro step 1, Console part): upload the 1.0 (2) bundle to internal testing, then create
    the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
@@ -75,6 +75,7 @@ Last updated: 2026-11-15
 - `design-refs` — the references are the 14 iOS screenshots in `design/refs/ios/`, described in `docs/DESIGN.md` (Guus, 2026-11-14); the checker only counts files directly in `design/refs/`
 
 ## Workbench feedback
+- 2026-11-15 — Claude's Bash sandbox blocks `~/.gradle` (wrapper lock) and `gh` fails TLS (OSStatus -26276): the release build ran in the Terminal panel and PR 7 was merged with git. Worth a line in handbook 80.
 - 2026-11-14 — `tests` counts only the inferred stack (swift); the 121 Android unit tests in `android/` did not satisfy it. Multi-app repos need per-app detection.
 - 2026-11-14 — `toolbox.json` `apple` and `google-play` limits say "through Expo/EAS", but this project is native Xcode + Gradle: no Expo path applies.
 - 2026-11-14 — `templates/github/workflows/ci-swift.yml` runs `-destination 'platform=macOS' test`, which fails for an iOS-only app; it needs an iOS Simulator destination and a shared scheme (here added by hand).

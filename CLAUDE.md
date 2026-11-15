@@ -81,6 +81,8 @@ in `android/` (`specs/android-app.md`, ADR-0005).
 - Android Pro sheet shows "Google Play can't be reached" on the emulator and in debug builds:
   Play only returns `pro_lifetime` to a Play-installed build once the product exists. Test the
   sheet with `FakeBilling` (`ProSheetTest`); real purchases need internal testing.
+- Claude's Bash sandbox cannot write `~/.gradle`, so `./gradlew` fails there with a `.lck`
+  "Operation not permitted". Run Gradle builds through the Terminal panel (`run_in_terminal`).
 - Simulator test results can be contaminated if someone else taps the same simulator while
   Claude tests — re-test as the sole operator before concluding a feature is broken.
 
