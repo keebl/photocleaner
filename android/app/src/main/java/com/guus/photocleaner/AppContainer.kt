@@ -6,7 +6,11 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.video.VideoFrameDecoder
+import com.guus.photocleaner.billing.Billing
+import com.guus.photocleaner.billing.EntitlementTracker
+import com.guus.photocleaner.billing.PlayBilling
 import com.guus.photocleaner.service.AppPreferences
+import com.guus.photocleaner.service.EntitlementStore
 import com.guus.photocleaner.service.HashCache
 import com.guus.photocleaner.service.KeepStore
 import com.guus.photocleaner.service.TrashStore
@@ -34,6 +38,9 @@ class AppContainer(context: Context) {
         loadKind = { preferences.sourceKind },
         saveKind = { preferences.sourceKind = it },
     )
+
+    /** Pro unlock (specs/pro-unlock.md): starts from the cached entitlement, never blocks start-up. */
+    val billing: Billing = PlayBilling(context, EntitlementTracker(EntitlementStore(File(files, "entitlement.json"))))
 }
 
 class PhotoCleanerApplication : Application(), SingletonImageLoader.Factory {

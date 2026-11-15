@@ -111,8 +111,12 @@ class MainActivity : ComponentActivity() {
             pendingNotificationAnswer[0] = null
         }
 
-        // Re-check on every resume: access can be changed or revoked in system settings.
-        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { state = currentState() }
+        // Re-check on every resume: access can be changed or revoked in system settings, and a
+        // purchase can be completed, restored or refunded outside the app.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            state = currentState()
+            container.billing.refresh()
+        }
 
         AppShell(
             state = state,
