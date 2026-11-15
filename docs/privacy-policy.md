@@ -44,7 +44,8 @@ them.
 
 ### What the app does not do
 - It only uses the network to reach a NAS **on your own network** (home Wi-Fi or your VPN),
-  and only after you link one. Any other address is refused. It never contacts a server of
+  and only after you link one. Any other address is refused. Apart from Google Play's
+  billing component for the optional purchase (see above), it never contacts a server of
   the developer or anyone else, so it cannot send your photos or other data anywhere else.
   Buying Pro goes through the Google Play app; your photos are never part of it.
 - No accounts, no analytics, no advertising, no tracking, and no third-party services other
@@ -110,8 +111,9 @@ toestel. Als je de app verwijdert, verdwijnen ze.
 
 ### Wat de app niet doet
 - Ze gebruikt het netwerk alleen om een NAS **op je eigen netwerk** (thuis-wifi of je VPN)
-  te bereiken, en pas nadat je er een koppelt. Elk ander adres wordt geweigerd. Ze maakt
-  nooit verbinding met een server van de ontwikkelaar of van iemand anders, dus ze kan je
+  te bereiken, en pas nadat je er een koppelt. Elk ander adres wordt geweigerd. Behalve het
+  betaalonderdeel van Google Play voor de optionele aankoop (zie hierboven) maakt ze nooit
+  verbinding met een server van de ontwikkelaar of van iemand anders, dus ze kan je
   foto's of andere gegevens nergens anders naartoe sturen. Pro kopen loopt via de Google
   Play-app; je foto's spelen daarbij geen rol.
 - Geen accounts, geen analytics, geen advertenties, geen tracking, en geen diensten van
