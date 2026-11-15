@@ -11,8 +11,9 @@ Last updated: 2026-11-15
   permanent NAS delete after the in-app trash. Tested on the emulator against a local Samba
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
 - Play organisation account verification pending (Guus).
-- Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned) only;
-  the two finished sessions were archived. No open PRs (Dependabot PRs 5 and 6 merged).
+- Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
+  "Pro unlock bouwen (Android)" — `claude/busy-cori-55da63`, PR 7 (spec steps 1–7) open, CI
+  running, unreviewed: waiting on Guus.
 
 ## Next
 1. Build the Pro unlock (`specs/pro-unlock.md`, approved, Android first) before the public
