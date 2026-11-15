@@ -15,8 +15,9 @@ Last updated: 2026-11-15
   the media tab and duplicate discard; version 1.0 (2). Tested with `FakeBilling` (unit and
   emulator); not yet against Play (needs the Console product, step 8).
 - Play organisation account verification pending (Guus).
-- Open sessions (2026-11-14): main session `photo-cleaner · main · 2026-11-14` (pinned) only;
-  the two finished sessions were archived. No open PRs (Dependabot PRs 5 and 6 merged).
+- Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
+  "Pro unlock bouwen (Android)" — `claude/busy-cori-55da63`, PR 7 (spec steps 1–7) open, CI
+  running, unreviewed: waiting on Guus.
 
 ## Next
 1. Guus: create the upload key and `android/keystore.properties`, then follow

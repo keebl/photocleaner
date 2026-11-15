@@ -20,8 +20,14 @@ jobs:
       - name: Build and unit tests
         run: |
           set -o pipefail
+          # Runner images drop simulator models over time; pick the newest available iPhone.
+          UDID=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[]
+                      | select(.name | startswith("iPhone"))] | last | .udid // empty')
+          if [ -z "$UDID" ]; then xcrun simctl list devices available; exit 1; fi
+          echo "Simulator: $UDID"
           xcodebuild test -project PhotoCleaner.xcodeproj -scheme PhotoCleaner \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination "platform=iOS Simulator,id=$UDID" \
             CODE_SIGNING_ALLOWED=NO -quiet
 
   android:
