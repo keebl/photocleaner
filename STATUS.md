@@ -22,8 +22,11 @@ Last updated: 2026-11-15
 ## Next
 1. Guus: finish the Console forms in `docs/PLAYSTORE.md` (upload key and
    `android/keystore.properties` exist since 2026-11-15).
-2. Guus (Pro step 1, Console part): set up the Google Payments merchant account (the products
-   page is locked without it, 2026-11-16), then create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
+2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
+   Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
+   "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
+   2026 Console), the other euro prices, and Guus's 15% service-fee enrolment. Original plan:
+   create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
 3. Pro step 8 (with Guus): manual test on a real phone as license tester — buy, cancel,
