@@ -68,7 +68,8 @@ Every new upload needs a higher `versionCode` in `android/app/build.gradle.kts`.
 
 ## 4. Create the app in Play Console (Guus)
 Play Console → **Create app**: name `PhotoCleaner`, default language Dutch (nl-NL), App,
-Free. Accept the declarations. Package name comes from the first upload:
+Free. Accept the declarations. (Done 2026-11-11; the Console shows the app's default
+language as en-US, so release notes default to English.) Package name comes from the first upload:
 `com.guus.photocleaner` (permanent).
 
 Enrol in **Play App Signing** (default) when uploading the first bundle.
@@ -130,6 +131,9 @@ partial access, system trash dialog, reminder, video playback).
 ## 7a. Pro product and license testers (Guus)
 Play only allows in-app products after a build with the `BILLING` permission is in a track,
 so do this after the first internal-testing upload (version 1.0 (2) or later):
+0. The products page stays locked until a **Google Payments merchant account** is set up
+   (Console prompt "Een verkopersaccount instellen": organisation details, bank account,
+   tax info). Found 2026-11-16.
 1. Monetize with Play → Products → **One-time products** → Create: product ID
    `pro_lifetime` (permanent, must match `ProEntitlement.PRODUCT_ID`), name "PhotoCleaner
    Pro", description "Browse any day, month or year, clean up videos, use the grid and

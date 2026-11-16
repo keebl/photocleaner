@@ -14,16 +14,16 @@ Last updated: 2026-11-15
   the media tab and duplicate discard; version 1.0 (2). Tested with `FakeBilling` (unit and
   emulator); not yet against Play (needs the Console product, step 8).
 - Play organisation account verification pending (Guus).
-- Signed release bundle 1.0 (2) with `BILLING` built locally on 2026-11-15
-  (`android/app/build/outputs/bundle/release/app-release.aab`, lintRelease 0 errors); not uploaded yet.
+- Android 1.0 (2) with `BILLING` published to Play internal testing on 2026-11-16 (1.0 (1) was
+  there since 2026-11-11). Review warning only: no native debug symbols uploaded.
 - Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
   "Pro unlock bouwen (Android)" — PR 7 merged, idle, finished.
 
 ## Next
 1. Guus: finish the Console forms in `docs/PLAYSTORE.md` (upload key and
    `android/keystore.properties` exist since 2026-11-15).
-2. Guus (Pro step 1, Console part): upload the 1.0 (2) bundle to internal testing, then create
-   the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
+2. Guus (Pro step 1, Console part): set up the Google Payments merchant account (the products
+   page is locked without it, 2026-11-16), then create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
 3. Pro step 8 (with Guus): manual test on a real phone as license tester — buy, cancel,
