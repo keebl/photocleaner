@@ -1,8 +1,17 @@
 {
   "permissions": {
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.local)",
+      "Read(./**/.env.*.local)",
+      "Read(./**/.env.production)",
+      "Read(./**/.env.development)",
+      "Read(./**/.env.staging)",
+      "Read(./**/.env.test)",
+      "Read(./**/.env.prod)",
+      "Read(./**/.env.preview)",
+      "Read(./**/.env.ci)",
+      "Read(./**/.envrc)",
       "Read(./secrets/**)",
       "Read(./**/tokens.json)",
       "Read(./**/*.pem)",
