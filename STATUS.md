@@ -3,7 +3,6 @@
 Last updated: 2026-11-15
 
 ## Now
-- Waiting on Guus since 2026-11-19 00:17 — start the "CI versnellen: concurrency, padfilters, caches" session card (workbench CI speed-up order).
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
   all v1 features, release bundle configuration, store assets (`store/play/`), privacy
   policy and `docs/PLAYSTORE.md`. Merged to `main` (PR 1).
