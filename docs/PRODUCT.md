@@ -69,3 +69,4 @@ UI: yes
   trader, so its name and address are public on the listing (see `docs/PLAYSTORE.md`).
 - TODO(guus): Is an App Store release the goal, or personal/sideload use only?
   (`docs/APPSTORE.md` exists but no privacy policy URL yet.)
+
