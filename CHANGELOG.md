@@ -36,6 +36,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 
 ### Fixed
 - iOS: the "Klaar" summary of a day finished earlier no longer reads "0 behouden · 0 weggegooid".
+- Android: Google Play no longer hides the app from devices without a portrait screen
+  (some tablets, desktops and XR headsets); the app still opens in portrait.
 
 <!-- No git tags exist yet, so no released versions are listed. The first tagged release
      will become the first version section below. -->

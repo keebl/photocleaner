@@ -7,6 +7,13 @@
          (specs/android-nas.md AC 6 and AC 24, ADR-0006). Nothing else uses the network. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The portrait lock on MainActivity implies a required android.hardware.screen.portrait
+         feature, which Play uses to hide the app from landscape-only devices (some tablets,
+         desktops, XR). Portrait is a preference, not a requirement. -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
     <!-- Media read: Android 13+ per media type, 14+ partial ("selected photos") access. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />

@@ -26,7 +26,9 @@ Last updated: 2026-11-19
    en-US and store settings (§5); open: nl-NL translation. Sending stays locked until the closed
    test track is finished. Done 2026-11-19: closed test "Alpha" prepared (178 countries,
    release 2 (1.0), saved, not sent); open: Guus sends for review (Play's quick check flags the
-   implied `android.hardware.screen.portrait` feature: proceed anyway or fix in 1.0 (3)).
+   implied `android.hardware.screen.portrait` feature). Guus chose "proceed anyway" and sends
+   it himself. The fix (`uses-feature screen.portrait required=false`, versionCode 3) is on
+   branch `fix/android-portrait-optional`: build 1.0 (3) and upload it before production.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
@@ -83,6 +85,7 @@ Last updated: 2026-11-19
 - `design-refs` — the references are the 14 iOS screenshots in `design/refs/ios/`, described in `docs/DESIGN.md` (Guus, 2026-11-14); the checker only counts files directly in `design/refs/`
 
 ## Workbench feedback
+- 2026-11-19 — Android builds still cannot run through the Bash sandbox: the proxy blocks Google Maven, `--offline` fails on the blocked system temp dir, and the sandbox-started Gradle daemon is then reused by the Terminal panel ("plugin not found" in 300 ms) until `./gradlew --stop`. Reported to mission control at Guus's request.
 - 2026-11-15 — Claude's Bash sandbox blocks `~/.gradle` (wrapper lock) and `gh` fails TLS (OSStatus -26276): the release build ran in the Terminal panel and PR 7 was merged with git. Worth a line in handbook 80.
 - 2026-11-14 — `tests` counts only the inferred stack (swift); the 121 Android unit tests in `android/` did not satisfy it. Multi-app repos need per-app detection.
 - 2026-11-14 — `toolbox.json` `apple` and `google-play` limits say "through Expo/EAS", but this project is native Xcode + Gradle: no Expo path applies.
