@@ -24,7 +24,9 @@ Last updated: 2026-11-19
    "no data", target 18+, PEGI 3, reviewer access via a Pro promo code). Open: send the changes
    for review in the Publishing overview (Guus), DSA trader status. Done 2026-11-19: store listing
    en-US and store settings (§5); open: nl-NL translation. Sending stays locked until the closed
-   test track is finished (countries, release, preview) — Guus decides the route.
+   test track is finished. Done 2026-11-19: closed test "Alpha" prepared (178 countries,
+   release 2 (1.0), saved, not sent); open: Guus sends for review (Play's quick check flags the
+   implied `android.hardware.screen.portrait` feature: proceed anyway or fix in 1.0 (3)).
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the

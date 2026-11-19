@@ -90,6 +90,16 @@ done, but "Send for review" in the Publishing overview stays locked: the dashboa
 finish the closed test track (countries, a release, preview, send), whose tester list was
 already set.
 
+Closed test "Alpha" prepared 2026-11-19 (Guus chose closed test before production): countries
+unsynced from production and all 178 targeted (testers stay limited to the list "Family and
+friends"); release `2 (1.0)` from the bundle library with en-US release notes, saved, not sent.
+The Publishing overview now offers "15 wijzigingen indienen voor beoordeling". Play's quick
+check reports one blocking issue with a "Toch doorgaan" (proceed anyway) option:
+`android:screenOrientation="portrait"` implies the required feature
+`android.hardware.screen.portrait`, which limits installs on some devices. Fix for the next
+build: declare `<uses-feature android:name="android.hardware.screen.portrait"
+android:required="false" />` in `AndroidManifest.xml`.
+
 ## 6. App content (Policy → App content)
 All declarations saved 2026-11-19 (overview: "Je bent helemaal bij"); not yet sent for review
 in the Publishing overview. Data safety: no data collected or shared (Guus's choice).
