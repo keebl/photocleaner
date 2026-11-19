@@ -3,6 +3,7 @@
 Last updated: 2026-11-15
 
 ## Now
+- Waiting on Guus since 2026-11-19 14:01 — sign in to Play Console in the built-in browser so the other euro prices of `pro_lifetime` can be set to €4.99 (his card answer: "Overal €4,99").
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
   all v1 features, release bundle configuration, store assets (`store/play/`), privacy
   policy and `docs/PLAYSTORE.md`. Merged to `main` (PR 1).
