@@ -11,12 +11,52 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same PR makes the older run pointless; main runs are never cancelled.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Decides which platform jobs have to run. Skipped jobs count as passed for the required
+  # checks `ios` / `android`, so docs-only changes finish in seconds and spend no macOS minutes.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ios: ${{ steps.filter.outputs.ios }}
+      android: ${{ steps.filter.outputs.android }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # Without a usable base (new branch, force push) run everything.
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
+             || ! git fetch --depth=1 origin "$BASE"; then
+            echo "ios=true" >> "$GITHUB_OUTPUT"; echo "android=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          FILES=$(git diff --name-only "$BASE" HEAD)
+          echo "$FILES"
+          SHARED='^(\.github/workflows/|\.swiftformat$|\.gitignore$)'
+          if echo "$FILES" | grep -Eq "^(PhotoCleaner/|PhotoCleanerTests/|PhotoCleaner\.xcodeproj/)|$SHARED"; then
+            echo "ios=true" >> "$GITHUB_OUTPUT"; else echo "ios=false" >> "$GITHUB_OUTPUT"; fi
+          if echo "$FILES" | grep -Eq "^android/|$SHARED"; then
+            echo "android=true" >> "$GITHUB_OUTPUT"; else echo "android=false" >> "$GITHUB_OUTPUT"; fi
+
   ios:
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
     runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+      - name: Cache Swift packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/spm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
       - name: Build and unit tests
         run: |
           set -o pipefail
@@ -28,9 +68,12 @@ jobs:
           echo "Simulator: $UDID"
           xcodebuild test -project PhotoCleaner.xcodeproj -scheme PhotoCleaner \
             -destination "platform=iOS Simulator,id=$UDID" \
+            -clonedSourcePackagesDirPath "$HOME/spm" \
             CODE_SIGNING_ALLOWED=NO -quiet
 
   android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -42,6 +85,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      # Caches ~/.gradle (read-only outside main); dependency verification still runs on every build.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Build, unit tests and lint
         run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 
@@ -54,3 +99,17 @@ jobs:
           fetch-depth: 0
       - name: gitleaks
         run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner
+
+  # One stable check for the whole workflow: fails only when a needed job failed or was cancelled.
+  ci-verdict:
+    if: always()
+    needs: [changes, ios, android, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Evaluate needed jobs
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$RESULTS" | jq -e '[.[].result] | all(. == "success" or . == "skipped")' > /dev/null
