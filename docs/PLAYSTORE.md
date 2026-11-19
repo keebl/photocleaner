@@ -82,12 +82,20 @@ Store settings: category **Photography**, contact e-mail (shown publicly), priva
 URL from the status section above.
 
 ## 6. App content (Policy → App content)
+All declarations saved 2026-11-19 (overview: "Je bent helemaal bij"); not yet sent for review
+in the Publishing overview. Data safety: no data collected or shared (Guus's choice).
 - **Privacy policy**: the URL above.
 - **Ads**: no ads.
-- **App access**: all functionality is available without login.
+- **App access**: no login, but Play requires reviewer access to paid content: declared
+  "some functionality is restricted" with the instruction set "No account needed (Pro and NAS
+  notes)", which gives the reviewer a Play promo code for `pro_lifetime` (promotion "Play review
+  access", id 131816898, 1 code, valid until 2027-05-19). The code itself is only in the Console
+  form, never in the repo. Renew the promotion before it expires while the app is in review.
 - **Content rating**: questionnaire, category "Utility, Productivity, Communication or
   Other"; answer no to violence, sexuality, language, controlled substances, gambling, user
-  interaction and data sharing → expected rating PEGI 3 / Everyone.
+  interaction and data sharing → expected rating PEGI 3 / Everyone. Saved 2026-11-19 with one
+  "yes": users can buy digital products (Pro). Result: PEGI 3, ESRB Everyone, USK 0, IARC 3+,
+  ClassInd 14+ (Brazil rates in-app purchases higher).
 - **Target audience**: 18 and over (not designed for children).
 - **Data safety**: "Does your app collect or share any of the required user data types?" →
   proposed answer **No** — Guus decides before submitting (checked 2026-11-14 against Play's
@@ -103,8 +111,9 @@ URL from the status section above.
   transit unless the NAS enforces SMB3 encryption. Sharing a photo is user-initiated through
   Android's share sheet, which Play does not count as sharing.
 - **Photo and video permissions** declaration (required for `READ_MEDIA_IMAGES` /
-  `READ_MEDIA_VIDEO`): core functionality is **photo management / gallery cleanup**. Suggested
-  text:
+  `READ_MEDIA_VIDEO`): core functionality is **photo management / gallery cleanup**. The 2026
+  form has two fields of at most 250 characters (one per permission); saved 2026-11-19 with a
+  shortened version of the text below. Suggested text:
   > PhotoCleaner is a photo and video clean-up app. Its core function is reviewing the
   > user's whole library: an "on this day" swipe deck, day/month/year browsing, a grid for
   > bulk decisions, and finding exact and visually similar duplicates across all photos.

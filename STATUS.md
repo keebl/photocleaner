@@ -1,6 +1,6 @@
 # Status — PhotoCleaner
 
-Last updated: 2026-11-15
+Last updated: 2026-11-19
 
 ## Now
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
@@ -20,8 +20,9 @@ Last updated: 2026-11-15
   "Pro unlock bouwen (Android)" — PR 7 merged, idle, finished.
 
 ## Next
-1. Guus: finish the Console forms in `docs/PLAYSTORE.md` (upload key and
-   `android/keystore.properties` exist since 2026-11-15).
+1. Done 2026-11-19: all Play app-content declarations saved (`docs/PLAYSTORE.md` §6; data safety
+   "no data", target 18+, PEGI 3, reviewer access via a Pro promo code). Open: send the changes
+   for review in the Publishing overview (Guus), store listing and store settings (§5), DSA trader status.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
