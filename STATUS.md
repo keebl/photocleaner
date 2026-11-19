@@ -22,7 +22,9 @@ Last updated: 2026-11-19
 ## Next
 1. Done 2026-11-19: all Play app-content declarations saved (`docs/PLAYSTORE.md` §6; data safety
    "no data", target 18+, PEGI 3, reviewer access via a Pro promo code). Open: send the changes
-   for review in the Publishing overview (Guus), store listing and store settings (§5), DSA trader status.
+   for review in the Publishing overview (Guus), DSA trader status. Done 2026-11-19: store listing
+   en-US and store settings (§5); open: nl-NL translation. Sending stays locked until the closed
+   test track is finished (countries, release, preview) — Guus decides the route.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the

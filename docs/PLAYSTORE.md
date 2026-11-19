@@ -81,6 +81,15 @@ Grow → Store presence → **Main store listing**: paste from `store/play/listi
 Store settings: category **Photography**, contact e-mail (shown publicly), privacy policy
 URL from the status section above.
 
+Done 2026-11-19: category **Fotografie** (Photography) and the public contact e-mail (Guus's
+Gmail) saved and published; the default listing en-US saved with the EN texts, icon,
+feature graphic and the five `screenshots/en/` images in order (deck, grid, duplicates,
+trash, settings), AI-generated assets declaration "do not label". Not yet added: the nl-NL
+translation (`listing.md` NL texts and `screenshots/nl/`). The dashboard's setup tasks are all
+done, but "Send for review" in the Publishing overview stays locked: the dashboard now asks to
+finish the closed test track (countries, a release, preview, send), whose tester list was
+already set.
+
 ## 6. App content (Policy → App content)
 All declarations saved 2026-11-19 (overview: "Je bent helemaal bij"); not yet sent for review
 in the Publishing overview. Data safety: no data collected or shared (Guus's choice).
