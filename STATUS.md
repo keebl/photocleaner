@@ -26,7 +26,7 @@ Last updated: 2026-11-15
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
-   2026 Console), the other euro prices, and Guus's 15% service-fee enrolment. Original plan:
+   2026 Console) and the other euro prices (Guus chose €4.99 everywhere on 2026-11-19). Guus enrolled in the 15% service fee on 2026-11-19. Original plan:
    create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
