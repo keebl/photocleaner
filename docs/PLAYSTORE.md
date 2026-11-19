@@ -138,6 +138,8 @@ so do this after the first internal-testing upload (version 1.0 (2) or later):
    adds VAT and rounds), so the Netherlands was set to €4.99 by hand per row; the purchase
    option ID is `buy`; no family-sharing switch was found in the product form or monetization
    setup; license testers live under Account beheren → Licentie testen.
+   2026-11-19: every EUR row (33 countries, including Spain, Finland and France with
+   regional VAT overrides) set to €4.99 by hand via each row's pencil, then the page Save.
 1. Monetize with Play → Products → **One-time products** → Create: product ID
    `pro_lifetime` (permanent, must match `ProEntitlement.PRODUCT_ID`), name "PhotoCleaner
    Pro", description "Browse any day, month or year, clean up videos, use the grid and
