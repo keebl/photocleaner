@@ -1,6 +1,6 @@
 # Status — PhotoCleaner
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 ## Now
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
@@ -26,9 +26,10 @@ Last updated: 2026-11-19
    en-US and store settings (§5); open: nl-NL translation. Sending stays locked until the closed
    test track is finished. Done 2026-11-19: closed test "Alpha" prepared (178 countries,
    release 2 (1.0), saved, not sent); open: Guus sends for review (Play's quick check flags the
-   implied `android.hardware.screen.portrait` feature). Guus chose "proceed anyway" and sends
-   it himself. The fix (`uses-feature screen.portrait required=false`, versionCode 3) is on
-   branch `fix/android-portrait-optional`: build 1.0 (3) and upload it before production.
+   implied `android.hardware.screen.portrait` feature). Guus chose "proceed anyway" and sent
+   the 15 changes for review on 2026-11-20 (Publishing overview: "Wijzigingen worden
+   beoordeeld"); waiting for Google's review. The fix (`uses-feature screen.portrait required=false`, versionCode 3) is on
+   `main` (PR 11): build 1.0 (3) and upload it before production.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
