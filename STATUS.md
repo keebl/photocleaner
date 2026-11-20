@@ -16,20 +16,26 @@ Last updated: 2026-11-20
 - Play organisation account verification pending (Guus).
 - Android 1.0 (2) with `BILLING` published to Play internal testing on 2026-11-16 (1.0 (1) was
   there since 2026-11-11). Review warning only: no native debug symbols uploaded.
+- Play (2026-11-20, hand-off): closed test "Alpha" (release 2 (1.0), 178 countries, testers
+  "Family and friends") plus all store listing, store settings and app-content changes are in
+  Google's review ("Wijzigingen worden beoordeeld"); managed publishing is off, so the test goes
+  live for the testers once approved. Default listing is en-US only. Main has versionCode 3 with
+  the optional portrait feature (PR 11), not yet built or uploaded.
+- Open asks: none. Answered: `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90`
+  (portrait warning → proceed anyway, fix in 1.0 (3)). Report the review result to mission control.
 - Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
   "Pro unlock bouwen (Android)" — PR 7 merged, idle, finished.
 
 ## Next
-1. Done 2026-11-19: all Play app-content declarations saved (`docs/PLAYSTORE.md` §6; data safety
-   "no data", target 18+, PEGI 3, reviewer access via a Pro promo code). Open: send the changes
-   for review in the Publishing overview (Guus), DSA trader status. Done 2026-11-19: store listing
-   en-US and store settings (§5); open: nl-NL translation. Sending stays locked until the closed
-   test track is finished. Done 2026-11-19: closed test "Alpha" prepared (178 countries,
-   release 2 (1.0), saved, not sent); open: Guus sends for review (Play's quick check flags the
-   implied `android.hardware.screen.portrait` feature). Guus chose "proceed anyway" and sent
-   the 15 changes for review on 2026-11-20 (Publishing overview: "Wijzigingen worden
-   beoordeeld"); waiting for Google's review. The fix (`uses-feature screen.portrait required=false`, versionCode 3) is on
-   `main` (PR 11): build 1.0 (3) and upload it before production.
+1. Play review pending (sent 2026-11-20, `docs/PLAYSTORE.md` §5–6): check the Publishing
+   overview and the inbox for Google's result; on rejection, fix and resend; report the result
+   to mission control. Then: Pro step 8 on a Play-installed build (item 3).
+   Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
+   `screenshots/nl/`), DSA trader status.
+   Before production: Guus builds the signed bundle 1.0 (3) in his own Terminal
+   (`cd android && ./gradlew --stop && ./gradlew :app:lintRelease :app:bundleRelease`; the
+   `--stop` clears a Gradle daemon started inside Claude's sandbox), then upload
+   `app-release.aab` to the closed test and promote to production.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
