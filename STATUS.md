@@ -23,8 +23,8 @@ Last updated: 2026-11-20
   the optional portrait feature (PR 11), not yet built or uploaded.
 - Open asks: none. Answered: `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90`
   (portrait warning → proceed anyway, fix in 1.0 (3)). Report the review result to mission control.
-- Open sessions (2026-11-15): main session `photo-cleaner · main · 2026-11-14` (pinned);
-  "Pro unlock bouwen (Android)" — PR 7 merged, idle, finished.
+- Open sessions (2026-11-20): main session `photo-cleaner · main · 2026-11-20` (pinned; took over
+  from `· main · 2026-11-14`, archived). No other open sessions, no open pull requests.
 
 ## Next
 1. Play review pending (sent 2026-11-20, `docs/PLAYSTORE.md` §5–6): check the Publishing
