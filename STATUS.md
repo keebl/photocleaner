@@ -1,6 +1,6 @@
 # Status — PhotoCleaner
 
-Last updated: 2026-11-20
+Last updated: 2026-11-25
 
 ## Now
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
@@ -21,10 +21,18 @@ Last updated: 2026-11-20
   Google's review ("Wijzigingen worden beoordeeld"); managed publishing is off, so the test goes
   live for the testers once approved. Default listing is en-US only. Main has versionCode 3 with
   the optional portrait feature (PR 11), not yet built or uploaded.
-- Open asks: none. Answered: `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90`
-  (portrait warning → proceed anyway, fix in 1.0 (3)). Report the review result to mission control.
-- Open sessions (2026-11-20): main session `photo-cleaner · main · 2026-11-20` (pinned; took over
-  from `· main · 2026-11-14`, archived). No other open sessions, no open pull requests.
+- Play review check 2026-11-25: still no result visible to Claude (no Play mail in Guus's Gmail
+  since 2026-11-19; the built-in browser is not signed in to the Console).
+- Open asks: `ask-8de865ce` (2026-11-25, to mission control) — Guus checks the Publishing
+  overview once and reports approved / still in review / rejected with the reason. Answered:
+  `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90` (portrait warning → proceed anyway,
+  fix in 1.0 (3)).
+- Open pull requests (2026-11-25), all Dependabot, all green, merged by mission control:
+  PR 12 (`actions/setup-java` 5 → 6), PR 13 (AGP 9.5.1 → 9.5.2, head `aa48e07`), PR 14
+  (kotlinx-serialization-json 1.12.0 → 1.13.0, head `b310123`). PR 13 and 14 were red because
+  Dependabot does not update `verification-metadata.xml`; fixed with
+  `android/scripts/verification-metadata-bump.py` (CLAUDE.md Gotchas).
+- Project main sessions were removed on 2026-11-24: sessions report to mission control directly.
 
 ## Next
 1. Play review pending (sent 2026-11-20, `docs/PLAYSTORE.md` §5–6): check the Publishing
@@ -32,10 +40,12 @@ Last updated: 2026-11-20
    to mission control. Then: Pro step 8 on a Play-installed build (item 3).
    Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
    `screenshots/nl/`), DSA trader status.
-   Before production: Guus builds the signed bundle 1.0 (3) in his own Terminal
-   (`cd android && ./gradlew --stop && ./gradlew :app:lintRelease :app:bundleRelease`; the
-   `--stop` clears a Gradle daemon started inside Claude's sandbox), then upload
-   `app-release.aab` to the closed test and promote to production.
+   Before production: Guus builds the signed bundle 1.0 (3) (versionCode 3 on `main`) in his
+   own Terminal, after PR 13/14 are merged, as one line:
+   `cd /Users/guus/Claude/Projects/photo-cleaner && git switch main && git pull --ff-only && cd android && export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home && ./gradlew --stop && ./gradlew :app:lintRelease :app:bundleRelease`
+   (the `--stop` clears a Gradle daemon started inside Claude's sandbox; signed only when
+   `android/keystore.properties` exists) → `android/app/build/outputs/bundle/release/app-release.aab`;
+   upload it to the closed test and promote to production.
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
@@ -92,6 +102,7 @@ Last updated: 2026-11-20
 - `design-refs` — the references are the 14 iOS screenshots in `design/refs/ios/`, described in `docs/DESIGN.md` (Guus, 2026-11-14); the checker only counts files directly in `design/refs/`
 
 ## Workbench feedback
+- 2026-11-25 — The `heavy ./gradlew` vetter refuses `--write-verification-metadata`, so every Dependabot Gradle PR (always red: no metadata update) needs a Terminal step or the hash script; worth a sanctioned form or a CI job that regenerates on Dependabot branches.
 - 2026-11-19 — Android builds still cannot run through the Bash sandbox: the proxy blocks Google Maven, `--offline` fails on the blocked system temp dir, and the sandbox-started Gradle daemon is then reused by the Terminal panel ("plugin not found" in 300 ms) until `./gradlew --stop`. Reported to mission control at Guus's request.
 - 2026-11-15 — Claude's Bash sandbox blocks `~/.gradle` (wrapper lock) and `gh` fails TLS (OSStatus -26276): the release build ran in the Terminal panel and PR 7 was merged with git. Worth a line in handbook 80.
 - 2026-11-14 — `tests` counts only the inferred stack (swift); the 121 Android unit tests in `android/` did not satisfy it. Multi-app repos need per-app detection.
