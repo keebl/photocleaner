@@ -78,6 +78,11 @@ in `android/` (`specs/android-app.md`, ADR-0005).
   warm local cache, BOM `.module` files a clean CI runner downloads are missed and CI fails.
   `aapt2` is per OS: the Mac run records only `-osx.jar`; after an AGP bump add the `-linux.jar`
   sha256 (from `dl.google.com/dl/android/maven2/…/aapt2-<ver>-linux.jar.sha256`) by hand for CI.
+- Dependabot Gradle PRs are always red: they bump `libs.versions.toml` but not
+  `verification-metadata.xml`. Claude's sandbox refuses `--write-verification-metadata`, so for
+  a plain version bump run `android/scripts/verification-metadata-bump.py` (mirrors the old
+  version's files, hashes the new ones, checks each against the repo's `.sha1`), push to the
+  Dependabot branch and let CI confirm (2026-11-25, PRs 13 and 14).
 - Android Pro sheet shows "Google Play can't be reached" on the emulator and in debug builds:
   Play only returns `pro_lifetime` to a Play-installed build once the product exists. Test the
   sheet with `FakeBilling` (`ProSheetTest`); real purchases need internal testing.
