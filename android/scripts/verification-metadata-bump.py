@@ -3,15 +3,19 @@
 For a Dependabot version bump when `./gradlew --write-verification-metadata` cannot run
 (Claude's sandbox refuses it). Each file is cross-checked against the repository's .sha1.
 Example (from the repo root, AGP 9.5.1 -> 9.5.2):
-  python3 -I android/scripts/verification-metadata-bump.py android/gradle/verification-metadata.xml \
+  python3 -I android/scripts/verification-metadata-bump.py \
     9.5.1=9.5.2 32.5.1=32.5.2 9.5.1-16666295=9.5.2-16666295
 Then run the CI tasks to confirm; a new transitive dependency still needs a Terminal regeneration.
 
-usage: verification-metadata-bump.py <metadata.xml> <old>=<new> [<old>=<new> ...] [--group-prefix p ...] [--only group:name ...]
+usage: verification-metadata-bump.py <old>=<new> [<old>=<new> ...] [--group-prefix p ...] [--only group:name ...]
 For each component whose version equals an <old> (and whose group matches a prefix / is listed),
 download the same artifact files at <new>, hash them, and insert a new component after the old one.
 """
-import hashlib, re, sys, urllib.request, urllib.error
+import hashlib, re, sys
+from pathlib import Path
+
+# Always the project's own file, never a path from the command line.
+METADATA = Path(__file__).resolve().parent.parent / "gradle" / "verification-metadata.xml"
 
 REPOS = [
     "https://dl.google.com/dl/android/maven2",
@@ -30,7 +34,7 @@ def fetch(group, name, ver, fname):
         s1 = subprocess.run(["curl", "-sSfL", "--retry", "3", url + ".sha1"], capture_output=True)
         if s1.returncode == 0:
             want = s1.stdout.decode().split()[0].strip()
-            got = hashlib.sha1(data).hexdigest()
+            got = hashlib.sha1(data, usedforsecurity=False).hexdigest()  # integrity cross-check only; SHA-256 is what Gradle verifies
             if want != got:
                 raise SystemExit(f"sha1 mismatch for {url}: {got} != {want}")
         else:
@@ -39,9 +43,8 @@ def fetch(group, name, ver, fname):
     raise SystemExit(f"not found in any repo: {group}:{name}:{ver} {fname}")
 
 def main():
-    path = sys.argv[1]
     maps, prefixes, only = {}, [], set()
-    args = sys.argv[2:]
+    args = sys.argv[1:]
     i = 0
     while i < len(args):
         a = args[i]
@@ -50,7 +53,7 @@ def main():
         if a == "--only":
             only.add(args[i + 1]); i += 2; continue
         old, new = a.split("="); maps[old] = new; i += 1
-    text = open(path).read()
+    text = METADATA.read_text()
     comp_re = re.compile(r'( *)<component group="([^"]+)" name="([^"]+)" version="([^"]+)">\n(.*?)\n *</component>\n', re.S)
     out, pos, added = [], 0, 0
     existing = set(m.group(2, 3, 4) for m in comp_re.finditer(text))
@@ -74,7 +77,7 @@ def main():
         out.append("\n".join(lines) + "\n"); added += 1
         print(f"added {g}:{n}:{nv} ({len(files)} files)", file=sys.stderr)
     out.append(text[pos:])
-    open(path, "w").write("".join(out))
+    METADATA.write_text("".join(out))
     print(f"{added} components added", file=sys.stderr)
 
 main()
