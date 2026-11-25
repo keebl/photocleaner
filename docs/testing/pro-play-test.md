@@ -47,11 +47,17 @@ UI labels are quoted as the app shows them in Dutch.
 6. **Offline start** (AC 16) — turn on airplane mode, force-stop, open the app: Pro features
    work (Maand, Filmpjes, grid). Turn airplane mode off.
 7. **Restore after reinstall** (AC 14) — uninstall the app, reinstall from the Play Store,
-   give photo access, open the Pro sheet or tap "Aankopen herstellen": Pro is unlocked.
-8. **Refund → locked** (AC 15) — on the computer: Play Console → Orderbeheer → find the test
-   order (account and date) → Terugbetalen, tick "Recht intrekken" (revoke entitlement) →
-   confirm. On the phone: force-stop and reopen. Pro is locked again; decisions and the
-   in-app trash are kept (AC 8).
+   give photo access: Pro is unlocked by itself, without tapping anything, because the app
+   asks Play for purchases at every start. That is the pass. "Aankopen herstellen" is only
+   the fallback when that automatic check misses (for example offline at first start).
+8. **Refund → locked** (AC 15) — on the computer: Play Console → Account beheren (the badge
+   icon in the left rail) → **Bestellingen beheren** (or
+   `play.google.com/console/developers/<account-id>/orders`) → click the arrow at the end of
+   the newest "Test: PhotoCleaner Pro" row → order page → button **Teruggave** at the bottom
+   of "Bestelgegevens" → choose a full refund and tick the option that removes the buyer's
+   access (revoke entitlement) → confirm. The test card charges nothing. On the phone:
+   force-stop and reopen. Pro is locked again; decisions and the in-app trash are kept
+   (AC 8).
 9. **Buy again** (AC 11, 17) — buy with "Test card, always approves". Pro unlocks at once,
    the sheet closes.
 
