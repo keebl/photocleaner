@@ -12,9 +12,12 @@ UI labels are quoted as the app shows them in Dutch.
 - **Account**: the phone's Google account must be on the tester list "Family and friends"
   (closed test "Alpha" and license testers use the same list). License testers pay with
   test cards; nothing is charged.
-- **Install from Play**: Play Console → PhotoCleaner → Testen → Gesloten test → Alpha →
-  tab Testers → copy the link under "Deelnemen via internet", open it on the phone, tap
-  "Tester worden", then install from the Play Store page. A build installed with `adb` or
+- **Install from Play**: a closed-test app cannot be found by searching the Play Store.
+  On the phone, signed in with the tester account, open
+  https://play.google.com/apps/testing/com.guus.photocleaner, tap "Tester worden", then
+  https://play.google.com/store/apps/details?id=com.guus.photocleaner and install. (The
+  same opt-in link is in Play Console → Testen → Gesloten test → Alpha → tab Testers,
+  under "Deelnemen via internet".) A build installed with `adb` or
   Android Studio cannot buy: Play then shows "Google Play is nu niet bereikbaar".
 - **Two places to watch**: the app's Pro sheet (any lock icon, or Instellingen → "Pro
   ontgrendelen") and Instellingen → Status.
