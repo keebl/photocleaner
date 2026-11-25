@@ -12,7 +12,7 @@ Last updated: 2026-11-25
   server (`android/scripts/nas-test-server.sh`); not yet against a real NAS.
 - Android Pro unlock built (`specs/pro-unlock.md` steps 1–7), merged to `main` (PR 7): Play Billing 9.1.0, entitlement cache, Pro sheet, Settings row, locks on
   the media tab and duplicate discard; version 1.0 (2). Tested with `FakeBilling` (unit and
-  emulator); not yet against Play (needs the Console product, step 8).
+  emulator) and against Play on a real phone (step 8 passed 2026-11-25, Next 3).
 - Play organisation account verification pending (Guus).
 - Android 1.0 (2) with `BILLING` published to Play internal testing on 2026-11-16 (1.0 (1) was
   there since 2026-11-11). Review warning only: no native debug symbols uploaded.
@@ -27,24 +27,23 @@ Last updated: 2026-11-25
 - Open asks: none. Answered: `ask-8de865ce` (Play review → approved, 2026-11-25),
   `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90` (portrait warning → proceed anyway,
   fix in 1.0 (3)).
-- Open pull requests (2026-11-25), all Dependabot, all green, merged by mission control:
-  PR 12 (`actions/setup-java` 5 → 6), PR 13 (AGP 9.5.1 → 9.5.2, head `aa48e07`), PR 14
-  (kotlinx-serialization-json 1.12.0 → 1.13.0, head `b310123`). PR 13 and 14 were red because
-  Dependabot does not update `verification-metadata.xml`; fixed with
+- Open pull requests (2026-11-25): PR 12 (Dependabot, `actions/setup-java` 5 → 6, green).
+  PR 13 (AGP 9.5.2) and PR 14 (kotlinx-serialization-json 1.13.0) merged 2026-11-25; they were
+  red because Dependabot does not update `verification-metadata.xml`; fixed with
   `android/scripts/verification-metadata-bump.py` (CLAUDE.md Gotchas).
 - Project main sessions were removed on 2026-11-24: sessions report to mission control directly.
 
 ## Next
-1. Play review approved 2026-11-25. Next: Pro step 8 on a Play-installed build (item 3,
-   `docs/testing/pro-play-test.md`).
+1. Play review approved and Pro step 8 passed (2026-11-25). Next: the signed bundle 1.0 (3).
    Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
    `screenshots/nl/`), DSA trader status.
    Before production: Guus builds the signed bundle 1.0 (3) (versionCode 3 on `main`) in his
-   own Terminal, after PR 13/14 are merged, as one line:
+   own Terminal (PR 13/14 are merged), as one line:
    `cd /Users/guus/Claude/Projects/photo-cleaner && git switch main && git pull --ff-only && cd android && export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home && ./gradlew --stop && ./gradlew :app:lintRelease :app:bundleRelease`
    (the `--stop` clears a Gradle daemon started inside Claude's sandbox; signed only when
    `android/keystore.properties` exists) → `android/app/build/outputs/bundle/release/app-release.aab`;
-   upload it to the closed test and promote to production.
+   upload it to the closed test, check it there, then promote to production (going live and
+   every store change are asks on a card).
 2. Done 2026-11-16: merchant account set up; `pro_lifetime` active (option `buy`, NL €4.99;
    Play's conversion put the other euro countries at €5.99, US $5.49); license testers = list
    "Family and friends" (6), RESPOND_NORMALLY. Open: family sharing (no setting found in the
@@ -58,9 +57,9 @@ Last updated: 2026-11-25
    and reinstall without tapping "Aankopen herstellen" (AC 14 passes). The refund (10:16 UTC)
    was done without revoking access, so Play still counts Pro as owned and the app correctly
    keeps it; revoking cannot be added afterwards. AC 15 against Play: skipped (Guus,
-   2026-11-25), covered only by the `FakeBilling` tests. Not reported back yet: price shown,
-   cancel, declined card, acknowledgement after 10 minutes, offline start, buy again — ask
-   Guus for the run log if needed before production.
+   2026-11-25), covered only by the `FakeBilling` tests. The remaining checks passed too
+   (Guus via mission control, 2026-11-25): price shown, cancel, declined card,
+   acknowledgement after 10 minutes, offline start, buy again. Result: Pro step 8 passed.
 4. Pro step 9: iOS StoreKit 2 round (`specs/pro-unlock.md`); decide first whether the NAS
    source is free or Pro on iOS (Open questions).
 5. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
