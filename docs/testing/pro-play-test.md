@@ -71,4 +71,4 @@ works without `ACCESS_NETWORK_STATE`; no extra step needed.
 
 | Date | Phone, Android version | App version (Instellingen → Over) | Result per step 1–9 | Notes |
 |------|------------------------|-----------------------------------|---------------------|-------|
-|      |                        |                                   |                     |       |
+| 2026-11-25 | Guus's phone (not recorded) | 1.0 (2), closed test Alpha | 1 ✅ 2 ✅ 3 ✅ 4 ✅ 5 ✅ 6 ✅ 7 ✅ 8 ⏭ 9 ✅ | Step 8: refunded without revoke, so Pro correctly stayed unlocked; AC 15 left to the `FakeBilling` tests (Guus's choice). Passed. |
