@@ -55,7 +55,10 @@ UI labels are quoted as the app shows them in Dutch.
    `play.google.com/console/developers/<account-id>/orders`) → click the arrow at the end of
    the newest "Test: PhotoCleaner Pro" row → order page → button **Teruggave** at the bottom
    of "Bestelgegevens" → choose a full refund and tick the option that removes the buyer's
-   access (revoke entitlement) → confirm. The test card charges nothing. On the phone:
+   access (revoke entitlement) → confirm. The test card charges nothing. The access option
+   cannot be added afterwards (the button greys out after a full refund), and a refund
+   without it leaves the purchase owned in Play, so Pro correctly stays unlocked; then repeat
+   this step with another tester account (2026-11-25 run). On the phone:
    force-stop and reopen. Pro is locked again; decisions and the in-app trash are kept
    (AC 8).
 9. **Buy again** (AC 11, 17) — buy with "Test card, always approves". Pro unlocks at once,
