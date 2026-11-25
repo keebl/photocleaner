@@ -21,10 +21,10 @@ Last updated: 2026-11-25
   Google's review ("Wijzigingen worden beoordeeld"); managed publishing is off, so the test goes
   live for the testers once approved. Default listing is en-US only. Main has versionCode 3 with
   the optional portrait feature (PR 11), not yet built or uploaded.
-- Play review check 2026-11-25: still no result visible to Claude (no Play mail in Guus's Gmail
-  since 2026-11-19; the built-in browser is not signed in to the Console).
-- Open asks: `ask-8de865ce` (2026-11-25, to mission control) — Guus checks the Publishing
-  overview once and reports approved / still in review / rejected with the reason. Answered:
+- Play review approved: mission control read it in the Console on 2026-11-25 (submission 1 of
+  2026-11-20 07:04, "Gesloten test - Alpha, Winkelvermelding, App-content, Store-instellingen":
+  "Gepubliceerd"; no pending changes). Closed test "Alpha" (1.0 (2)) is live for the testers.
+- Open asks: none. Answered: `ask-8de865ce` (Play review → approved, 2026-11-25),
   `ask-3f9c2a71` (route → closed test first), `ask-7c1e4b90` (portrait warning → proceed anyway,
   fix in 1.0 (3)).
 - Open pull requests (2026-11-25), all Dependabot, all green, merged by mission control:
@@ -35,9 +35,8 @@ Last updated: 2026-11-25
 - Project main sessions were removed on 2026-11-24: sessions report to mission control directly.
 
 ## Next
-1. Play review pending (sent 2026-11-20, `docs/PLAYSTORE.md` §5–6): check the Publishing
-   overview and the inbox for Google's result; on rejection, fix and resend; report the result
-   to mission control. Then: Pro step 8 on a Play-installed build (item 3).
+1. Play review approved 2026-11-25. Next: Pro step 8 on a Play-installed build (item 3,
+   `docs/testing/pro-play-test.md`).
    Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
    `screenshots/nl/`), DSA trader status.
    Before production: Guus builds the signed bundle 1.0 (3) (versionCode 3 on `main`) in his
@@ -53,10 +52,11 @@ Last updated: 2026-11-25
    create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
-3. Pro step 8 (with Guus): manual test on a real phone as license tester — buy, cancel,
-   pending (slow test card), restore after reinstall, refund from the Console → locked,
-   offline start with Pro; also confirm billing works with `ACCESS_NETWORK_STATE` removed.
-   Record results here.
+3. Pro step 8 (Guus, ~45 min): follow `docs/testing/pro-play-test.md` on a real phone
+   installed from the closed-test opt-in link — price, cancel, declined card, pending (slow
+   test card), acknowledgement, offline start, restore after reinstall, refund → locked, buy
+   again; this also confirms billing works without `ACCESS_NETWORK_STATE`. Record the run log
+   here.
 4. Pro step 9: iOS StoreKit 2 round (`specs/pro-unlock.md`); decide first whether the NAS
    source is free or Pro on iOS (Open questions).
 5. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
