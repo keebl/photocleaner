@@ -52,11 +52,15 @@ Last updated: 2026-11-25
    create the one-time product `pro_lifetime` at €4.99 with family sharing and add license testers
    (`docs/PLAYSTORE.md` step 7a). Play allows products only after a `BILLING` build is in a
    track.
-3. Pro step 8 (Guus, ~45 min): follow `docs/testing/pro-play-test.md` on a real phone
-   installed from the closed-test opt-in link — price, cancel, declined card, pending (slow
-   test card), acknowledgement, offline start, restore after reinstall, refund → locked, buy
-   again; this also confirms billing works without `ACCESS_NETWORK_STATE`. Record the run log
-   here.
+3. Pro step 8 run on 2026-11-25 (Guus, real phone, installed via the closed-test opt-in link;
+   `docs/testing/pro-play-test.md`). Seen: a purchase went pending → processed within a
+   minute (Console order history 09:50 → 09:51 UTC), and Pro stayed unlocked across uninstall
+   and reinstall without tapping "Aankopen herstellen" (AC 14 passes). The refund (10:16 UTC)
+   was done without revoking access, so Play still counts Pro as owned and the app correctly
+   keeps it; revoking cannot be added afterwards. AC 15 against Play: skipped (Guus,
+   2026-11-25), covered only by the `FakeBilling` tests. Not reported back yet: price shown,
+   cancel, declined card, acknowledgement after 10 minutes, offline start, buy again — ask
+   Guus for the run log if needed before production.
 4. Pro step 9: iOS StoreKit 2 round (`specs/pro-unlock.md`); decide first whether the NAS
    source is free or Pro on iOS (Open questions).
 5. Guus: try the Android NAS source on a phone against the real NAS (Synology), incl. a
@@ -89,6 +93,7 @@ Last updated: 2026-11-25
    except to the user's NAS".
 
 ## Recent decisions
+- 2026-11-25 — Pro: AC 15 (refund with revoke locks Pro) not tested against Play; `FakeBilling` tests suffice (Guus)
 - 2026-11-15 — Android Pro: `ACCESS_NETWORK_STATE` stays removed with Play Billing; its usage logger then drops its events (spec Plan, step 1 finding)
 - 2026-11-11 — Monetization: one-time €4.99 "PhotoCleaner Pro", today's "Op deze dag" stays free (`specs/pro-unlock.md`; on `main` since 2026-11-15)
 - 2026-11-14 — Android NAS: local network only, `INTERNET` added — see `docs/decisions/0006-android-local-network-access.md`

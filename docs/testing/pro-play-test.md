@@ -12,9 +12,12 @@ UI labels are quoted as the app shows them in Dutch.
 - **Account**: the phone's Google account must be on the tester list "Family and friends"
   (closed test "Alpha" and license testers use the same list). License testers pay with
   test cards; nothing is charged.
-- **Install from Play**: Play Console → PhotoCleaner → Testen → Gesloten test → Alpha →
-  tab Testers → copy the link under "Deelnemen via internet", open it on the phone, tap
-  "Tester worden", then install from the Play Store page. A build installed with `adb` or
+- **Install from Play**: a closed-test app cannot be found by searching the Play Store.
+  On the phone, signed in with the tester account, open
+  https://play.google.com/apps/testing/com.guus.photocleaner, tap "Tester worden", then
+  https://play.google.com/store/apps/details?id=com.guus.photocleaner and install. (The
+  same opt-in link is in Play Console → Testen → Gesloten test → Alpha → tab Testers,
+  under "Deelnemen via internet".) A build installed with `adb` or
   Android Studio cannot buy: Play then shows "Google Play is nu niet bereikbaar".
 - **Two places to watch**: the app's Pro sheet (any lock icon, or Instellingen → "Pro
   ontgrendelen") and Instellingen → Status.
@@ -44,11 +47,20 @@ UI labels are quoted as the app shows them in Dutch.
 6. **Offline start** (AC 16) — turn on airplane mode, force-stop, open the app: Pro features
    work (Maand, Filmpjes, grid). Turn airplane mode off.
 7. **Restore after reinstall** (AC 14) — uninstall the app, reinstall from the Play Store,
-   give photo access, open the Pro sheet or tap "Aankopen herstellen": Pro is unlocked.
-8. **Refund → locked** (AC 15) — on the computer: Play Console → Orderbeheer → find the test
-   order (account and date) → Terugbetalen, tick "Recht intrekken" (revoke entitlement) →
-   confirm. On the phone: force-stop and reopen. Pro is locked again; decisions and the
-   in-app trash are kept (AC 8).
+   give photo access: Pro is unlocked by itself, without tapping anything, because the app
+   asks Play for purchases at every start. That is the pass. "Aankopen herstellen" is only
+   the fallback when that automatic check misses (for example offline at first start).
+8. **Refund → locked** (AC 15) — on the computer: Play Console → Account beheren (the badge
+   icon in the left rail) → **Bestellingen beheren** (or
+   `play.google.com/console/developers/<account-id>/orders`) → click the arrow at the end of
+   the newest "Test: PhotoCleaner Pro" row → order page → button **Teruggave** at the bottom
+   of "Bestelgegevens" → choose a full refund and tick the option that removes the buyer's
+   access (revoke entitlement) → confirm. The test card charges nothing. The access option
+   cannot be added afterwards (the button greys out after a full refund), and a refund
+   without it leaves the purchase owned in Play, so Pro correctly stays unlocked; then repeat
+   this step with another tester account (2026-11-25 run). On the phone:
+   force-stop and reopen. Pro is locked again; decisions and the in-app trash are kept
+   (AC 8).
 9. **Buy again** (AC 11, 17) — buy with "Test card, always approves". Pro unlocks at once,
    the sheet closes.
 
