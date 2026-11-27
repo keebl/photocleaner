@@ -3,6 +3,8 @@
 Last updated: 2026-11-25
 
 ## Now
+- Play screenshots retaken with real Pexels stock photos (PR 18, merged 2026-11-25;
+  `store/play/photos.md`); submitted for review on 2026-11-27 (Next 0).
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
   all v1 features, release bundle configuration, store assets (`store/play/`), privacy
   policy and `docs/PLAYSTORE.md`. Merged to `main` (PR 1).
@@ -34,6 +36,14 @@ Last updated: 2026-11-25
 - Project main sessions were removed on 2026-11-24: sessions report to mission control directly.
 
 ## Next
+0. Play screenshots (2026-11-27): the 5 new en-US phone screenshots (real Pexels photos) replace
+   the old ones in the default listing, order deck, grid, duplicates, trash, settings; AI-items
+   declaration 'Items niet labelen'; submitted for review by Guus ("Wijzigingen worden
+   beoordeeld", managed publishing off, so live once approved). Uploaded from the built-in
+   browser by a page script fetching the files from the public repo; mission control ruled that
+   route out afterwards, so a next upload uses fastlane supply with a Play service account (not
+   set up). Auto mode refuses Claude's clicks on the AI declaration and on submit for review: those
+   stay Guus's clicks. `screenshots/nl/` waits for the nl-NL translation.
 1. Play review approved and Pro step 8 passed (2026-11-25). Next: the signed bundle 1.0 (3).
    Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
    `screenshots/nl/`), DSA trader status.
