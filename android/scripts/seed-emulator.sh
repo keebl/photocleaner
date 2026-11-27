@@ -7,6 +7,7 @@
 # Needs adb on PATH, one running emulator/device, and Pillow for the generator
 # (set PYTHON to a virtualenv interpreter if the default python3 lacks it). With ffmpeg
 # installed it also adds a short synthetic video dated 10 November 2022.
+# SEED_PHOTOS=<dir> uses real photos instead of shapes (store screenshots; store/play/photos.md).
 set -euo pipefail
 
 CAMERA_DIR=/sdcard/Pictures/PhotoCleanerSeed
@@ -34,7 +35,7 @@ fi
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-"${PYTHON:-python3}" "$SCRIPT_DIR/generate_seed_images.py" "$work"
+"${PYTHON:-python3}" "$SCRIPT_DIR/generate_seed_images.py" "$work" ${SEED_PHOTOS:+"$SEED_PHOTOS"}
 clean
 adb shell mkdir -p "$CAMERA_DIR" "$SHOT_DIR"
 adb push -q "$work/camera/." "$CAMERA_DIR/"

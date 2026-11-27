@@ -6,7 +6,8 @@ full description 4000 characters.
 
 Assets in this folder: `icon-512.png` (app icon, 512×512), `feature-graphic.png`
 (1024×500), `screenshots/nl/` and `screenshots/en/` (phone, 1200×2400). Sources:
-`design/icon/android-launcher.svg`, `design/icon/play-feature-graphic.svg`.
+`design/icon/android-launcher.svg`, `design/icon/play-feature-graphic.svg`. Photos in the
+screenshots: free Pexels stock photos, `photos.md`.
 
 Category: Photography · Tags: photo management, gallery cleanup · Contains ads: no ·
 In-app purchases: one, PhotoCleaner Pro (`pro_lifetime`, €4.99 once, no subscription;

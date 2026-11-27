@@ -29,6 +29,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   (iPhone library only).
 
 ### Changed
+- Google Play screenshots (NL/EN) show real stock photos instead of coloured shapes, and the
+  Settings screenshot shows the Pro row (`store/play/photos.md`).
 - The counter next to the trash icon now shows how many items are in the trash; the lifetime
   "cleaned" total moved to Settings (iOS and Android).
 - Grid review: fixed-layout action bar (buttons always present), weggooien left / behouden

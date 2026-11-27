@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Generates synthetic test photos for the Android emulator (no personal photos).
 
-Usage: generate_seed_images.py OUT_DIR   (OUT_DIR must be inside the system temp directory)
+Usage: generate_seed_images.py OUT_DIR [PHOTOS_DIR]
+  OUT_DIR must be inside the system temp directory.
+  PHOTOS_DIR (optional): real photos to use instead of the shapes, for store screenshots
+  (store/play/photos.md lists the free Pexels photos used); its *.jpg files are used in
+  name order and must number at least 21.
 
 Writes OUT_DIR/camera/*.jpg and OUT_DIR/screenshots/*.png covering the review cases:
 on this day in earlier years, exact duplicates, similar photos, a panorama, a leap-day
@@ -19,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 try:
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageOps
 except ImportError:
     sys.exit(
         "Pillow is required; install it in a virtual environment (see the module docstring)."
@@ -49,6 +53,23 @@ def scene(seed: int, width: int, height: int) -> Image.Image:
     return img
 
 
+# Real photos for store screenshots (main() fills it from PHOTOS_DIR); empty = shapes.
+PHOTOS: list[Path] = []
+# Which photo each scene seed gets; the order of the seeds is the order of the files.
+SEEDS = [100, 101, 102, 200, 300, 400, 500, 600, 700] + [1000 + i for i in range(12)]
+
+
+def picture(seed: int, width: int, height: int) -> Image.Image:
+    """The seed's real photo cropped to the size (portrait photos stay portrait), or a scene."""
+    if not PHOTOS:
+        return scene(seed, width, height)
+    with Image.open(PHOTOS[SEEDS.index(seed)]) as src:
+        img = ImageOps.exif_transpose(src).convert("RGB")
+    if img.height > img.width and width > height and width < 2 * height:
+        width, height = height, width
+    return ImageOps.fit(img, (width, height))
+
+
 def save_jpeg(
     img: Image.Image, path: Path, taken: dt.datetime | None, quality: int = 90
 ) -> None:
@@ -65,8 +86,12 @@ def save_jpeg(
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
+    if len(sys.argv) == 3:
+        PHOTOS.extend(sorted(Path(sys.argv[2]).glob("*.jpg")))
+        if len(PHOTOS) < len(SEEDS):
+            sys.exit(f"PHOTOS_DIR needs at least {len(SEEDS)} .jpg files")
     # Only write inside the system temp directory (seed-emulator.sh passes `mktemp -d`),
     # so a mistyped argument cannot scatter files elsewhere.
     temp_root = Path(tempfile.gettempdir()).resolve()
@@ -93,33 +118,34 @@ def main() -> None:
     # On this day in earlier years.
     for i, year in enumerate((2019, 2021, 2023)):
         save_jpeg(
-            scene(100 + i, 1600, 1200), camera / f"onthisday_{year}.jpg", this_day(year)
+            picture(100 + i, 1600, 1200), camera / f"onthisday_{year}.jpg", this_day(year)
         )
 
     # Exact duplicates: same capture second and dimensions, different file size.
     dup_time = on(2022, 6, 15, 15)
     save_jpeg(
-        scene(200, 1600, 1200), camera / "exact_dup_original.jpg", dup_time, quality=95
+        picture(200, 1600, 1200), camera / "exact_dup_original.jpg", dup_time, quality=95
     )
     save_jpeg(
-        scene(200, 1600, 1200), camera / "exact_dup_copy.jpg", dup_time, quality=60
+        picture(200, 1600, 1200), camera / "exact_dup_copy.jpg", dup_time, quality=60
     )
 
     # Similar photos: same scene re-exported smaller, a day later (not an exact duplicate).
-    save_jpeg(scene(300, 1600, 1200), camera / "similar_original.jpg", on(2021, 9, 3))
+    similar = picture(300, 1600, 1200)
+    save_jpeg(similar, camera / "similar_original.jpg", on(2021, 9, 3))
     save_jpeg(
-        scene(300, 1600, 1200).resize((800, 600)),
+        similar.resize((similar.width // 2, similar.height // 2)),
         camera / "similar_smaller.jpg",
         on(2021, 9, 4),
         quality=70,
     )
 
     # Panorama (>= 2:1) and a leap-day photo.
-    save_jpeg(scene(400, 3000, 1000), camera / "panorama.jpg", on(2020, 7, 21))
-    save_jpeg(scene(500, 1600, 1200), camera / "leapday_2024.jpg", on(2024, 2, 29))
+    save_jpeg(picture(400, 3000, 1000), camera / "panorama.jpg", on(2020, 7, 21))
+    save_jpeg(picture(500, 1600, 1200), camera / "leapday_2024.jpg", on(2024, 2, 29))
 
     # No capture date: browsing falls back to the date the file was added.
-    save_jpeg(scene(600, 1200, 1200), camera / "no_exif_date.jpg", None)
+    save_jpeg(picture(600, 1200, 1200), camera / "no_exif_date.jpg", None)
 
     # Spread-out dates for day/month/year browsing.
     rng = random.Random(42)
@@ -130,10 +156,10 @@ def main() -> None:
             rng.randint(1, 28),
             rng.randint(8, 20),
         )
-        save_jpeg(scene(1000 + i, 1600, 1200), camera / f"random_{i:02d}.jpg", taken)
+        save_jpeg(picture(1000 + i, 1600, 1200), camera / f"random_{i:02d}.jpg", taken)
 
     # Phone screenshot (20:9, PNG, in a Screenshots folder).
-    scene(700, 1080, 2400).save(shots / "Screenshot_seed.png", "PNG")
+    picture(700, 1080, 2400).save(shots / "Screenshot_seed.png", "PNG")
 
     print(
         f"Wrote {len(list(camera.iterdir()))} camera photos and "
