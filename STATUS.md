@@ -3,6 +3,10 @@
 Last updated: 2026-11-25
 
 ## Now
+- Play screenshots retaken with real Pexels stock photos (PR 18, merged 2026-11-25;
+  `store/play/photos.md`). Not yet uploaded to the Play Console: the built-in browser cannot
+  drive the file picker and Claude in Chrome was not connected (2026-11-27). Nothing changed
+  in the Console yet (old 5 screenshots still there, nothing saved).
 - Android app built on branch `feat/android-app` (`specs/android-app.md` steps 1–13 done):
   all v1 features, release bundle configuration, store assets (`store/play/`), privacy
   policy and `docs/PLAYSTORE.md`. Merged to `main` (PR 1).
@@ -34,6 +38,12 @@ Last updated: 2026-11-25
 - Project main sessions were removed on 2026-11-24: sessions report to mission control directly.
 
 ## Next
+0. Upload the 5 new en-US phone screenshots (`store/play/screenshots/en/01-deck.png` …
+   `05-settings.png`) to the default listing, replacing the 5 old ones, order deck, grid,
+   duplicates, trash, settings; then save and send for review. Guus asked Claude to do it
+   (2026-11-27); waits on Guus connecting Claude in Chrome (`file_upload` tool). Editor:
+   https://play.google.com/console/u/0/developers/4646840648822950914/app/4972042046405877524/store-listings/default/edit
+   `screenshots/nl/` waits for the nl-NL translation. Then send mission control a done Status.
 1. Play review approved and Pro step 8 passed (2026-11-25). Next: the signed bundle 1.0 (3).
    Still open in the Console: nl-NL listing translation (`store/play/listing.md`,
    `screenshots/nl/`), DSA trader status.
